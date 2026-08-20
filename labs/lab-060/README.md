@@ -1,0 +1,9 @@
+# lab-060: Virtual Filesystems: /proc and /sys
+
+QEMU VM for the LFCS course — reading kernel memory/mount/fd state directly from procfs and making one temporary sysctl-equivalent change via `/proc/sys`.
+
+## Run
+
+```bash
+astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-060
+```

@@ -1,0 +1,39 @@
+metadata:
+  name: "ats-004-lab-060"
+  docs:
+    solution: "docs/solution.md"
+    question: "docs/question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    display: false
+
+bootstrap:
+  init:
+    - name: "procfs-lab-setup"
+      description: "Resets net.ipv4.ip_forward to disabled/unpersisted, and deploys a target process with a known open-FD count at /opt/course/target.pid"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-ip-forward-live"
+      description: "Confirms net.ipv4.ip_forward is live-enabled (1) via /proc/sys"
+      type: "file"
+      source: "validation/validate-ip-forward-live.sh"
+
+    - name: "verify-ip-forward-not-persisted"
+      description: "Confirms net.ipv4.ip_forward=1 was not written into /etc/sysctl.conf or /etc/sysctl.d/*.conf, proving the change was live-only"
+      type: "file"
+      source: "validation/validate-ip-forward-not-persisted.sh"
+
+teardown:
+  keepCluster: false
