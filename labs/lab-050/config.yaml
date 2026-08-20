@@ -1,0 +1,86 @@
+metadata:
+  name: "ats-004-lab-050"
+  docs:
+    solution: "docs/solution.md"
+    question: "docs/question.md"
+
+runtime:
+  type: "qemu"
+  # lab-net is the scenario's own subnet: data-001 exports NFS on
+  # 10.10.50.5, app-srv1 (10.10.50.10) automounts it via autofs.
+  networks:
+    - name: "lab-net"
+      cidr: "10.10.50.0/24"
+
+  qemu:
+    - name: "data-001"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      networks:
+        - name: "lab-net"
+          ipv4: "10.10.50.5"
+
+      bootstrap:
+        init:
+          - name: "setup-nfs-export"
+            description: "Installs nfs-kernel-server, creates /exports/shared with sample content, and exports it read-write to 10.10.50.0/24 -- fully pre-configured, not part of the graded task"
+            type: "folder"
+            source: "bootstrap/data-001/"
+
+      validation:
+        scripts:
+          - name: "verify-export-live"
+            description: "Confirms /exports/shared is actively exported by data-001's NFS server"
+            type: "file"
+            source: "validation/validate-export-live.sh"
+
+    - name: "app-srv1"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      networks:
+        - name: "lab-net"
+          ipv4: "10.10.50.10"
+
+      bootstrap:
+        init:
+          - name: "install-autofs"
+            description: "Installs autofs and nfs-common, creates the /mnt/auto parent directory, and enables the autofs service -- leaves the master map and indirect map entirely unconfigured (the graded task)"
+            type: "folder"
+            source: "bootstrap/app-srv1/"
+
+      validation:
+        scripts:
+          - name: "verify-no-fstab-entry"
+            description: "Confirms /etc/fstab has no entry for the shared export -- autofs must be used instead of a permanent mount"
+            type: "file"
+            source: "validation/validate-no-fstab-entry.sh"
+
+          - name: "verify-autofs-master-config"
+            description: "Confirms an autofs master map references /mnt/auto and an indirect map file whose entry points at data-001:/exports/shared"
+            type: "file"
+            source: "validation/validate-autofs-master-config.sh"
+
+          - name: "verify-autofs-timeout"
+            description: "Confirms the idle-unmount timeout is set to 300 seconds, either on the master map's mount-point line or in /etc/autofs.conf"
+            type: "file"
+            source: "validation/validate-autofs-timeout.sh"
+
+          - name: "verify-automount-works"
+            description: "Triggers access to /mnt/auto/shared and confirms the NFS mount actually appears live"
+            type: "file"
+            source: "validation/validate-automount-works.sh"
+
+teardown:
+  keepCluster: false
