@@ -1,146 +1,114 @@
-# Solution
+# Solution Guide (Offline & Exam Friendly)
 
-## Step 1: Read total and available memory straight from the kernel
+This step-by-step guide explains how to gather kernel-state facts and make temporary tuning changes directly via the `/proc` filesystem and standard command-line tools.
 
-Check `man 5 proc` — search for the `/proc/meminfo` subsection, which documents `MemTotal`, `MemFree`, and `MemAvailable` as the key fields (note `MemAvailable` is the more useful "how much can I actually allocate" figure, not `MemFree`).
+---
+
+## Step 1: Read Memory Stats from Kernel Memory Accounting
+
+The kernel exposes real-time memory information via `/proc/meminfo`. Run the following to display the top lines, which include total and available memory:
 
 ```bash
 cat /proc/meminfo | head -5
 ```
+*`MemAvailable` shows the actual memory that can be allocated for new processes, whereas `MemFree` is just completely unused memory.*
 
-Example output:
+---
 
-```
-MemTotal:       16384000 kB
-MemFree:         2048000 kB
-MemAvailable:    6144000 kB
-Buffers:          128000 kB
-Cached:          3072000 kB
-```
+## Step 2: Count a Process's Open File Descriptors
 
-Every value here is generated at the instant you run `cat` — there is no on-disk copy anywhere; run the command again a moment later and the numbers will already have shifted. Tools like `free -h` are simply friendlier formatters wrapped around this exact same file.
+The kernel tracks every file descriptor (FD) that a process currently has open inside a directory named `/proc/<PID>/fd/`.
 
-## Step 2: Count a process's open file descriptors
+1. Get the PID of the target process:
+   ```bash
+   cat /opt/course/target.pid
+   ```
+2. If you do not remember how the kernel represents process FDs, check the manual page:
+   ```bash
+   man 5 proc
+   ```
+   *Search for `/fd` inside the man page. It explains that `/proc/[pid]/fd` is a subdirectory containing symbolic links for every open file descriptor.*
+3. List the entries and count them using `wc -l`:
+   ```bash
+   PID=$(cat /opt/course/target.pid)
+   ls /proc/$PID/fd | wc -l
+   ```
+4. If you want to see what files or network sockets these descriptors actually point to, list them in long format:
+   ```bash
+   sudo ls -l /proc/$PID/fd
+   ```
 
-```bash
-PID=$(cat /opt/course/target.pid)
-ls /proc/$PID/fd | wc -l
-```
+---
 
-Check `man 5 proc` — the `/proc/[pid]/fd/` subsection explains each entry is a symlink named by its file descriptor number, pointing at whatever that descriptor references (regular file, socket, pipe, device). `ls` simply lists the symlink names; piping to `wc -l` counts them, giving you "how many file descriptors this process currently has open."
+## Step 3: Temporarily Enable IPv4 Forwarding
 
-To see what each one actually points at, not just the count:
+Kernel tuning variables are managed under the `/proc/sys/` directory tree.
 
-```bash
-sudo ls -l /proc/$PID/fd
-```
+1. If you forget the exact path to the IP forwarding setting, search the `/proc/sys/` directory:
+   ```bash
+   find /proc/sys -name "*forward*"
+   ```
+   *This output lists `/proc/sys/net/ipv4/ip_forward`.*
+2. Check the current value (0 means disabled, 1 means enabled):
+   ```bash
+   cat /proc/sys/net/ipv4/ip_forward
+   ```
+3. Enable IP forwarding for the current boot only by writing `1` directly into this file:
+   ```bash
+   echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward
+   ```
+   *Note: Directly writing to files in `/proc/sys/` updates the kernel state instantly in memory. Because we are not writing to `/etc/sysctl.conf` or `/etc/sysctl.d/`, this change will not persist across reboots.*
 
-This is genuinely useful troubleshooting beyond the lab exercise — a process leaking file descriptors (never closing files/sockets) shows a steadily growing list here over time.
+---
 
-## Step 3: Read the current IP forwarding state, then change it temporarily
+## Step 4: Show the `sysctl` Equivalent Name
 
-```bash
-cat /proc/sys/net/ipv4/ip_forward
-```
+The relationship between `/proc/sys/` paths and `sysctl` variables is completely mechanical:
+1. Strip the `/proc/sys/` prefix.
+2. Replace every remaining slash `/` with a dot `.`.
 
-`0` means disabled, `1` means enabled. Check `man 5 proc` — the `/proc/sys/` subsection explains that this directory tree mirrors kernel tunables one-to-one, and that most entries here accept a plain write to change the live value immediately.
+Therefore, `/proc/sys/net/ipv4/ip_forward` maps to `net.ipv4.ip_forward`.
 
-```bash
-echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward
-cat /proc/sys/net/ipv4/ip_forward
-```
-
-This takes effect immediately — the kernel now forwards IPv4 packets between interfaces — but it is **not** persisted anywhere; a reboot reverts it to whatever the boot-time default/config specifies. Do **not** also write a file under `/etc/sysctl.d/` here — the task explicitly asks for a temporary, current-boot-only change.
-
-## Step 4: Show the sysctl-equivalent variable name
-
+Verify this using the `sysctl` tool:
 ```bash
 sysctl net.ipv4.ip_forward
 ```
 
-Expected output:
+---
 
-```
-net.ipv4.ip_forward = 1
-```
+## Step 5: Read the Live Mount Table for `/`
 
-The translation rule is entirely mechanical: strip the `/proc/sys/` prefix from the path, then replace every remaining `/` with a `.` — `/proc/sys/net/ipv4/ip_forward` becomes `net.ipv4.ip_forward`. This works for essentially every tunable under `/proc/sys`, which is why memorizing the rule is more useful than memorizing individual variable names.
+The kernel keeps its live active mount list in `/proc/mounts`. This is generated dynamically by the kernel and represents the ultimate source of truth, avoiding potential drift associated with other command outputs.
 
-## Step 5: Read the live mount table directly for `/`
+1. Filter the live mount table for the root filesystem `/`:
+   ```bash
+   grep ' / ' /proc/mounts
+   ```
+2. Compare this raw kernel data with the outputs of user-space tools:
+   ```bash
+   findmnt /
+   mount | grep ' on / '
+   ```
 
-Check `man 5 proc` — search for `/proc/mounts` and `/proc/[pid]/mountinfo`; the page notes `/proc/mounts` gives the classic `mtab`-style format while `/proc/self/mountinfo` gives a richer, more detailed format including propagation and mount ID information.
-
-```bash
-grep ' / ' /proc/mounts
-```
-
-Example output:
-
-```
-/dev/vda1 / ext4 rw,relatime 0 0
-```
-
-Fields, in order: device source, mount point, filesystem type, mount options, and two legacy dump/pass fields (unused/always `0` here). Compare against the higher-level tools:
-
-```bash
-findmnt /
-mount | grep ' on / '
-```
-
-All three ultimately reflect the same kernel-internal mount table — `/proc/mounts` is simply the rawest, most direct read of it, generated fresh on every access with zero possibility of drifting from reality, which is why it's the tiebreaker source of truth if `mount`'s own output is ever in question (historically due to `/etc/mtab` staleness, though modern distros avoid that by symlinking `/etc/mtab` to `/proc/self/mounts`).
-
-## Step 6: Tour the rest of procfs's most useful files
-
-Beyond the specific facts the scenario asked for, a handful of other procfs entries come up constantly enough to be worth touring now rather than discovering under exam pressure:
-
-```bash
-cat /proc/cpuinfo | grep -E 'model name|processor' | head -4
-cat /proc/uptime
-cat /proc/loadavg
-cat /proc/version
-```
-
-Check `man 5 proc` for each of these by name — `/proc/cpuinfo` lists one stanza per logical CPU (so `grep processor` counts them); `/proc/uptime` is two numbers, seconds since boot and total idle time summed across CPUs; `/proc/loadavg` is the same three averages `uptime`/`w` display, plus a runnable/total-process count and the last PID allocated; `/proc/version` is the same string `uname -a` derives from.
-
-Per-process, three more are worth knowing beyond `/proc/<PID>/fd`:
-
-```bash
-cat /proc/$PID/status | head -5
-cat /proc/$PID/cmdline | tr '\0' ' '; echo
-sudo cat /proc/$PID/environ | tr '\0' '\n'
-```
-
-`/proc/<PID>/status` gives a human-readable summary (state, memory, UID/GID) of the same data `ps` and `top` format for display. `/proc/<PID>/cmdline` holds the exact argv the process was launched with, NUL-separated rather than space-separated — `tr '\0' ' '` makes it readable, and the raw NUL-separation is precisely why a naive `cat` looks like one run-together word. `/proc/<PID>/environ` is that process's environment at launch time, also NUL-separated, and requires `sudo` to read for a process you don't own since it can contain secrets.
+---
 
 ## Verification
 
+Verify that all facts and states are correct:
+
 ```bash
+# 1. Confirm memory stats read successfully
 cat /proc/meminfo | grep -E 'MemTotal|MemAvailable'
-# expect: two lines with live kB values
 
-ls /proc/$PID/fd | wc -l
-# expect: a positive integer matching the process's actual open FD count
+# 2. Check open file descriptor count
+ls /proc/$(cat /opt/course/target.pid)/fd | wc -l
 
+# 3. Confirm IP forwarding is enabled
 cat /proc/sys/net/ipv4/ip_forward
-# expect: 1 (after the change)
 
+# 4. Verify sysctl value
 sysctl net.ipv4.ip_forward
-# expect: net.ipv4.ip_forward = 1
 
+# 5. Verify the root filesystem details
 grep ' / ' /proc/mounts
-# expect: line showing device, /, fstype, and options for the root filesystem
-```
-
-## Command Summary
-
-```bash
-cat /proc/meminfo | head -5
-PID=$(cat /opt/course/target.pid)
-ls /proc/$PID/fd | wc -l
-sudo ls -l /proc/$PID/fd
-cat /proc/sys/net/ipv4/ip_forward
-echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward
-sysctl net.ipv4.ip_forward
-grep ' / ' /proc/mounts
-findmnt /
 ```

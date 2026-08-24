@@ -1,109 +1,119 @@
-# Solution
+# Solution Guide (Offline & Exam Friendly)
 
-## Step 1: Install and enable autofs
+This step-by-step guide explains how to configure `autofs` to automatically mount a remote share on demand and unmount it after inactivity, showing you how to find map file formats using standard manual pages.
 
-```bash
-sudo apt-get install -y autofs   # or: sudo dnf install -y autofs
-sudo systemctl enable --now autofs
-```
+---
 
-Check `man 8 automount` — this is the daemon that `systemctl` actually starts under the `autofs` service unit; skimming its synopsis confirms it's designed to run continuously, watching the mount points declared by the master map.
+## Step 1: Install and Start Autofs
 
-## Step 2: Create the base mount directory autofs will manage
+1. If you do not remember the exact package name for autofs, search your package manager:
+   ```bash
+   apt-cache search autofs   # On Debian/Ubuntu
+   # or: dnf search autofs   # On RHEL/Fedora
+   ```
+2. Install and start the service:
+   ```bash
+   sudo apt-get install -y autofs
+   sudo systemctl enable --now autofs
+   ```
+
+---
+
+## Step 2: Create the Base Mount Directory
+
+Create the base directory that `autofs` will watch. Note that you should **only** create the parent directory `/mnt/auto` — do not create the `/mnt/auto/shared` subdirectory, as `autofs` creates and deletes it dynamically.
 
 ```bash
 sudo mkdir -p /mnt/auto
 ```
 
-Note we create `/mnt/auto`, the *parent* directory referenced by the master map — we do **not** manually create `/mnt/auto/shared` itself. autofs creates and destroys that subdirectory dynamically as part of mounting/unmounting; pre-creating it isn't wrong, but understanding that autofs owns that specific path is important for later debugging.
+---
 
-## Step 3: Point the master map at an indirect map file
+## Step 3: Configure the Master Map
 
-Check `man 5 autofs.master` — the format documented there is `mount-point map-name [options]` per line, and this is where the idle `timeout=` belongs, not in the indirect map file itself.
+You need to tell `autofs` to watch `/mnt/auto`, refer to `/etc/auto.shared` for the map details, and use a 5-minute (300 seconds) idle timeout.
 
-Edit `/etc/auto.master` (or add a file under `/etc/auto.master.d/shared.autofs` — either is valid, the latter is cleaner for not touching the main file):
+1. If you forget the structure of the master map or how to specify a timeout, consult its manual page:
+   ```bash
+   man 5 autofs.master
+   ```
+   *Searching `/timeout` inside the man page reveals that options like `--timeout=300` are added at the end of the master map line.*
+2. Edit `/etc/auto.master` and add the following line:
+   ```text
+   /mnt/auto  /etc/auto.shared  --timeout=300
+   ```
 
-```
-/mnt/auto  /etc/auto.shared  --timeout=300
-```
+---
 
-`/mnt/auto` is the base directory autofs will watch; `/etc/auto.shared` is the indirect map file that defines what lives under it; `--timeout=300` sets the idle-unmount window to 300 seconds (5 minutes), satisfying the "released after 5 minutes of inactivity" requirement.
+## Step 4: Configure the Map File
 
-## Step 4: Define the indirect map entry
+Now, define how the `shared` subdirectory mounts.
 
-Check `man 5 autofs` — the map-file syntax section documents the `key [-options] location` format used here; `-options` are standard `mount`-style options for the target filesystem type.
+1. If you forget how to write the indirect map file entries, look at its manual page:
+   ```bash
+   man 5 autofs
+   ```
+   *This documents the standard format:*
+   ```text
+   key [-options] location
+   ```
+2. Create and edit the `/etc/auto.shared` file, adding the following entry:
+   ```text
+   shared  -fstype=nfs,rw  data-001:/exports/shared
+   ```
+   *Here, `shared` is the key (creating `/mnt/auto/shared`), `-fstype=nfs,rw` are the mount options, and `data-001:/exports/shared` is the remote export source.*
 
-Create `/etc/auto.shared`:
+---
 
-```
-shared  -fstype=nfs,rw  data-001:/exports/shared
-```
+## Step 5: Start the Service and Trigger the Mount
 
-Reading this line left to right: `shared` is the key — it becomes the subdirectory name under `/mnt/auto`, so the final accessible path is `/mnt/auto/shared`, matching the task's required path. `-fstype=nfs,rw` are the mount options, explicitly specifying NFS and read-write access. `data-001:/exports/shared` is the location — the same `host:/export` syntax used by a normal `mount -t nfs` command.
+1. Restart `autofs` to load your new configuration files:
+   ```bash
+   sudo systemctl restart autofs
+   ```
+2. Access the directory to trigger the automatic mount:
+   ```bash
+   cd /mnt/auto/shared
+   ```
+3. Check the active mounts to confirm the NFS share was mounted on demand:
+   ```bash
+   mount | grep shared
+   ```
 
-## Step 5: Reload autofs to pick up the new maps
+---
 
-```bash
-sudo systemctl restart autofs
-```
+## Step 6: Verify the Idle Timeout
 
-A restart re-reads `/etc/auto.master` and every map file it references. This is lighter than a reboot and is the standard workflow for iterating on autofs configuration — no filesystem is actually touched by the restart itself, since nothing is mounted until accessed.
+1. Move out of the mount directory so it is no longer marked "in use":
+   ```bash
+   cd ~
+   ```
+2. Wait past the 5-minute timeout window (300 seconds):
+   ```bash
+   sleep 310
+   ```
+3. Check active mounts again. The directory should be unmounted automatically:
+   ```bash
+   mount | grep shared
+   ```
+   *No output should be returned once the timeout expires.*
 
-## Step 6: Trigger the automount and verify it happened
-
-```bash
-cd /mnt/auto/shared
-ls
-mount | grep shared
-```
-
-Simply changing into `/mnt/auto/shared` is enough to trigger automount's on-demand mount — the kernel's autofs filesystem module intercepts the access to that not-yet-mounted path, notifies the `automount` daemon, which performs the actual `mount -t nfs data-001:/exports/shared /mnt/auto/shared` on your behalf. `mount | grep shared` should now show the live NFS mount.
-
-## Step 7: Confirm the idle timeout actually releases the mount
-
-```bash
-cd ~
-sleep 310
-mount | grep shared
-```
-
-After leaving the directory (so nothing keeps it "in use") and waiting past the 300-second timeout, the mount should no longer appear in `mount` output — `automount` unmounted it automatically once idle, with zero manual `umount` involved. (In a real timed exam you would not literally `sleep` for 5 minutes to prove this — state the mechanism and, if time allows, shorten the timeout temporarily to something like `--timeout=10` to demonstrate the behavior quickly, then set it back to `300`.)
+---
 
 ## Verification
 
+Confirm your configuration matches the rules:
+
 ```bash
-# master map correctly references the indirect map and timeout
+# 1. Check master map reference and timeout
 cat /etc/auto.master | grep auto.shared
-# expect: /mnt/auto  /etc/auto.shared  --timeout=300
 
-# indirect map defines the shared key correctly
+# 2. Check indirect map configuration
 cat /etc/auto.shared
-# expect: shared  -fstype=nfs,rw  data-001:/exports/shared
 
-# service is active
+# 3. Check service status
 systemctl is-active autofs
-# expect: active
 
-# on-demand mount works
-cd /mnt/auto/shared && mount | grep shared
-# expect: data-001:/exports/shared on /mnt/auto/shared type nfs (rw,...)
-
-# no permanent fstab entry exists for this share
+# 4. Confirm no persistent fstab entry exists for the share
 grep shared /etc/fstab
-# expect: no output
-```
-
-## Command Summary
-
-```bash
-sudo apt-get install -y autofs
-sudo systemctl enable --now autofs
-sudo mkdir -p /mnt/auto
-# edit /etc/auto.master, add: /mnt/auto  /etc/auto.shared  --timeout=300
-# create /etc/auto.shared, add: shared  -fstype=nfs,rw  data-001:/exports/shared
-sudo systemctl restart autofs
-cd /mnt/auto/shared
-mount | grep shared
-cd ~
-mount | grep shared   # (after timeout) expect no output
 ```

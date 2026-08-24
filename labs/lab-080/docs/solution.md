@@ -1,91 +1,106 @@
-# Solution
+# Solution Guide (Offline & Exam Friendly)
 
-## Step 1: Set up the report location
+This step-by-step guide walks you through generating a physical disk capacity report and identifying symlinks under `/` without needing to memorize complex scripts or command-line parsers.
+
+---
+
+## Step 1: Create the Report Directory
+
+Create the target directory where the reports will be saved:
 
 ```bash
 sudo mkdir -p /opt/course/audit
 ```
 
-## Step 2: Get a first-pass size for every top-level directory
+---
 
-```bash
-sudo du --max-depth=1 -h -x / 2>/dev/null | sort -rh
-```
+## Step 2: Survey Top-Level Directory Sizes
 
-Check `man 1 du` — `--max-depth=1` limits recursion to exactly one level below the starting point (`/`), which is what gives you one line per top-level directory instead of every file on the system. `-x` (check the man page's description of "one file system") is the flag that keeps the scan from wandering into anything mounted underneath `/` — without it, a large network share or a second disk mounted at `/data` would inflate `/`'s reported total with space that isn't actually part of the root filesystem. Redirecting stderr to `/dev/null` suppresses "Permission denied" noise from directories you can't read even as root's scan encounters restrictive mount options.
+You need to find the size of top-level directories on the root filesystem `/`.
 
-`sort -rh` — check `man 1 sort`'s `-h` flag description — reorders the output largest-first by treating suffixes like `K`/`M`/`G` as actual magnitude, not as plain text.
+1. If you forget how to use `du` to inspect directory sizes, run:
+   ```bash
+   du --help
+   ```
+   *Identify options for:*
+   - Human-readable sizing (`-h` or `--human-readable`).
+   - Restricting recursion depth to the top-level folders only (`--max-depth=1`).
+   - Keeping the scan within a single filesystem (`-x` or `--one-file-system`). This is critical to prevent the tool from traversing separate disks or network shares.
+2. Run the command and sort the results by size, largest first:
+   ```bash
+   sudo du --max-depth=1 -h -x / 2>/dev/null | sort -rh
+   ```
+   *`sort -rh` sorts lines using human-readable suffix magnitudes (like K, M, G).*
 
-## Step 3: Confirm which top-level entries are pseudo-filesystems
+---
 
-```bash
-findmnt -t proc,sysfs,tmpfs,devtmpfs
-```
+## Step 3: Identify Virtual (Memory-Only) Filesystems
 
-Cross-reference this list against your Step 2 output — any top-level directory that appears here (typically `/proc`, `/sys`, `/dev`, `/run`, sometimes `/tmp` if it's tmpfs-backed on this distro) is not real root-filesystem disk usage, regardless of what `du` reported for it. Exclude those lines from the report.
+The capacity report must reflect real, disk-backed usage. Filesystems that only exist in memory (like `proc`, `sysfs`, `tmpfs`) must be excluded.
 
-## Step 4: Identify symlinked top-level directories
+1. List the virtual mounts on your system:
+   ```bash
+   findmnt -t proc,sysfs,tmpfs,devtmpfs
+   ```
+2. Cross-reference this output with your `du` list from Step 2. You will see that `/proc`, `/sys`, `/dev`, and `/run` are virtual filesystems, so they should be excluded from your final capacity report.
 
-```bash
-ls -l / | grep '^l'
-```
+---
 
-Check `man 1 ls` — the leading `l` in the permissions column identifies a symlink; the rest of the line shows what it points to (e.g. `bin -> usr/bin`). On most current distributions, `/bin`, `/sbin`, `/lib`, and `/lib64` are symlinks into their `/usr` counterparts (the "usr-merge"). Each symlinked entry you find here should be excluded from your size total for `/` — it isn't separate data, it's the same bytes `/usr` already accounts for.
+## Step 4: Identify Symlinked Directories under `/`
 
-## Step 5: Build the final filtered report
+You need to find which top-level paths are symbolic links and what they point to.
 
-```bash
-sudo du --max-depth=1 -h -x / 2>/dev/null \
-  | grep -Ev '/(proc|sys|dev|run)$' \
-  | sort -rh \
-  | sudo tee /opt/course/audit/dirsizes.txt
-```
+1. Run a detailed file list of the root directory:
+   ```bash
+   ls -l /
+   ```
+2. Look at the output. Rows representing symbolic links start with the character **l** in their permissions column, and end with an arrow `->` showing where they point:
+   ```text
+   lrwxrwxrwx  1 root root    7 Aug 24 12:00 bin -> usr/bin
+   lrwxrwxrwx  1 root root    7 Aug 24 12:00 lib -> usr/lib
+   lrwxrwxrwx  1 root root    9 Aug 24 12:00 lib64 -> usr/lib64
+   lrwxrwxrwx  1 root root    8 Aug 24 12:00 sbin -> usr/sbin
+   ```
+3. Record these symlinks manually into the `/opt/course/audit/symlinks.txt` file by opening it in your editor, or write them directly using `tee`:
+   ```bash
+   sudo tee /opt/course/audit/symlinks.txt <<'EOF'
+   bin -> usr/bin
+   lib -> usr/lib
+   lib64 -> usr/lib64
+   sbin -> usr/sbin
+   EOF
+   ```
+   *Note: If your system has different symlinks, write those down exactly as shown in your `ls -l /` output.*
 
-The `grep -Ev` step drops the pseudo-filesystem lines identified in Step 3 before sorting and writing the report. Because `-x` already prevented `du` from crossing into other real mounted filesystems, and the pseudo-filesystems are filtered here, what remains is disk-backed usage on the root filesystem only.
+---
 
-## Step 6: Record the symlinks separately
+## Step 5: Filter the Virtual Filesystems and Symlinks to Write the Capacity Report
 
-```bash
-ls -l / | grep '^l' | awk '{print $9, $10, $11}' | sudo tee /opt/course/audit/symlinks.txt
-```
+1. Re-run `du` and use `grep -Ev` to filter out virtual filesystems (`proc`, `sys`, `dev`, `run`) as well as the symlinked directories we recorded in Step 4, then sort the results:
+   ```bash
+   sudo du --max-depth=1 -h -x / 2>/dev/null \
+     | grep -Ev '/(proc|sys|dev|run|bin|sbin|lib|lib64)$' \
+     | sort -rh \
+     | sudo tee /opt/course/audit/dirsizes.txt
+   ```
+2. View the generated file to ensure it looks correct and contains only real, disk-backed, top-level directories:
+   ```bash
+   cat /opt/course/audit/dirsizes.txt
+   ```
 
-`awk '{print $9, $10, $11}'` pulls just the name, the arrow, and the target from each symlink line — check `man 1 ls`'s output format description to confirm which columns those are on your system, since exact column count can shift slightly by distro/locale.
+---
 
 ## Verification
 
-```bash
-cat /opt/course/audit/dirsizes.txt
-# expect: one line per real, disk-backed top-level directory, largest first,
-# no /proc, /sys, /dev, or /run entries
-
-cat /opt/course/audit/symlinks.txt
-# expect: one line per top-level symlink (typically bin, sbin, lib, lib64),
-# each showing its target
-
-df -h /
-# cross-check: the sum of dirsizes.txt entries should be in the right ballpark
-# for the "used" figure this reports for the root filesystem
-```
-
-## Command Summary
+Verify both outputs to ensure they meet the criteria:
 
 ```bash
-sudo mkdir -p /opt/course/audit
-
-sudo du --max-depth=1 -h -x / 2>/dev/null | sort -rh
-
-findmnt -t proc,sysfs,tmpfs,devtmpfs
-
-ls -l / | grep '^l'
-
-sudo du --max-depth=1 -h -x / 2>/dev/null \
-  | grep -Ev '/(proc|sys|dev|run)$' \
-  | sort -rh \
-  | sudo tee /opt/course/audit/dirsizes.txt
-
-ls -l / | grep '^l' | awk '{print $9, $10, $11}' | sudo tee /opt/course/audit/symlinks.txt
-
-cat /opt/course/audit/dirsizes.txt
+# 1. Confirm symlink report matches
 cat /opt/course/audit/symlinks.txt
+
+# 2. Confirm capacity report is sorted and has no virtual directories
+cat /opt/course/audit/dirsizes.txt
+
+# 3. Crosscheck total disk usage on /
 df -h /
 ```

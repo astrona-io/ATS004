@@ -1,147 +1,151 @@
-# Solution
+# Solution Guide (Offline & Exam Friendly)
 
-## Step 1 (on `terminal`): Confirm SSH access to app-srv1 works
+This step-by-step guide explains how to find package names, options, and configuration formats using system utilities rather than memorization.
 
+---
+
+## Part 1: SSHFS Mount from `terminal` to `app-srv1`
+
+You need to mount `/data-export` from `app-srv1` to `/app-srv1/data-export` on `terminal` using SSHFS, with read-write access and `allow_other` enabled.
+
+### Step 1 (on `terminal`): Confirm SSH Access to `app-srv1`
+
+Make sure you can connect to `app-srv1` via SSH:
 ```bash
 ssh root@app-srv1 'ls -ld /data-export'
 ```
+*Enter password `AstronaLab2024!` if prompted.*
 
-`app-srv1`'s root account uses password authentication for this lab (password: `AstronaLab2024!`, see the lab README) — enter it when prompted. SSHFS piggybacks entirely on an existing SSH session, so if you can already `ssh app-srv1` and see the directory, SSHFS has everything it needs — there's no separate service to install on `app-srv1` for this part.
+### Step 2 (on `terminal`): Find and Install SSHFS
 
-## Step 2 (on `terminal`): Install sshfs if needed and prepare the local mountpoint
+1. If you do not remember the exact package name for SSHFS, search your package manager:
+   ```bash
+   apt-cache search sshfs   # On Debian/Ubuntu
+   # or: dnf search sshfs   # On RHEL/Fedora
+   ```
+2. Install the package:
+   ```bash
+   sudo apt-get install -y sshfs
+   ```
 
-```bash
-sudo apt-get install -y sshfs   # or: dnf install -y fuse-sshfs
-sudo mkdir -p /app-srv1/data-export
-```
+### Step 3 (on `terminal`): Configure FUSE to Allow Other Users
 
-## Step 3 (on `terminal`): Allow non-owning users to see FUSE mounts system-wide
+By default, FUSE mounts do not allow other local users to access them. You must enable this option in the FUSE configuration file.
 
-Check `man 5 fuse.conf` — this is a separate man page from `sshfs`, and it's the one that documents `user_allow_other` as the system-level opt-in required before any user's `-o allow_other` mount request will be honored.
+1. Find the FUSE config files:
+   ```bash
+   ls /etc/*fuse*
+   ```
+   *This reveals `/etc/fuse.conf`.*
+2. Check the FUSE manual page to see how to enable options for non-owners:
+   ```bash
+   man 5 fuse.conf
+   ```
+   *Searching `/allow_other` inside the man page shows that you need to uncomment or add the line `user_allow_other`.*
+3. Append this setting to the config file:
+   ```bash
+   echo 'user_allow_other' | sudo tee -a /etc/fuse.conf
+   ```
 
-```bash
-echo 'user_allow_other' | sudo tee -a /etc/fuse.conf
-```
+### Step 4 (on `terminal`): Mount the Remote Directory
 
-The `allow_other` mount option is refused by the FUSE kernel module unless `/etc/fuse.conf` explicitly contains `user_allow_other` — this is a deliberate security gate so that a regular user can't silently expose their FUSE mounts to every other local user without a sysadmin-level opt-in first.
+1. Create the mount directory:
+   ```bash
+   sudo mkdir -p /app-srv1/data-export
+   ```
+2. Run the `sshfs` mount command. If you forget `sshfs` syntax, run `sshfs -h` or `sshfs --help`. Under the options section, it lists `-o opt,...`.
+3. Mount with the required options:
+   ```bash
+   sudo sshfs -o allow_other,rw root@app-srv1:/data-export /app-srv1/data-export
+   ```
+4. Verify the mount is active and accessible:
+   ```bash
+   mount | grep sshfs
+   ```
 
-## Step 4 (on `terminal`): Mount the remote directory read-write with allow_other
+---
 
-```bash
-sudo sshfs -o allow_other,rw root@app-srv1:/data-export /app-srv1/data-export
-```
+## Part 2: NFS Share from `terminal` to `app-srv1`
 
-`sshfs` opens an SSH connection to `app-srv1`, authenticates, and translates every filesystem operation against `/app-srv1/data-export` into SFTP protocol calls against `/data-export` on the remote host. `rw` is actually the SSHFS default (it's not read-only unless you pass `-o ro`), but specifying it explicitly documents intent and satisfies "should be read-write" unambiguously.
+Export `/nfs/share` read-only from `terminal` to the private subnet `10.10.40.0/24`, and mount it on `app-srv1`.
 
-Verify:
+### Step 5 (on `terminal`): Install and Verify NFS Server
 
-```bash
-mount | grep sshfs
-touch /app-srv1/data-export/write-test && rm /app-srv1/data-export/write-test
-```
+1. Find the NFS server package:
+   ```bash
+   apt-cache search nfs-server
+   ```
+2. Install and start the server:
+   ```bash
+   sudo apt-get install -y nfs-kernel-server
+   sudo systemctl enable --now nfs-kernel-server
+   ```
 
-## Step 5 (on `terminal`): Confirm NFS server packages and services
+### Step 6 (on `terminal`): Configure the NFS Export
 
-```bash
-sudo apt-get install -y nfs-kernel-server   # Debian/Ubuntu
-# or: sudo dnf install -y nfs-utils && sudo systemctl enable --now nfs-server  # RHEL/Fedora
-sudo systemctl status nfs-server 2>/dev/null || sudo systemctl status nfs-kernel-server
-```
+You need to share `/nfs/share` with the subnet `10.10.40.0/24` with read-only access.
 
-The task states NFS is "already installed" — this step is about confirming the daemon is actually running before you export anything against it.
+1. Create the shared directory:
+   ```bash
+   sudo mkdir -p /nfs/share
+   ```
+2. To find the correct format for `/etc/exports`, consult its manual page:
+   ```bash
+   man 5 exports
+   ```
+   *Look at the "EXAMPLE" section at the bottom. It shows formats like:*
+   ```text
+   /usr/export  192.168.1.0/24(ro,insecure,sync)
+   ```
+3. Open `/etc/exports` in your editor or append the share configuration using `tee`:
+   ```bash
+   echo '/nfs/share 10.10.40.0/24(ro,sync,no_subtree_check)' | sudo tee -a /etc/exports
+   ```
+   *Note: Ensure there are no spaces between the subnet and the opening parenthesis `(`.*
 
-## Step 6 (on `terminal`): Create the share directory and export it read-only to the subnet
+### Step 7 (on `terminal`): Apply the Exports
 
-```bash
-sudo mkdir -p /nfs/share
-```
-
-Check `man 5 exports` — note the section number: this is the config-file format page, distinct from `man 8 exportfs` (the command). The page's `client_spec` discussion covers CIDR notation, and the `general options` list documents `ro`/`rw`/`sync`/`no_subtree_check`.
-
-Edit `/etc/exports`:
-
-```
-/nfs/share 10.10.40.0/24(ro,sync,no_subtree_check)
-```
-
-Each line is `<path> <client-spec>(<options>)` — note there is **no space** between the client spec and the opening parenthesis; a stray space there silently changes the meaning to "export to this client with default options, AND export to everyone else with these options," which is a classic NFS misconfiguration. `ro` makes the export read-only as required, `10.10.40.0/24` restricts it to this lab's private subnet exactly as asked, `sync` commits writes before acknowledging them (safer default), and `no_subtree_check` avoids extra consistency checking overhead that isn't needed for a whole-filesystem export.
-
-## Step 7 (on `terminal`): Apply the export
-
+Apply the changes:
 ```bash
 sudo exportfs -ra
 sudo exportfs -v
 ```
+`-ra` re-exports everything in `/etc/exports`, and `-v` displays the active configuration to verify that `ro` is applied.
 
-`-r` re-exports everything in `/etc/exports` (removing anything no longer listed), `-a` targets all entries, and `-v` verbosely confirms exactly what's now active, including the resolved options — a good sanity check that `ro` and the subnet actually took effect as written.
+---
 
-## Step 8 (on `app-srv1`): Confirm what terminal is exporting, then mount it
+### Step 8 (on `app-srv1`): Discover and Mount the NFS Export
 
-```bash
-showmount -e terminal
-```
+1. Check what exports are available on `terminal`:
+   ```bash
+   showmount -e terminal
+   ```
+   *If `showmount` is missing, you can find and install `nfs-common` or `nfs-utils` packages.*
+2. Create the local mount directory:
+   ```bash
+   sudo mkdir -p /nfs/terminal/share
+   ```
+3. Mount the NFS export. If you do not remember the NFS mount type, check `man mount` and search `/nfs`:
+   ```bash
+   sudo mount -t nfs terminal:/nfs/share /nfs/terminal/share
+   ```
 
-This queries `terminal`'s mountd over RPC and lists its exports — confirming reachability and the export list before committing to a mount attempt.
-
-```bash
-sudo mkdir -p /nfs/terminal/share
-sudo mount -t nfs terminal:/nfs/share /nfs/terminal/share
-```
-
-`-t nfs` tells the generic `mount` command to hand off to the NFS client kernel module. Because the export is `ro`, attempts to write from `app-srv1` into `/nfs/terminal/share` will be rejected by the server regardless of local permissions — read-only is enforced server-side, not just advisory.
-
-## Step 9 (on `app-srv1`): Verify and optionally persist
-
-```bash
-mount | grep nfs
-findmnt /nfs/terminal/share
-```
-
-To persist across reboots, add to `/etc/fstab` on `app-srv1`:
-
-```
-terminal:/nfs/share  /nfs/terminal/share  nfs  ro,defaults  0  0
-```
+---
 
 ## Verification
 
+Run these checks to confirm success:
+
 ```bash
-# On terminal: SSHFS mount active and read-write
+# On terminal: Check SSHFS mount options
 mount | grep '/app-srv1/data-export'
-# expect: app-srv1:/data-export on /app-srv1/data-export type fuse.sshfs (rw,...,allow_other)
 
-# On terminal: export list shows the ro subnet restriction
+# On terminal: Check NFS export status
 sudo exportfs -v
-# expect: /nfs/share  10.10.40.0/24(ro,...)
 
-# On app-srv1: NFS mount active
+# On app-srv1: Check NFS mount status
 mount | grep '/nfs/terminal/share'
-# expect: terminal:/nfs/share on /nfs/terminal/share type nfs (ro,...)
 
-# On app-srv1: write should fail (read-only export)
-touch /nfs/terminal/share/should-fail
-# expect: Read-only file system
-```
-
-## Command Summary
-
-```bash
-# terminal (SSHFS client + NFS server)
-ssh root@app-srv1 'ls -ld /data-export'
-sudo apt-get install -y sshfs
-sudo mkdir -p /app-srv1/data-export
-echo 'user_allow_other' | sudo tee -a /etc/fuse.conf
-sudo sshfs -o allow_other,rw root@app-srv1:/data-export /app-srv1/data-export
-mount | grep sshfs
-
-sudo mkdir -p /nfs/share
-sudo tee -a /etc/exports <<< '/nfs/share 10.10.40.0/24(ro,sync,no_subtree_check)'
-sudo exportfs -ra
-sudo exportfs -v
-
-# app-srv1 (NFS client)
-showmount -e terminal
-sudo mkdir -p /nfs/terminal/share
-sudo mount -t nfs terminal:/nfs/share /nfs/terminal/share
-mount | grep nfs
+# On app-srv1: Confirm writing is rejected (Read-only)
+touch /nfs/terminal/share/testfile
 ```
