@@ -1,31 +1,26 @@
 # Section 020: Remote Filesystems (SSHFS and NFS)
 
-Welcome to the world of network-distributed storage. In modern data centers, applications running on your application servers rarely write data directly to their local host drives. Instead, they write to centralized, dedicated storage arrays located elsewhere on the local area network.
+Welcome to Section 020. This section explores how to mount and manage filesystems over a network, bridging the gap between local storage and remote servers. You will learn the mechanics behind ad-hoc user-space mounting and robust, permanent enterprise sharing.
 
-In this section, we explore how to bridge filesystems over network wires. We focus on two critical administrative protocols: **SSHFS** (Secure Shell Filesystem), which allows for secure, ad-hoc user-space mounts over standard SSH, and **NFS** (Network File System), the industry-standard kernel-space protocol designed for high-performance, multi-client storage sharing.
+## Section Objectives
 
----
+By the end of this section, you will master the following competencies:
+* Understand the architectural differences between kernel-space and user-space filesystems.
+* Confidently mount and manage remote directories using SSHFS for ad-hoc access.
+* Configure, export, and secure NFS shares on a server.
+* Mount NFS exports on clients with the correct safety parameters to prevent system hangs.
 
-## What You Will Master
+## Modules
 
-By completing this section, you will acquire three core network storage capabilities:
-*   **User-Space Mounts (SSHFS):** How to securely mount remote directories over SSH without requiring root privileges or complex firewall configurations.
-*   **Enterprise Share Exporting (NFS):** How to configure the NFS daemon, export directories securely to specific whitelisted networks, and balance sync states for data safety.
-*   **Resilient Network Mounting:** How to connect remote exports to client nodes and configure mount parameters to prevent terminal hangs if the storage server goes offline.
+### [Module 1: Ad-Hoc Mounting with SSHFS](./module-01/course.md)
+* **Analogy:** The personal bicycle courier.
+* **Core Topics:** FUSE vs kernel space, context-switching overhead, `sshfs` mounting, permission security, and critical flags like `-o allow_other` and `default_permissions`.
 
----
+### [Module 2: Enterprise Sharing with NFS](./module-02/course.md)
+* **Analogy:** Constructing the direct cargo pipeline.
+* **Core Topics:** NFS server exports (`/etc/exports`), permission syntax, reloading exports (`exportfs -arv`), querying shares (`showmount -e`), client-side mounts, and client protection flags (`soft`, `intr`).
 
-## The Learning Path
+## Lab Exercise
 
-This section is organized into a single comprehensive guide:
-
-*   **[Module 1: Remote Filesystems: SSHFS and NFS](./module-01)**
-    Explore the tradeoffs of user-space FUSE context-switching vs. direct kernel RPC pipelines. Master exporting folders via `/etc/exports`, reloading tables on the fly, and securely mounting network volumes.
-
----
-
-## Hands-On Practice Mission
-
-Once you have read through the narrative guides, you are ready to apply your network storage skills in a multi-VM live scenario:
-
-*   **[Go to Lab 020](../../labs/lab-020)**: Configure a secure SSHFS user-space bridge and export a high-performance read-only NFS share across your network.
+Apply your knowledge in a practical environment:
+* **[Lab 020: Remote Filesystems](../../labs/lab-020/README.md)**: Practice creating and mounting both SSHFS and NFS shares, managing permissions, and testing client-side safety limits.

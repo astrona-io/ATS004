@@ -1,33 +1,26 @@
 # Section 080: Filesystem Hierarchy and Directory Sizing
 
-Welcome to Section 080. In this section, we master filesystem capacity auditing and navigation.
+Welcome to Section 080. This section covers navigating the layout of a standard Linux system and aggressively auditing space when a disk fills up. You will learn to measure physical directory consumption, traverse filesystem boundaries safely, and manage the complex network of symbolic links holding the operating system together.
 
-When a server alerts you that disk storage is critically full, you need to quickly locate where the space is being consumed. However, naive filesystem queries can lead to massive administrative errors: they can hang in virtual directories, double-count separate external drives, or get lost in endless shortcut paths.
+## Section Objectives
 
-To generate accurate capacity reports, you must understand how to isolate your disk queries to a single physical device, skip memory-only virtual streams, and audit symbolic links across the root filesystem directory tree.
+By the end of this section, you will master the following competencies:
+* Audit storage consumption accurately using `du` and `sort`.
+* Prevent disastrous, system-halting disk crawls by restricting searches to single mount boundaries using the `-x` flag.
+* Navigate the Filesystem Hierarchy Standard (FHS) confidently.
+* Identify, resolve, and safely manage symbolic links without accidentally destroying target data.
 
----
+## Modules
 
-## What You Will Master
+### [Module 1: Directory Capacity Auditing](./module-01/course.md)
+* **Analogy:** Rolling real cargo scales into physical warehouse rooms.
+* **Core Topics:** Standard directory sizing (`du`), depth limits (`-d 1`), numerical sorting (`sort -hr`), and using the `-x` flag to prevent walking across mount boundaries.
 
-By completing this section, you will acquire three core capacity auditing capabilities:
-*   **Local Space Auditing:** How to recursively measure folder capacities (`du`) while forcing the tool to stay strictly on the local device (`-x`) and avoiding virtual folders.
-*   **Data Aggregation & Sorting:** How to filter and sort storage outputs numerically in descending order (`sort -hr`) to immediately expose heavy directories.
-*   **Symbolic Link Auditing:** How to identify, locate (`find -type l`), and resolve shortcut pointer targets across the root directory tree.
+### [Module 2: Navigating Shortcuts: Symbolic Links & FHS](./module-02/course.md)
+* **Analogy:** Navigating teleporter portals versus standard inventory shelves.
+* **Core Topics:** FHS layouts, locating active symlinks (`find -maxdepth 1 -type l`), resolving targets (`readlink`), and understanding the catastrophic danger of trailing slashes when deleting symlinks.
 
----
+## Lab Exercise
 
-## The Learning Path
-
-This section is organized into a single comprehensive guide:
-
-*   **[Module 1: Filesystem Hierarchy and Directory Sizing](./module-01)**
-    Explore the FHS filesystem standard. Learn how to measure directories cleanly without crossing mount boundaries, exclude pseudo-filesystems, sort capacities numerically, and audit symlinks.
-
----
-
-## Hands-On Practice Mission
-
-Once you have read through the narrative guide, you are ready to conduct a storage capacity audit on a production VM:
-
-*   **[Go to Lab 080](../../labs/lab-080)**: Generate a sorted capacity report of top-level directories on the root filesystem, exclude virtual streams and mounted drives, and audit all root-level symlinks.
+Apply your knowledge in a practical environment:
+* **[Lab 080: Filesystem Hierarchy and Directory Sizing](../../labs/lab-080/README.md)**: Practice diagnosing a full root partition, tracking down hidden multi-gigabyte log directories, and navigating the core FHS symlink structures safely.

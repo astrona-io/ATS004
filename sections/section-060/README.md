@@ -1,33 +1,26 @@
 # Section 060: Virtual Filesystems (/proc and /sys)
 
-Welcome to Section 060. In this section, we explore the core design philosophy of Linux: "Everything is a file."
+Welcome to Section 060. This section explores the fundamental Unix philosophy: "Everything is a file." You will look beyond traditional hard drives to understand how the Linux kernel exposes its internal state, running processes, and hardware configuration as a navigable directory tree.
 
-In Linux, you do not need proprietary binaries or complex APIs to query how many processes are running, what hardware is active, or how much memory is free. The Linux kernel exposes its live, active internal data structures directly to you as a plain-text directory tree inside `/proc` and `/sys`.
+## Section Objectives
 
-By learning how to navigate these virtual filesystems, you gain the ability to inspect the kernel, audit application file handles, and adjust active system tuning on the fly—all by reading and writing to files.
+By the end of this section, you will master the following competencies:
+* Understand the architecture of pseudo-filesystems and 0-byte VFS callbacks.
+* Diagnose memory leaks and open file handles by navigating process directories in `/proc`.
+* Query raw kernel metrics, including live mount states and memory accounting.
+* Tune running kernel parameters on the fly using `/sys`, `/proc/sys`, and `sysctl`.
 
----
+## Modules
 
-## What You Will Master
+### [Module 1: The Process Blueprint: Inside /proc](./module-01/course.md)
+* **Analogy:** The oil dipstick and fuel level gauges of a high-tech car.
+* **Core Topics:** The "everything is a file" philosophy, dynamic 0-byte files, memory accounting via `/proc/meminfo`, and diagnosing file descriptor leaks by exploring `/proc/<PID>/fd/`.
 
-By completing this section, you will acquire three core kernel auditing capabilities:
-*   **Live Kernel Memory Auditing:** How to extract accurate, real-time memory facts directly from `/proc/meminfo`.
-*   **Process Resource Auditing:** How to investigate running processes and count active open file descriptors inside `/proc/<PID>/fd/`.
-*   **Runtime Kernel Tuning:** How to temporarily view and modify live kernel variables (like IP packet forwarding) on the fly using `sysctl` and `/proc/sys/`.
+### [Module 2: The Hardware Tree & Runtime Tuning: /sys & sysctl](./module-02/course.md)
+* **Analogy:** Changing active engine control tuning through the dashboard dial.
+* **Core Topics:** Navigating hardware and driver classes in `/sys`, auditing active mounts with `/proc/mounts`, and modifying active kernel behavior using `sysctl` and `/proc/sys/`.
 
----
+## Lab Exercise
 
-## The Learning Path
-
-This section is organized into a single comprehensive guide:
-
-*   **[Module 1: Virtual Filesystems: /proc and /sys](./module-01)**
-    Explore the mechanics of 0-byte dynamic VFS filesystem callbacks. Learn how to debug file descriptor leaks, inspect memory pools, and tune kernel parameters on a live boot.
-
----
-
-## Hands-On Practice Mission
-
-Once you have read through the narrative guide, you are ready to conduct live kernel-state diagnostics:
-
-*   **[Go to Lab 060](../../labs/lab-060)**: Extract live memory metrics, audit a process's open file descriptors, and temporarily adjust system network packet routing.
+Apply your knowledge in a practical environment:
+* **[Lab 060: Virtual Filesystems](../../labs/lab-060/README.md)**: Practice querying process state, diagnosing artificial file descriptor leaks, and tuning kernel network parameters using virtual filesystems.
