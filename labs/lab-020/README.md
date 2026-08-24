@@ -2,15 +2,9 @@
 
 Two QEMU VMs for the LFCS course — `terminal` (SSHFS client + NFS server) and `app-srv1` (SSHFS/NFS-export source + NFS client), joined on a private `10.10.40.0/24` network.
 
-## Credentials
+## Access
 
-`app-srv1`'s root account uses password authentication for this lab:
-
-```
-password: AstronaLab2024!
-```
-
-Needed for `ssh app-srv1` / `sshfs ... app-srv1:/data-export` from `terminal`.
+`terminal`'s `sshAccess: [app-srv1]` config wires key-based SSH trust to `app-srv1` as the `student` user automatically — `ssh app-srv1` / `sshfs ... student@app-srv1:/data-export` from `terminal` just work, no password needed.
 
 ## Run
 

@@ -21,17 +21,6 @@ sudo chmod 777 /data-export
 
 sudo mkdir -p /nfs/terminal/share
 
-# Known root password for this lab so the student can authenticate sshfs
-# and ssh interactively -- documented in labs/lab-020/README.md.
-echo "root:AstronaLab2024!" | sudo chpasswd
-
-sudo mkdir -p /etc/ssh/sshd_config.d
-sudo tee /etc/ssh/sshd_config.d/99-lab-root-login.conf >/dev/null <<'EOF'
-PermitRootLogin yes
-PasswordAuthentication yes
-EOF
-sudo systemctl restart ssh 2>/dev/null || sudo systemctl restart sshd
-
 # terminal's static IP on the lab-net network -- so "mount -t nfs
 # terminal:/nfs/share ..." resolves without depending on the astrona
 # runtime's own DNS conventions.
