@@ -1,26 +1,48 @@
 # Section 030: Dynamic Volume Management (LVM)
 
-Welcome to Section 030. This section transitions from physical, rigid storage concepts into abstract, fluid volume management. You will learn how the Logical Volume Manager (LVM) decouples filesystems from physical hardware, granting the flexibility to adapt storage infrastructure without downtime.
+Welcome to Section 030. In this section, we solve one of the greatest challenges of traditional system administration: static partition boundaries.
 
-## Section Objectives
+If you allocate 50GB to a traditional partition, and that partition fills up, you are facing a labor-intensive and risky migration to expand it—even if you have 100GB of empty space sitting unused on a neighboring drive. 
 
-By the end of this section, you will master the following competencies:
-* Understand the architecture of LVM: Physical Volumes, Volume Groups, and Logical Volumes.
-* Provision dynamic storage pools across multiple physical disks.
-* Execute high-stakes live maintenance tasks, including migrating active data off failing hardware.
-* Safely resize block devices and their underlying filesystems while the system remains fully operational.
+To solve this, Linux employs **LVM (Logical Volume Manager)**. LVM abstracts raw hardware, allowing you to pool physical disks together and slice out flexible, dynamic "logical volumes" that can be expanded or shrunk instantly—even while applications are actively reading and writing to them.
 
-## Modules
+---
 
-### [Module 1: LVM Fundamentals](./module-01/course.md)
-* **Analogy:** Laying out cubicle terrain in an open warehouse.
-* **Core Topics:** Limitations of static partitions, the LVM stack components (`pvcreate`, `vgcreate`, `lvcreate`), command groups (`pvs`, `vgs`, `lvs`), and understanding Physical Extents (PEs) as the standard currency of LVM.
+## What You Will Master
 
-### [Module 2: Advanced LVM Operations](./module-02/course.md)
-* **Analogy:** Dynamically sliding cubicle walls during live active operations.
-* **Core Topics:** Zero-downtime maintenance. Evacuating extents from disks using `pvmove`, safely shrinking volume groups (`vgreduce`), extending logical boundaries (`lvextend`), and commanding the filesystem to grow into new space (`resize2fs`, `xfs_growfs`).
+By completing this section, you will acquire three core dynamic storage capabilities:
+*   **LVM Architecture Design:** How to structure and manage Physical Volumes (PVs), Volume Groups (VGs), and Logical Volumes (LVs).
+*   **Live Data Migration:** How to migrate active storage extents from one physical disk to another on the fly with zero downtime using `pvmove`.
+*   **Volume Pool Reduction:** How to safely shrink Volume Groups and remove physical hardware from active storage pools.
 
-## Lab Exercise
+---
 
-Apply your knowledge in a practical environment:
-* **[Lab 030: Dynamic Volume Management (LVM)](../../labs/lab-030/README.md)**: Practice building LVM structures, expanding logical volumes, and performing live disk replacements.
+## The Learning & Lab Path
+
+This section is divided into two modules, both paired with hands-on practice inside the LVM configuration laboratory environment:
+
+### 1. LVM Fundamentals
+*   **Module Reader:** **[Module 1: LVM Fundamentals](./module-01/course.md)**
+*   **Associated Lab:** **`labs/lab-030` (Part I)**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-030
+    ```
+*   **Hands-on Objective:** Identify raw devices, initialize Physical Volumes (PV), aggregate them into a Volume Group (VG), and carve out formatted, ready-to-mount ext4 Logical Volumes (LV).
+
+### 2. Advanced LVM Operations
+*   **Module Reader:** **[Module 2: Advanced LVM Operations](./module-02/course.md)**
+*   **Associated Lab:** **`labs/lab-030` (Part II)**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-030
+    ```
+*   **Hands-on Objective:** Shrink Volume Group `vol1` by running `pvmove` to migrate all allocated active extents off a physical disk without downtime, remove the freed disk via `vgreduce`, construct a new Volume Group `vol2` from it, and provision a new 50M logical volume named `p1` formatted with ext4.
+
+---
+
+## Ready for Assessment?
+
+Test your theoretical knowledge and diagnostic reasoning before tackling the LVM lab mission:
+
+*   **[Take the Section 030 Knowledge Check Quiz](./quiz.md)**

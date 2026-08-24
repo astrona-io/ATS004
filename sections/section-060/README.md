@@ -1,26 +1,48 @@
 # Section 060: Virtual Filesystems (/proc and /sys)
 
-Welcome to Section 060. This section explores the fundamental Unix philosophy: "Everything is a file." You will look beyond traditional hard drives to understand how the Linux kernel exposes its internal state, running processes, and hardware configuration as a navigable directory tree.
+Welcome to Section 060. In this section, we explore the core design philosophy of Linux: "Everything is a file."
 
-## Section Objectives
+In Linux, you do not need proprietary binaries or complex APIs to query how many processes are running, what hardware is active, or how much memory is free. The Linux kernel exposes its live, active internal data structures directly to you as a plain-text directory tree inside `/proc` and `/sys`.
 
-By the end of this section, you will master the following competencies:
-* Understand the architecture of pseudo-filesystems and 0-byte VFS callbacks.
-* Diagnose memory leaks and open file handles by navigating process directories in `/proc`.
-* Query raw kernel metrics, including live mount states and memory accounting.
-* Tune running kernel parameters on the fly using `/sys`, `/proc/sys`, and `sysctl`.
+By learning how to navigate these virtual filesystems, you gain the ability to inspect the kernel, audit application file handles, and adjust active system tuning on the fly—all by reading and writing to files.
 
-## Modules
+---
 
-### [Module 1: The Process Blueprint: Inside /proc](./module-01/course.md)
-* **Analogy:** The oil dipstick and fuel level gauges of a high-tech car.
-* **Core Topics:** The "everything is a file" philosophy, dynamic 0-byte files, memory accounting via `/proc/meminfo`, and diagnosing file descriptor leaks by exploring `/proc/<PID>/fd/`.
+## What You Will Master
 
-### [Module 2: The Hardware Tree & Runtime Tuning: /sys & sysctl](./module-02/course.md)
-* **Analogy:** Changing active engine control tuning through the dashboard dial.
-* **Core Topics:** Navigating hardware and driver classes in `/sys`, auditing active mounts with `/proc/mounts`, and modifying active kernel behavior using `sysctl` and `/proc/sys/`.
+By completing this section, you will acquire three core kernel auditing capabilities:
+*   **Live Kernel Memory Auditing:** How to extract accurate, real-time memory facts directly from `/proc/meminfo`.
+*   **Process Resource Auditing:** How to investigate running processes and count active open file descriptors inside `/proc/<PID>/fd/`.
+*   **Runtime Kernel Tuning:** How to temporarily view and modify live kernel variables (like IP packet forwarding) on the fly using `sysctl` and `/proc/sys/`.
 
-## Lab Exercise
+---
 
-Apply your knowledge in a practical environment:
-* **[Lab 060: Virtual Filesystems](../../labs/lab-060/README.md)**: Practice querying process state, diagnosing artificial file descriptor leaks, and tuning kernel network parameters using virtual filesystems.
+## The Learning & Lab Path
+
+This section is divided into two modules, both paired with hands-on practice in the kernel virtual filesystem laboratory environment:
+
+### 1. The Process Blueprint: Inside `/proc`
+*   **Module Reader:** **[Module 1: The Process Blueprint: Inside /proc](./module-01/course.md)**
+*   **Associated Lab:** **`labs/lab-060` (Part I)**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-060
+    ```
+*   **Hands-on Objective:** Extract live memory metrics (such as total and available RAM) from the kernel memory log, and count the active file descriptors of a targeted PID inside `/proc/<PID>/fd/`.
+
+### 2. The Hardware Tree & Runtime Tuning: `/sys` & `sysctl`
+*   **Module Reader:** **[Module 2: The Hardware Tree & Runtime Tuning: /sys & sysctl](./module-02/course.md)**
+*   **Associated Lab:** **`labs/lab-060` (Part II)**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-060
+    ```
+*   **Hands-on Objective:** Temporarily enable IPv4 packet routing directly inside the virtual kernel write-intercepts under `/proc/sys/`, query the parameter using `sysctl`, and audit active mount structures directly from the live kernel mount ledger `/proc/mounts`.
+
+---
+
+## Ready for Assessment?
+
+Test your theoretical knowledge and diagnostic reasoning before tackling the kernel systems lab mission:
+
+*   **[Take the Section 060 Knowledge Check Quiz](./quiz.md)**

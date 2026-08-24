@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-042"
+  docs:
+    solution: "docs/solution.md"
+    question: "docs/question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab042-swapdisk"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-042-setup"
+      description: "Sets up an active swapfile with low priority"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-swap-priority"
+      description: "Confirms swap partition formatting and priority queue scheduling"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

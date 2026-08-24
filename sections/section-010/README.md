@@ -16,23 +16,50 @@ By completing this section, you will acquire four core administrative capabiliti
 
 ---
 
-## The Learning Path
+## The Learning & Lab Path
 
-This section is divided into four highly focused, sequential modules:
+This section is divided into four highly focused, sequential modules. Each module is paired with a dedicated hands-on virtual lab environment that you can launch instantly using the `astrona` CLI:
 
-*   **[Module 1: Filesystem Creation, Mounting, & Forensics](./module-01)**
-    Learn how to format raw storage with the journaling `ext4` filesystem, mount it securely into the VFS directory tree, and hunt down processes lockading active devices.
-*   **[Module 2: Partitioning Raw Storage](./module-02)**
-    Master partition tables. Compare legacy MBR with modern GUID Partition Tables (GPT), align sectors to prevent SSD performance wear, and partition drives using `fdisk` and `parted`.
-*   **[Module 3: Securing Data-at-Rest with LUKS](./module-03)**
-    Secure your block storage. Walk through mapping, formatting, mounting, and locking high-security cryptographic LUKS volumes using `cryptsetup`.
-*   **[Module 4: Filesystem Maintenance, Labeling, & Tuning](./module-04)**
-    Audit and manage existing filesystems. Master offline volume repair (`fsck`), metadata tuning (`tune2fs`), volume labeling, and stable UUID mount maps.
+### 1. Filesystem Creation, Mounting, & Forensics
+*   **Module Reader:** **[Module 1: Filesystem Creation, Mounting, & Forensics](./module-01/course.md)**
+*   **Hands-on Lab:** **`labs/lab-010`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-010
+    ```
+*   **Practical Objective:** Identify a newly attached raw disk, format it with ext4, mount it to `/mnt/backup-black`, audit capacity on active disks, empty trash folders, and use `fuser` and `kill` to evict a process locking a busy partition.
+
+### 2. Partitioning Raw Storage
+*   **Module Reader:** **[Module 2: Partitioning Raw Storage](./module-02/course.md)**
+*   **Hands-on Lab:** **`labs/lab-011`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-011
+    ```
+*   **Practical Objective:** Design a modern GPT partition table on a raw block device and partition it safely with correct page alignment using `parted` or `fdisk`.
+
+### 3. Securing Data-at-Rest
+*   **Module Reader:** **[Module 3: Securing Data-at-Rest with LUKS](./module-03/course.md)**
+*   **Hands-on Lab:** **`labs/lab-012`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-012
+    ```
+*   **Practical Objective:** Encrypt a local storage partition with `cryptsetup luksFormat`, open the encrypted block map, format the mapped volume with ext4, mount it for secure writes, and lock it back down.
+
+### 4. Filesystem Maintenance, Labeling, & Tuning
+*   **Module Reader:** **[Module 4: Filesystem Maintenance, Labeling, & Tuning](./module-04/course.md)**
+*   **Hands-on Lab:** **`labs/lab-013`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-013
+    ```
+*   **Practical Objective:** Troubleshoot a corrupted filesystem. Run `fsck` offline to restore integrity, assign a volume label using `tune2fs -L`, and extract its UUID for a secure fstab mount.
 
 ---
 
-## Hands-On Practice Mission
+## Ready for Assessment?
 
-Once you have read through the narrative guides in each module, you are ready to test your skills in a live, simulated production environment:
+Test your theoretical knowledge and diagnostic reasoning before tackling the practical lab missions:
 
-*   **[Go to Lab 010](../../labs/lab-010)**: Put your filesystem preparation, active process auditing, and directory cleaning skills to the test.
+*   **[Take the Section 010 Knowledge Check Quiz](./quiz.md)**

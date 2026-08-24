@@ -1,26 +1,48 @@
 # Section 040: Swap Space Management
 
-Welcome to Section 040. This section covers the critical safety net of Linux memory management: swap space. You will learn how the kernel handles memory exhaustion, how to provision emergency overflow storage, and how to tune the priority of these storage spaces to keep servers responsive under extreme load.
+Welcome to Section 040. In this section, we study how Linux handles memory exhaustion crises.
 
-## Section Objectives
+Every operating system must handle the moment where applications request more physical RAM than the computer possesses. Left unmanaged, the Linux kernel is forced to invoke the Out-of-Memory (OOM) Killer, terminating random databases or web server processes to prevent a system crash.
 
-By the end of this section, you will master the following competencies:
-* Understand the kernel's Out-Of-Memory (OOM) killer logic and the role of swap.
-* Provision, secure, and activate temporary swap files on existing filesystems.
-* Configure dedicated swap partitions for permanent, high-speed memory overflow.
-* Tune swap priority queues to guarantee the kernel exhausts fast physical partitions before falling back to slower swap files.
+To protect your system from these sudden shutdowns, you must configure **Swap Space**. Swap space acts as a safety valve, allowing the kernel to temporarily offload inactive application memory blocks onto secondary storage, keeping the system stable under heavy workloads.
 
-## Modules
+---
 
-### [Module 1: Temporary Safety Valves: Swap Files](./module-01/course.md)
-* **Analogy:** Pulling folders from your active work desk to a cabinet drawer to avoid the paper shredder.
-* **Core Topics:** Virtual memory limits, OOM-killer mechanics, allocating space (`fallocate` vs `dd`), securing swap permissions (`chmod 600`), formatting (`mkswap`), and temporary activation (`swapon`/`swapoff`).
+## What You Will Master
 
-### [Module 2: Permanent Swap Partitions & Priority Scheduling](./module-02/course.md)
-* **Analogy:** Dedicated, high-speed automated storage bins in a factory.
-* **Core Topics:** Initializing raw dedicated partitions, persisting swap configurations in `/etc/fstab`, and tuning scheduling priority (`pri=`) to optimize performance across multiple swap devices.
+By completing this section, you will acquire three core virtual memory management capabilities:
+*   **Swap File Creation:** How to dynamically allocate, secure (`chmod 600`), format, and activate swap files to handle memory spikes on the fly.
+*   **Swap Partition Allocation:** How to format and mount dedicated swap partitions for optimized, raw virtual memory blocks.
+*   **Priority Tuning:** How to configure `/etc/fstab` to prioritize fast swap partitions over slow swap file fallbacks, ensuring optimal kernel performance.
 
-## Lab Exercise
+---
 
-Apply your knowledge in a practical environment:
-* **[Lab 040: Swap Space Management](../../labs/lab-040/README.md)**: Practice creating both swap files and partitions, managing permissions, setting up persistent fstab entries, and verifying priority queues under load.
+## The Learning & Lab Path
+
+This section is divided into two modules, both paired with hands-on practice inside the memory allocation laboratory environment:
+
+### 1. Temporary Safety Valves: Swap Files
+*   **Module Reader:** **[Module 1: Temporary Safety Valves: Swap Files](./module-01/course.md)**
+*   **Associated Lab:** **`labs/lab-040` (Part I)**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-040
+    ```
+*   **Hands-on Objective:** Identify a server running out of memory. Allocate a 2G swap file on the local root partition, secure its permissions, initialize it, and enable it.
+
+### 2. Permanent Swap Partitions & Priority Scheduling
+*   **Module Reader:** **[Module 2: Permanent Swap Partitions & Priority Scheduling](./module-02/course.md)**
+*   **Associated Lab:** **`labs/lab-040` (Part II)**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-040
+    ```
+*   **Hands-on Objective:** Identify an unformatted raw disk partition on a secondary drive. Settle and format it as a swap partition, make both swap zones persistent inside `/etc/fstab`, and configure priorities so the fast partition (`pri=10`) is preferred over the slow file (`pri=5`).
+
+---
+
+## Ready for Assessment?
+
+Test your theoretical knowledge and diagnostic reasoning before tackling the swap lab mission:
+
+*   **[Take the Section 040 Knowledge Check Quiz](./quiz.md)**

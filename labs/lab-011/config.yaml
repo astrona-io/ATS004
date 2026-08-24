@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-011"
+  docs:
+    solution: "docs/solution.md"
+    question: "docs/question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 2
+        serial: "lab011-raw"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-011-setup"
+      description: "Ensures the extra disk is raw and ready"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-partitioning"
+      description: "Confirms GPT partition table and aligned partition on the raw disk"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

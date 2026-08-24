@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-081"
+  docs:
+    solution: "docs/solution.md"
+    question: "docs/question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 2
+        serial: "lab081-disk"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-081-setup"
+      description: "Sets up directories and nested mountpoints to test local device boundary checking"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-du-audit"
+      description: "Confirms proper directory capacity auditing restricted to local device boundaries"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false
