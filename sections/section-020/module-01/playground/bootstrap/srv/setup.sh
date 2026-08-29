@@ -13,8 +13,12 @@ sudo mkdir -p /srv/logs
 echo "srv app.log line 1"        | sudo tee /srv/logs/app.log    >/dev/null
 echo "srv access.log line 1"     | sudo tee /srv/logs/access.log >/dev/null
 echo "credentials: hunter2"      | sudo tee /srv/logs/secret.txt >/dev/null
-sudo chown root:root /srv/logs/secret.txt
-sudo chmod 600 /srv/logs/secret.txt        # only root can read this at the server
+# Owned by the login user (the identity the client's non-root sshfs connects as),
+# mode 600 so it is not world-readable. The sshfs process can read it on srv;
+# other local users on the client cannot, unless -o default_permissions is off.
+LOGIN_USER="$(id -un)"
+sudo chown "$LOGIN_USER:$LOGIN_USER" /srv/logs/secret.txt
+sudo chmod 600 /srv/logs/secret.txt        # only the owner can read this at the server
 sudo chmod 644 /srv/logs/app.log /srv/logs/access.log
 sudo chmod 755 /srv/logs
 
