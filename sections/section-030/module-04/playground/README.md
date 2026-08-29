@@ -1,7 +1,7 @@
-# User and Group Disk Quotas — Playground
+# RAID Maintenance and Recovery — Playground
 
 - **ID:** PLAYGROUND
-- **Slug:** section-080-module-02-playground
+- **Slug:** section-030-module-04-playground
 - **Author:** Paris Nakita Kejser
 - **Type:** Astrona playground — clean environment, no task, no grading
 
@@ -14,10 +14,10 @@ you can explore the module's topic on a clean machine. Nothing to submit.
 
 ```sh
 astrona run -c .
-astrona destroy section-080-module-02-playground
+astrona destroy section-030-module-04-playground
 ```
 
-`astrona destroy` takes the environment name (`metadata.name` = `section-080-module-02-playground`), not
+`astrona destroy` takes the environment name (`metadata.name` = `section-030-module-04-playground`), not
 the config path. `astrona submit` and `astrona test` do not apply — there is no
 grading.
 

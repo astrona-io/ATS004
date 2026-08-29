@@ -1,6 +1,6 @@
-# Section 080 Knowledge Check: Filesystem Sizing & Symlinks
+# Section 080 Knowledge Check: Capacity, Quotas & Symlinks
 
-Test your understanding of the Filesystem Hierarchy Standard, single-device capacity constraints, sorting human-readable sizes, and symbolic link resolutions.
+Test your understanding of single-device capacity auditing, sorting human-readable sizes, enabling and enforcing ext4 and XFS quotas (including project quotas), the Filesystem Hierarchy Standard, and symbolic link resolution.
 
 ---
 
@@ -107,4 +107,111 @@ You need to identify all symbolic links located directly under the `/` directory
     *   *Option A* is incorrect because omitting the depth limit will cause `find` to recursively scan every folder in your entire hard drive, taking a long time and outputting millions of nested links.
     *   *Option C* is incorrect because standard `grep` for the word "symlink" fails as `ls -la` outputs links formatted with arrows (`->`), not the word "symlink".
     *   *Option D* is incorrect because `file /` simply reports that `/` is a directory.
+</details>
+
+---
+
+## Disk Quotas (Modules 2–3)
+
+### Question 6
+You added `usrquota,grpquota` to the `/home` line in `/etc/fstab` and remounted, but `quotaon /home` reports that quotas are not initialised. What step is missing?
+*   **A)** Reboot — quota options only apply at boot.
+*   **B)** Run `quotacheck -cug /home` to create the accounting files before enabling enforcement.
+*   **C)** Run `mkfs.ext4` again with a quota feature flag.
+*   **D)** Add the users to `/etc/quotatab`.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** On ext4, enforcement (`quotaon`) needs the accounting files (`aquota.user` / `aquota.group`) at the filesystem root. `quotacheck -cug <fs>`, run once with the filesystem idle, scans current usage and creates them. After that, `quotaon` works.
+*   **Why others are incorrect:**
+    *   *Option A* — a remount applies the options fine; the missing piece is the accounting files.
+    *   *Option C* — reformatting would destroy the data and is not required.
+    *   *Option D* — there is no `/etc/quotatab`; quota records live in the accounting files.
+</details>
+
+---
+
+### Question 7
+A user's quota is `soft=2G`, `hard=3G`. They are currently using 2.4G. What is happening?
+*   **A)** Writes are already blocked; they must delete files to write again.
+*   **B)** Writes still succeed, but a grace-period countdown has started; if they are still over 2G when it expires, the soft limit starts acting like a hard one.
+*   **C)** Nothing — soft limits are advisory and never enforced.
+*   **D)** The hard limit has been automatically raised to 4G.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** Between the soft and hard limits, writes continue but the filesystem starts a grace timer. If the user drops back under the soft limit before it expires, nothing happens. If the timer reaches zero while they are still over soft, further allocation is refused until they get back under soft — the soft limit effectively becomes a hard limit.
+*   **Why others are incorrect:**
+    *   *Option A* — the hard limit (3G) has not been reached, so writes are not yet blocked.
+    *   *Option C* — soft limits are enforced, via the grace mechanism.
+    *   *Option D* — limits are not adjusted automatically.
+</details>
+
+---
+
+### Question 8
+Which statement about enabling quotas on an **XFS** filesystem is correct?
+*   **A)** Run `quotacheck` then `quotaon`, the same as ext4.
+*   **B)** Quotas are enabled by mounting with an option such as `uquota` or `pquota`; there is no `quotacheck`.
+*   **C)** XFS does not support quotas.
+*   **D)** You must convert the filesystem to ext4 first.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** XFS keeps quota usage in internal metadata and turns quotas on at mount time based on options like `uquota` (user), `gquota` (group), `pquota` (project). There are no `aquota.*` files and no `quotacheck` step; `xfs_quota` is used to set and report limits.
+*   **Why others are incorrect:**
+    *   *Option A* — `quotacheck`/`quotaon` and `aquota.*` files are the ext2/3/4 model, not XFS.
+    *   *Option C* — XFS has full quota support, including project quotas.
+    *   *Option D* — no conversion is needed.
+</details>
+
+---
+
+### Question 9
+You want the directory `/srv/www/site` to use no more than 10 GB total, no matter which users create files in it. Which quota type does this, and where is the directory-to-ID mapping defined?
+*   **A)** A group quota; defined in `/etc/group`.
+*   **B)** A user quota on each user; defined in `/etc/passwd`.
+*   **C)** A project quota; the ID-to-path mapping goes in `/etc/projects` (with a name in `/etc/projid`).
+*   **D)** An inode quota; defined in the superblock.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: C**
+
+*   **Why C is correct:** A project quota attaches a numeric ID to a directory tree; every file under it inherits the ID, and the project's limit caps the whole tree regardless of file ownership. `/etc/projects` holds `<id>:<path>`; `/etc/projid` gives the ID a name. `xfs_quota -x -c 'project -s <name>'` initialises it, then `limit -p bhard=10g <name>` sets the cap.
+*   **Why others are incorrect:**
+    *   *Option A* — a group quota limits files owned by a group, not a directory, and users could create files under other groups.
+    *   *Option B* — per-user quotas do not bound a shared directory's total.
+    *   *Option D* — an inode quota limits file *count*, not space, and is not directory-scoped.
+</details>
+
+---
+
+### Question 10
+On a filesystem with enforced quotas, a process running as **root** writes a 5 GB file into a user's directory whose quota is 1 GB. What happens?
+*   **A)** The write fails at 1 GB — quotas apply to everyone.
+*   **B)** The write succeeds — quota enforcement does not apply to root.
+*   **C)** The file is created but immediately deleted by the quota daemon.
+*   **D)** The user's quota is automatically raised to 5 GB.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** Quota enforcement is bypassed for UID 0. Root can write past any user's or project's limit. This is why you always test quota enforcement as an unprivileged user (`sudo -u alice ...`), and why a runaway root process can still fill a quota-managed filesystem.
+*   **Why others are incorrect:**
+    *   *Option A* — root is exempt from enforcement.
+    *   *Option C* — there is no daemon that deletes over-quota files.
+    *   *Option D* — quotas are never raised automatically.
 </details>

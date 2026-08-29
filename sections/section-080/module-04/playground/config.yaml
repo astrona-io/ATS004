@@ -1,10 +1,10 @@
-# User and Group Disk Quotas (PLAYGROUND) — Playground environment
+# Navigating Shortcuts: Symbolic Links & FHS (PLAYGROUND) — Playground environment
 # A clean sandbox: it spins up, runs OS prep, then stays running for free
 # exploration. No task, no grading, no `astrona submit`.
 # Schema: internal/config.LabConfig.
 
 metadata:
-  name: "section-080-module-02-playground"
+  name: "section-080-module-04-playground"
   docs:
     guide: "docs/overview.md"
 
@@ -17,16 +17,13 @@ runtime:
       cpus: 2
       memoryMB: 2048
       diskSizeGB: 15
-      extraDisks:
-        - sizeGB: 2
-          serial: "s100m01-q"
       display: false
       sshPasswordAuth: false
 
 bootstrap:
   init:
     - name: "prepare"
-      description: "OS prep only: ext4 fs mounted at /quota with usrquota,grpquota; test users alice/bob and group team. Quotas NOT yet turned on."
+      description: "OS prep only: create a sample release-symlink layout and a disposable /tmp/rmdemo with a reset helper for the trailing-slash demo."
       type: "file"
       source: "bootstrap/prepare.sh"
   manifests: []

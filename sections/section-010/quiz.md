@@ -1,6 +1,6 @@
 # Section 010 Knowledge Check: Local Storage & Forensics
 
-Test your understanding of partition tables, encryption mapping, filesystem integrity repairs, and active process forensics. 
+Test your understanding of partition tables, encryption mapping, filesystem integrity repairs, active process forensics, `/etc/fstab` entries, and systemd mount/automount units.
 
 ---
 
@@ -109,4 +109,111 @@ You are editing `/etc/fstab` to permanently mount a secondary local backup disk.
     *   *Option A* is incorrect because UUID lookups actually add a tiny fraction of a second during boot (though negligible) to resolve the block tables.
     *   *Option C* is incorrect because block paths support any filesystem format.
     *   *Option D* is incorrect because UUIDs do not handle decryption or bypass key inputs.
+</details>
+
+---
+
+## Persistent & On-Boot Mounting (Modules 5–6)
+
+### Question 6
+A server has an internal data disk added to `/etc/fstab` as `/dev/sdb1  /data  ext4  defaults  0  2`. After a technician installs a second internal disk and reboots, the machine drops to an emergency shell. What is the most likely cause?
+*   **A)** ext4 filesystems cannot be listed in `/etc/fstab`.
+*   **B)** The new disk changed the kernel device ordering, so `/dev/sdb1` now refers to a different (or unformatted) disk, and the non-`nofail` mount failed at boot.
+*   **C)** The `dump` field should have been `1`.
+*   **D)** `/etc/fstab` only supports one non-root entry.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** Kernel names like `/dev/sdb1` are assigned in detection order and are not stable. Adding another disk can make `/dev/sdb1` point at the new, unformatted disk. The entry has no `nofail`, so when the mount fails, systemd treats it as a fatal boot problem and drops to the emergency shell. Using `UUID=` (or `LABEL=`/`PARTUUID=`) and adding `nofail` for a non-essential disk both prevent this.
+*   **Why others are incorrect:**
+    *   *Option A* is wrong — ext4 is the most common fstab filesystem type.
+    *   *Option C* is wrong — `dump` is a legacy backup flag, almost always `0`, and does not affect booting.
+    *   *Option D* is wrong — `/etc/fstab` has no practical limit on entries.
+</details>
+
+---
+
+### Question 7
+Which `/etc/fstab` field controls the order in which `fsck` checks filesystems at boot, and what value belongs on a non-root local data filesystem?
+*   **A)** The 4th field (options); use `check=2`.
+*   **B)** The 5th field (dump); use `2`.
+*   **C)** The 6th field (pass); use `2`.
+*   **D)** The 6th field (pass); use `1`.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: C**
+
+*   **Why C is correct:** The sixth field is `pass` (fsck order). `0` means never check, `1` is reserved for the root filesystem (checked first, alone), and `2` is for other local filesystems (checked after root, in parallel with each other). A data disk gets `2`.
+*   **Why others are incorrect:**
+    *   *Option A* is wrong — there is no `check=` mount option; ordering is the sixth field.
+    *   *Option B* is wrong — the fifth field is `dump`, unrelated to `fsck`.
+    *   *Option D* is wrong — `1` is only for the root filesystem; giving two filesystems `1` would serialise and can cause problems.
+</details>
+
+---
+
+### Question 8
+You add an NFS export to `/etc/fstab`. Which option must be present so the system does not try to mount it before networking is available?
+*   **A)** `noauto`
+*   **B)** `_netdev`
+*   **C)** `nofail`
+*   **D)** `x-mount.mkdir`
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** `_netdev` marks the mount as network-dependent. systemd then orders it after `network-online.target` and does not attempt it during early boot. Without it, the mount is tried before the network is up, fails, and can stall the boot.
+*   **Why others are incorrect:**
+    *   *Option A* (`noauto`) means "do not mount automatically at all" — it would not mount on boot even when the network is ready.
+    *   *Option C* (`nofail`) stops a missing mount from failing the boot, but does not fix the ordering; the mount would simply be skipped.
+    *   *Option D* (`x-mount.mkdir`) just creates the mount-point directory if it is missing.
+</details>
+
+---
+
+### Question 9
+You want to mount an ext4 filesystem at `/srv/data` using a native systemd unit instead of `/etc/fstab`. What must the unit file be named?
+*   **A)** `data.mount`
+*   **B)** `srv-data.mount`
+*   **C)** `srv/data.mount`
+*   **D)** Any name, as long as `Where=/srv/data` is set.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** A `.mount` unit's filename must be the mount path with systemd path-escaping applied: the leading slash is dropped and remaining slashes become dashes, giving `srv-data.mount`. The `Where=` line inside must match (`/srv/data`). `systemd-escape -p --suffix=mount /srv/data` produces the correct name.
+*   **Why others are incorrect:**
+    *   *Option A* omits the `srv` path component; it would describe `/data`, not `/srv/data`.
+    *   *Option C* is invalid — a filename cannot contain a slash.
+    *   *Option D* is wrong — systemd ignores a `.mount` unit whose filename does not match its `Where=` path.
+</details>
+
+---
+
+### Question 10
+You want `/srv/data` to mount only when something first accesses it and to unmount after 30 seconds idle, without writing any unit files. What do you put in the `/etc/fstab` options field?
+*   **A)** `defaults,noauto`
+*   **B)** `defaults,x-systemd.automount,x-systemd.idle-timeout=30`
+*   **C)** `defaults,comment=systemd.automount`
+*   **D)** `defaults,autofs,timeout=30`
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** `x-systemd.automount` tells the fstab generator to create a paired `.automount` unit, so the filesystem mounts on first access; `x-systemd.idle-timeout=30` unmounts it after 30 seconds with no activity. A `systemctl daemon-reload` activates the change. No unit files needed.
+*   **Why others are incorrect:**
+    *   *Option A* (`noauto`) prevents automatic mounting entirely, with no on-access trigger.
+    *   *Option C* uses an old comment-style syntax that current systemd does not honour for automount; `x-systemd.automount` is the supported form.
+    *   *Option D* invents options — `autofs` and a bare `timeout=` are not valid ext4/fstab mount options for this purpose.
 </details>

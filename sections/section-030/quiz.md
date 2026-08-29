@@ -1,6 +1,6 @@
-# Section 030 Knowledge Check: LVM
+# Section 030 Knowledge Check: Dynamic & Redundant Volumes
 
-Test your understanding of the LVM architecture layers, Physical Extent allocations, live pvmove data migrations, and volume reduction procedures.
+Test your understanding of the LVM architecture layers, Physical Extent allocations, live pvmove data migrations, volume reduction procedures, RAID levels and their trade-offs, and failure recovery with `mdadm`.
 
 ---
 
@@ -107,4 +107,111 @@ Which command should you run to get a quick, compact, 1-line-per-item summary of
     *   *Option A* is incorrect because `vgdisplay` outputs a highly verbose, multi-line detailed breakdown of every VG parameter, which is harder to read at a glance.
     *   *Option C* is incorrect because `/proc` does not contain an active LVM text device file.
     *   *Option D* is incorrect because `blkid` shows raw filesystem UUIDs and types, but cannot parse or detail LVM volume group allocations.
+</details>
+
+---
+
+## Software RAID with mdadm (Modules 3–4)
+
+### Question 6
+A team lead asks for "RAID so we don't lose data if a disk dies" on a 4-disk server and wants maximum usable capacity. Which single level best fits, and why not RAID 0?
+*   **A)** RAID 0 — it stripes across all four disks for full capacity and speed.
+*   **B)** RAID 5 — usable capacity of three disks, survives any one disk failure.
+*   **C)** RAID 1 — mirrors everything, the safest option.
+*   **D)** RAID 10 — the only level that tolerates a failure.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** RAID 5 across four disks gives the usable capacity of three (one disk's worth of parity, distributed) and survives any single disk failure — the best capacity/redundancy balance for this request. RAID 0 must be rejected outright: it has **no** redundancy, and losing any one disk loses everything, so it is the opposite of what was asked.
+*   **Why others are incorrect:**
+    *   *Option A* — RAID 0 provides zero fault tolerance.
+    *   *Option C* — RAID 1 (or a 4-disk RAID 10) works but only gives 50% usable capacity, not "maximum".
+    *   *Option D* — RAID 10 also tolerates a failure, but at 50% capacity, and the claim that it is the *only* such level is false (1 and 5 also tolerate one failure).
+</details>
+
+---
+
+### Question 7
+After `mdadm --create /dev/md0 ...` and putting a filesystem on it, you reboot. The array comes back as `/dev/md127` and your `/etc/fstab` entry for `/dev/md0` fails. What step was skipped?
+*   **A)** The array needed `mkfs` run on each member disk first.
+*   **B)** The array UUID/name was never recorded in `/etc/mdadm/mdadm.conf` (and the initramfs not refreshed), so it was assembled with an auto-assigned name.
+*   **C)** RAID arrays always come back as `md127`; the fstab entry must use that.
+*   **D)** `mdadm --create` must be re-run at every boot.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** Without an `ARRAY` line in `/etc/mdadm/mdadm.conf` (from `mdadm --detail --scan`) and an initramfs rebuild (`update-initramfs -u` / `dracut -f`), the boot process assembles the array by scanning superblocks and gives it a generic name like `/dev/md127`. Recording it pins the name back to `/dev/md0`.
+*   **Why others are incorrect:**
+    *   *Option A* — you format `/dev/md0`, never the members.
+    *   *Option C* — `md127` is the *fallback* name, not a rule; a recorded array keeps its configured name.
+    *   *Option D* — `--create` builds an array once; boot-time assembly is automatic when configured.
+</details>
+
+---
+
+### Question 8
+On a healthy 3-disk RAID 5, `/proc/mdstat` currently shows `[3/3] [UUU]`. You run `mdadm --manage /dev/md0 --fail /dev/vdc`. What happens to the array and the data on it immediately after?
+*   **A)** The array stops and the filesystem becomes unreadable until the disk is replaced.
+*   **B)** The array becomes degraded (`[3/2] [U_U]`) but keeps serving data, reconstructing the missing blocks from parity.
+*   **C)** Nothing changes until the next reboot.
+*   **D)** All three disks are wiped and the array must be recreated.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** RAID 5 tolerates one missing device. Failing `/dev/vdc` drops the array to a degraded state (`[U_U]`); reads and writes continue, with the kernel computing the missing stripe portions from the remaining data and parity. Redundancy is now gone, so replacement is urgent — a second failure would lose the array.
+*   **Why others are incorrect:**
+    *   *Option A* — a single failure does not stop a RAID 5.
+    *   *Option C* — the state change is immediate, not deferred.
+    *   *Option D* — `--fail` marks one member faulty; it does not touch the others' data.
+</details>
+
+---
+
+### Question 9
+You replaced a failed disk with `mdadm --manage /dev/md0 --add /dev/vde`. Which command shows the rebuild progress?
+*   **A)** `df -h /dev/md0`
+*   **B)** `cat /proc/mdstat`
+*   **C)** `blkid /dev/md0`
+*   **D)** `lsblk -f`
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** `/proc/mdstat` shows a live `recovery = NN%` progress bar with an ETA while `md` rebuilds the replacement disk from the surviving members. `mdadm --detail /dev/md0` shows the same as a `Rebuild Status` line.
+*   **Why others are incorrect:**
+    *   *Option A* — `df` reports filesystem usage, not array rebuild state.
+    *   *Option C* — `blkid` reports the filesystem UUID/type, nothing about the rebuild.
+    *   *Option D* — `lsblk -f` lists devices and filesystems but not rebuild progress.
+</details>
+
+---
+
+### Question 10
+You want to expand a 3-disk RAID 5 to 4 disks. After `mdadm --grow /dev/md0 --raid-devices=4` completes its reshape, the filesystem still reports the old size. What must you do, and what is the key precaution before starting a reshape?
+*   **A)** Nothing else; reboot and the filesystem resizes itself. No precaution needed.
+*   **B)** Run `resize2fs /dev/md0` (or `xfs_growfs`); and back up the data first, since an interrupted reshape can be unrecoverable.
+*   **C)** Re-run `mkfs.ext4 /dev/md0` to pick up the new size.
+*   **D)** Remove and re-add every disk one at a time.
+
+<details>
+<summary><b>Reveal Correct Answer & Teacher's Explanation</b></summary>
+
+**Correct Answer: B**
+
+*   **Why B is correct:** `mdadm --grow` enlarges the block device; the filesystem on top is unchanged until you extend it with `resize2fs` (ext4) or `xfs_growfs` (XFS). A reshape rewrites the entire stripe layout and must not be interrupted — back up first, and for parity levels use `--backup-file=` on a separate device so an interrupted reshape can resume.
+*   **Why others are incorrect:**
+    *   *Option A* — filesystems never auto-resize; a reshape is a high-risk operation, not a no-op.
+    *   *Option C* — `mkfs` would destroy all existing data.
+    *   *Option D* — that is not how capacity is added; `--grow` handles the redistribution.
 </details>

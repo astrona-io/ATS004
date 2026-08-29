@@ -1,7 +1,7 @@
-# User and Group Disk Quotas — Playground
+# /etc/fstab in Depth — Playground
 
 - **ID:** PLAYGROUND
-- **Slug:** section-080-module-02-playground
+- **Slug:** section-010-module-05-playground
 - **Author:** Paris Nakita Kejser
 - **Type:** Astrona playground — clean environment, no task, no grading
 
@@ -14,10 +14,10 @@ you can explore the module's topic on a clean machine. Nothing to submit.
 
 ```sh
 astrona run -c .
-astrona destroy section-080-module-02-playground
+astrona destroy section-010-module-05-playground
 ```
 
-`astrona destroy` takes the environment name (`metadata.name` = `section-080-module-02-playground`), not
+`astrona destroy` takes the environment name (`metadata.name` = `section-010-module-05-playground`), not
 the config path. `astrona submit` and `astrona test` do not apply — there is no
 grading.
 

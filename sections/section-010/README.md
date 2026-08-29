@@ -8,17 +8,19 @@ As an administrator, you are responsible for the entire lifecycle of a local dis
 
 ## What You Will Master
 
-By completing this section, you will acquire four core administrative capabilities:
+By completing this section, you will acquire six core administrative capabilities:
 *   **Disk Discovery & Analysis:** How to query the kernel to identify newly attached, unformatted physical drives and trace filesystem signatures without risking data loss.
 *   **Partition Design:** How to structure disks using standard MBR and modern GPT partition tables to balance compatibility, redundancy, and performance.
 *   **Data-at-Rest Security:** How to encrypt storage sectors using enterprise LUKS encryption to protect sensitive data from offline cloning or hardware theft.
 *   **Filesystem Maintenance & Forensics:** How to check filesystem integrity, repair metadata corruptions, and locate and safely evict rogue processes blockading standard disk operations.
+*   **Persistent Mounting:** How to write correct `/etc/fstab` entries — stable identifiers, safe options (`nofail`, `_netdev`, `noatime`), correct `dump`/`pass` — and verify them with `mount -a` and `findmnt --verify` before a reboot can act on them.
+*   **systemd Mount Management:** How every mount is a systemd unit, how to write a native `.mount` unit and pair it with an `.automount`, and how `x-systemd.*` fstab options achieve the same with no unit files.
 
 ---
 
 ## The Learning & Lab Path
 
-This section is divided into four highly focused, sequential modules. Each module is paired with a dedicated hands-on virtual sandbox practice lab, and concluded with a comprehensive Capstone Integration Challenge:
+This section is divided into six sequential modules. Modules 1–4 are each paired with a dedicated graded sandbox lab; modules 5–6 come with an ungraded hands-on playground you run while you read. The section concludes with a comprehensive Capstone Integration Challenge:
 
 ### 1. Filesystem Creation, Mounting, & Forensics
 *   **Module Reader:** **[Module 1: Filesystem Creation, Mounting, & Forensics](./module-01/course.md)**
@@ -56,7 +58,23 @@ This section is divided into four highly focused, sequential modules. Each modul
     ```
 *   **Hands-on Objective:** Troubleshoot a corrupted filesystem. Run `fsck` offline to restore integrity, assign a volume label using `tune2fs -L`, and extract its UUID for a secure fstab mount.
 
-### 5. Section Capstone Challenge
+### 5. /etc/fstab in Depth
+*   **Module Reader:** **[Module 5: /etc/fstab in Depth](./module-05/course.md)**
+*   **Hands-on Playground:** `sections/section-010/module-05/playground/`
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-05/playground
+    ```
+*   **You will:** Read the six fields of an fstab entry, add a data filesystem keyed by `UUID=`, choose `nofail`/`_netdev`/`noatime` appropriately, and catch a broken entry with `findmnt --verify` before it can break a boot.
+
+### 6. systemd Mount and Automount Units
+*   **Module Reader:** **[Module 6: systemd Mount and Automount Units](./module-06/course.md)**
+*   **Hands-on Playground:** `sections/section-010/module-06/playground/`
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-06/playground
+    ```
+*   **You will:** Inspect the `.mount` units generated from `/etc/fstab`, derive a unit filename with `systemd-escape`, write a native `.mount` unit, add an `.automount` with an idle timeout, and get the same behaviour from a single `x-systemd.automount` fstab option.
+
+### 7. Section Capstone Challenge
 *   **Comprehensive Challenge:** **`labs/lab-010` (Local Storage Integration)**
 *   **Lab Run Command:**
     ```bash

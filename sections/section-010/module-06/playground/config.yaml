@@ -1,10 +1,10 @@
-# User and Group Disk Quotas (PLAYGROUND) — Playground environment
+# systemd Mount and Automount Units (PLAYGROUND) — Playground environment
 # A clean sandbox: it spins up, runs OS prep, then stays running for free
 # exploration. No task, no grading, no `astrona submit`.
 # Schema: internal/config.LabConfig.
 
 metadata:
-  name: "section-080-module-02-playground"
+  name: "section-010-module-06-playground"
   docs:
     guide: "docs/overview.md"
 
@@ -18,15 +18,15 @@ runtime:
       memoryMB: 2048
       diskSizeGB: 15
       extraDisks:
-        - sizeGB: 2
-          serial: "s100m01-q"
+        - sizeGB: 1
+          serial: "s015m02-a"
       display: false
       sshPasswordAuth: false
 
 bootstrap:
   init:
     - name: "prepare"
-      description: "OS prep only: ext4 fs mounted at /quota with usrquota,grpquota; test users alice/bob and group team. Quotas NOT yet turned on."
+      description: "OS prep only: put a labelled ext4 filesystem on the spare disk, back up /etc/fstab. No units or fstab entries added."
       type: "file"
       source: "bootstrap/prepare.sh"
   manifests: []

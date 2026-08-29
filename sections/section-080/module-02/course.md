@@ -1,4 +1,4 @@
-# Navigating Shortcuts: Symbolic Links & FHS
+# User and Group Disk Quotas
 
 <!-- astrona:playground -->
 > [!NOTE]
@@ -9,155 +9,157 @@
 > astrona destroy section-080-module-02-playground
 > ```
 
-The Filesystem Hierarchy Standard (FHS) is why `/etc` holds configuration, `/var` holds changing data, and programs live under `/usr/bin` on every Linux system. Modern distributions also lean heavily on **symbolic links** to keep that layout stable while the real files move around underneath — most visibly, `/bin`, `/sbin`, and `/lib` are now links into `/usr`.
+On a shared system, one user filling a filesystem stops everyone. **Disk quotas** cap how much space (and how many files) each user or group may consume on a given filesystem, so one account cannot starve the rest.
 
-This module covers finding symlinks, resolving where they point, why `du` treats them as weightless, and a specific `rm` mistake with symlinks that destroys data.
+This module covers turning quotas on for an ext4 filesystem, setting per-user and per-group limits, the difference between soft and hard limits, and reading quota reports.
 
 ## Learning objectives
 
 After this module you can:
 
-- Locate symlinks in a directory with `find -type l`.
-- Resolve a symlink's target with `ls -ld`, `readlink`, `readlink -f`, and `realpath`.
-- Explain why `du` reports a symlink as ~0 bytes.
-- Remove a symlink without touching its target, and explain what a trailing slash changes.
+- Enable quotas on an ext4 filesystem with the right mount options, `quotacheck`, and `quotaon`.
+- Set per-user and per-group block and inode limits with `setquota` (and `edquota`).
+- Explain the difference between a soft limit, a hard limit, and the grace period.
+- Read quota usage with `repquota` and `quota`.
 
 ## Before you start
 
-You should know basic navigation (`ls`, `cd`), and `du` from the previous module helps but is not required.
+You need Section 015 (fstab mount options) and to be comfortable with users, groups, and `sudo`.
 
-The linked playground gives you an Ubuntu server VM with the distro's usrmerge symlinks in place (`/bin`, `/sbin`, `/lib` → `/usr/...`), a sample `/srv/www/active → /srv/releases/v2` to inspect, and a **disposable** `/tmp/rmdemo` (a real directory `real/` plus `link → real`) with a `reset-symlink-demo` command to rebuild it. Run the command blocks below in that VM after `astrona ssh section-080-module-02-playground`.
+The linked playground gives you an Ubuntu server VM with a 2 GB ext4 filesystem mounted at `/quota` (its `/etc/fstab` line already carries `usrquota,grpquota`, but quotas are **not on yet**), test users **alice** and **bob**, group **team**, and the `quota` toolset installed. Run the command blocks below in that VM after `astrona ssh section-080-module-02-playground`.
 
-## What a symlink is
+## Turning quotas on
 
-A **symbolic link** is a small file whose contents are a path. When a program opens the link, the kernel substitutes that path and continues. The link and its target are separate objects: deleting one does not delete the other, and the link can point at something that does not exist (a "dangling" link).
+Three things must line up:
 
-> As an analogy: a symlink is a signpost that reads "Records — this way". Follow it and you reach the records room. Take the signpost down and the room is untouched; move the room and the signpost now points at nothing. The analogy breaks down because a symlink is followed automatically and invisibly — you do not "choose" to follow it the way you choose to follow a sign.
-
-## Finding symlinks
-
-`find <dir> -maxdepth 1 -type l` lists the symlinks directly inside a directory. `-type l` matches links specifically (not the directories or files they point to); `-maxdepth 1` keeps it to that one level. Adding `-ls` prints each with its target.
+1. **Mount options.** The filesystem must be mounted with `usrquota` (per-user), `grpquota` (per-group), or both. On ext4 these go in the `/etc/fstab` options field; a running filesystem picks them up with `mount -o remount`.
+2. **Quota accounting files.** `quotacheck` scans the filesystem and builds `aquota.user` / `aquota.group` at its root, recording current usage. Run it once, with the filesystem idle or read-only.
+3. **Enforcement.** `quotaon` activates limit checking; `quotaoff` stops it. `quotaon -p` reports the current on/off state.
 
 > [!TIP]
-> **Try it — the symlinks at the root**
+> **Try it — enable quotas on `/quota`**
 >
 > ```sh
-> find / -maxdepth 1 -type l -ls
-> ls -ld /bin /sbin /lib
+> findmnt -no OPTIONS /quota
+> sudo quotacheck -cugv /quota
+> sudo quotaon -v /quota
+> sudo quotaon -p /quota
 > ```
 >
 > Expect something like:
 >
 > ```text
->    12 0 lrwxrwxrwx 1 root root 7 ... /bin -> usr/bin
->    13 0 lrwxrwxrwx 1 root root 8 ... /sbin -> usr/sbin
->    14 0 lrwxrwxrwx 1 root root 7 ... /lib -> usr/lib
+> rw,relatime,quota,usrquota,grpquota
 >
-> lrwxrwxrwx 1 root root 7 ... /bin -> usr/bin
+> quotacheck: Scanning /dev/vdb [/quota] done
+> quotacheck: Checked ... directories and ... files
+>
+> /dev/vdb [/quota]: user quotas turned on
+> /dev/vdb [/quota]: group quotas turned on
+>
+> user quota on /quota (/dev/vdb) is on
+> group quota on /quota (/dev/vdb) is on
 > ```
 >
-> `/bin`, `/sbin`, and `/lib` are not directories on this system — they are symlinks into `/usr`. This "usrmerge" keeps decades-old scripts that hard-code `/bin/sh` working while the actual files live in one place under `/usr`.
+> `findmnt` confirms `usrquota,grpquota` are active on the mount. `quotacheck -cugv` creates the accounting files (`-c` create, `-u` user, `-g` group, `-v` verbose); `quotaon` then switches on enforcement. On a systemd host the `quotaon.service` does this automatically at boot for fstab filesystems that have the options.
 
-## Resolving where a link points
+## Setting limits
 
-Several tools answer "where does this go?", with increasing thoroughness:
+A quota has **four numbers**, for two resources:
 
-- `ls -ld <link>` — shows the target as stored in the link, often a *relative* path (`/bin -> usr/bin`).
-- `readlink <link>` — prints just that stored target, nothing else.
-- `readlink -f <link>` / `realpath <link>` — follow the chain all the way, including links that point at other links, and print the final **absolute** path.
-- `namei -l <path>` — shows every step of resolving a path, link by link, with permissions.
+- **blocks** — disk space, counted in 1 KiB blocks (tools accept `40M`, `2G`, …).
+- **inodes** — number of files/directories, regardless of their size.
+
+For each, a **soft** and a **hard** limit:
+
+- **hard** — an absolute ceiling. A write that would cross it fails immediately with "Disk quota exceeded".
+- **soft** — may be exceeded temporarily. Once over it, a countdown (the **grace period**) starts; if the user is still over soft when grace expires, soft behaves like hard until they get back under it.
+
+`setquota -u <user> <block-soft> <block-hard> <inode-soft> <inode-hard> <fs>` sets them non-interactively; `0` means "no limit". `edquota -u <user>` opens the same values in an editor.
 
 > [!TIP]
-> **Try it — raw target versus fully resolved**
+> **Try it — give alice a 40M/50M space quota**
 >
 > ```sh
-> readlink /bin
-> readlink -f /bin
-> realpath /bin
-> namei -l /bin/ls
+> sudo setquota -u alice 40M 50M 0 0 /quota
+> sudo quota -u alice
+> sudo repquota -s /quota
 > ```
 >
 > Expect something like:
 >
 > ```text
-> usr/bin
-> /usr/bin
-> /usr/bin
-> f: /bin/ls
->  dr-xr-xr-x root root /
->  lrwxrwxrwx root root bin -> usr/bin
->  drwxr-xr-x root root   usr
->  drwxr-xr-x root root   bin
->  -rwxr-xr-x root root   ls
+> Disk quotas for user alice (uid 1001):
+>   Filesystem  space  quota  limit  grace  files  quota  limit  grace
+>       /quota     0K   40M    50M            0      0      0
+>
+> *** Report for user quotas on device /dev/vdb
+>                    Block limits                File limits
+> User      used   soft   hard  grace   used  soft  hard  grace
+> alice      0K    40M    50M              0     0     0
+> bob        0K     0K     0K               0     0     0
 > ```
 >
-> `readlink` alone gives the relative `usr/bin` actually stored in the link; `readlink -f` and `realpath` resolve it to the absolute `/usr/bin`. `namei -l` shows the resolution step where `bin` is followed to `usr/bin` — useful when a path has several links in it.
+> alice has a 40 MiB soft / 50 MiB hard space limit and no inode limit (`0 0`). `repquota -s` shows every user's usage against their limits in human-readable units (`-s`).
 
-## `du` and symlinks
+## Hitting the limit
 
-A symlink's own size is just the length of the path string it stores — a handful of bytes. `du` does not follow symlinks by default, so measuring a symlinked directory reports essentially nothing.
+The hard limit stops a write mid-operation. The tool doing the writing gets an error; nothing is silently truncated beyond what fits.
 
 > [!TIP]
-> **Try it — a symlink weighs nothing**
+> **Try it — write past the quota as alice**
 >
 > ```sh
-> du -sh /bin
-> du -sh /usr/bin
+> sudo -u alice dd if=/dev/zero of=/quota/alice/big bs=1M count=60
+> sudo -u alice ls -lh /quota/alice/big
+> sudo repquota -s /quota
 > ```
 >
 > Expect something like:
 >
 > ```text
-> 0       /bin
-> 180M    /usr/bin
+> dd: error writing '/quota/alice/big': Disk quota exceeded
+> 49+0 records in
+> 48+0 records out
+>
+> -rw-r--r-- 1 alice alice 49M ... /quota/alice/big
+>
+> User      used   soft   hard  grace
+> alice     50M*   40M    50M   none
 > ```
 >
-> `du -sh /bin` reports `0` because `/bin` is a 7-byte link and `du` stops there. The real space is under the target, `/usr/bin`. In a capacity audit this is what you want — otherwise a symlink would make you count the same data twice.
+> `dd` wrote ~49 MiB, then hit the 50 MiB hard limit and failed. `repquota` marks alice's usage with `*` — over the soft limit — and the file stopped growing at the ceiling.
 
-## Removing a symlink safely
+## The grace period
 
-To delete a symlink and leave its target alone, name the link with **no trailing slash**:
-
-```sh
-rm /tmp/rmdemo/link
-```
-
-This removes only the link; `/tmp/rmdemo/real` and its files are untouched. Repointing a link is `ln -sfn <new-target> <link>`.
+The grace period governs the soft limit. It is a per-filesystem setting (with a separate value for blocks and inodes), configured with `setquota -t <block-grace> <inode-grace> <fs>` in seconds. While a user is over soft but under hard, `repquota` shows a countdown; when it reaches zero, further writes are refused until they drop back under soft.
 
 > [!TIP]
-> **Try it — remove the link, keep the data**
+> **Try it — set and observe the grace period**
 >
 > ```sh
-> reset-symlink-demo
-> ls -ld /tmp/rmdemo/link
-> rm /tmp/rmdemo/link
-> ls /tmp/rmdemo/
-> ls /tmp/rmdemo/real/
+> sudo setquota -t 3600 3600 /quota
+> sudo repquota -s /quota
+> sudo setquota -u bob 10M 50M 0 0 /quota
+> sudo -u bob dd if=/dev/zero of=/quota/bob/f bs=1M count=20
+> sudo repquota -s /quota
 > ```
 >
 > Expect something like:
 >
 > ```text
-> rebuilt: /tmp/rmdemo/real (2 files) and /tmp/rmdemo/link -> /tmp/rmdemo/real
-> lrwxrwxrwx 1 root root 14 ... /tmp/rmdemo/link -> /tmp/rmdemo/real
-> (after rm:)
-> real
-> a.txt  b.txt
+> User      used   soft   hard  grace
+> bob       20M*   10M    50M   59min
 > ```
 >
-> `link` is gone; `real/` and both files remain. That is the correct way to retire or repoint a symlink.
+> bob is 20 MiB used against a 10 MiB soft / 50 MiB hard limit — over soft, under hard, so writes still succeed but a `59min` grace countdown has started. If bob is still over 10 MiB when it hits zero, the soft limit starts behaving like a hard one.
 
 > [!WARNING]
-> **The trailing slash on a symlink is dangerous**
+> **Common pitfalls**
 >
-> `rm /tmp/rmdemo/link` removes the link. `rm -rf /tmp/rmdemo/link/` — the same path **with a trailing slash** — does not. The slash tells `rm` to resolve the symlink and operate on the **directory it points to**: it deletes the contents of `/tmp/rmdemo/real/` (and, depending on your `rm` version, the `real` directory itself). Shell tab-completion often appends that slash for you.
->
-> - Before `rm`-ing a symlink, check what it is and where it points: `ls -ld <path>`.
-> - Never let a trailing slash stay on a symlink path you are about to delete.
-> - To see your own system's exact behaviour safely, run `reset-symlink-demo`, then `rm -rf /tmp/rmdemo/link/` (with the slash), then `ls /tmp/rmdemo/real/` — and `reset-symlink-demo` again afterwards. Only do this in that disposable directory.
->
-> **Other pitfalls**
->
-> - **`readlink` without `-f` in a script.** The bare output can be a relative path that only makes sense from the link's own directory. Use `readlink -f` or `realpath` for an absolute path.
-> - **Assuming `find -type l` follows the link.** It matches the link itself. `find -L` would make `find` follow links, which is usually not what you want when auditing them.
-> - **A dangling symlink.** If the target was moved or deleted, the link remains and points at nothing. `ls -l` shows the target; trying to open it fails with "No such file or directory".
+> - **Mount options missing.** Without `usrquota`/`grpquota` on the mount, `quotaon` fails. Put them in `/etc/fstab` and `mount -o remount` (or reboot); check with `findmnt -no OPTIONS <mp>`.
+> - **Skipping `quotacheck` the first time.** Enforcement needs the accounting files. Run `quotacheck -cug` once (filesystem idle) before the first `quotaon`.
+> - **Quotas are per-filesystem.** A limit on `/quota` says nothing about `/home` or `/`. Each filesystem is quota-managed separately, and only if mounted with the options.
+> - **Confusing soft and hard.** Soft can be exceeded until the grace period runs out; hard cannot be exceeded at all. Set hard as the true ceiling and soft a bit below as the warning line.
+> - **Root is exempt.** Processes running as root ignore quotas. Test enforcement as a normal user (`sudo -u alice ...`).
+> - **`edquota` shows blocks in KiB.** The `blocks`/`inodes` "used" columns in `edquota` are current usage in 1 KiB units and are informational — editing them does nothing. Change the `soft`/`hard` columns.
