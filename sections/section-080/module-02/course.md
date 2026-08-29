@@ -1,70 +1,163 @@
 # Navigating Shortcuts: Symbolic Links & FHS
 
-Linux organizes files according to the Filesystem Hierarchy Standard (FHS). This standard ensures that binaries live in `/usr/bin`, system configurations in `/etc`, and variable data (like logs and databases) in `/var`. You can log into any Linux distribution and know generally where things are.
+<!-- astrona:playground -->
+> [!NOTE]
+> 🧪 **Hands-on playground for this module** — a clean, throwaway machine to explore on. No task, no grading. Folder: [`playground/`](https://github.com/astrona-io/ATS004/tree/main/sections/section-080/module-02/playground)
+>
+> ```sh
+> astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-080/module-02/playground
+> astrona destroy section-080-module-02-playground
+> ```
 
-However, modern distributions have shifted this layout over time. To maintain compatibility with scripts written 20 years ago, they rely heavily on symbolic links (symlinks).
+The Filesystem Hierarchy Standard (FHS) is why `/etc` holds configuration, `/var` holds changing data, and programs live under `/usr/bin` on every Linux system. Modern distributions also lean heavily on **symbolic links** to keep that layout stable while the real files move around underneath — most visibly, `/bin`, `/sbin`, and `/lib` are now links into `/usr`.
 
-Think of standard directories as physical inventory shelves. Think of a symlink as a teleporter portal. When you walk into the portal, you instantly arrive at a different physical shelf, even though the sign on the portal says something else.
+This module covers finding symlinks, resolving where they point, why `du` treats them as weightless, and a specific `rm` mistake with symlinks that destroys data.
 
-## Identifying Symlinks
+## Learning objectives
 
-In the root of a modern Linux system, several classic directories are no longer real directories. They are symlinks. You find them using the `find` command, looking specifically for the link type (`l`).
+After this module you can:
 
-```bash
-find / -maxdepth 1 -type l
+- Locate symlinks in a directory with `find -type l`.
+- Resolve a symlink's target with `ls -ld`, `readlink`, `readlink -f`, and `realpath`.
+- Explain why `du` reports a symlink as ~0 bytes.
+- Remove a symlink without touching its target, and explain what a trailing slash changes.
+
+## Before you start
+
+You should know basic navigation (`ls`, `cd`), and `du` from the previous module helps but is not required.
+
+The linked playground gives you an Ubuntu server VM with the distro's usrmerge symlinks in place (`/bin`, `/sbin`, `/lib` → `/usr/...`), a sample `/srv/www/active → /srv/releases/v2` to inspect, and a **disposable** `/tmp/rmdemo` (a real directory `real/` plus `link → real`) with a `reset-symlink-demo` command to rebuild it. Run the command blocks below in that VM after `astrona ssh section-080-module-02-playground`.
+
+## What a symlink is
+
+A **symbolic link** is a small file whose contents are a path. When a program opens the link, the kernel substitutes that path and continues. The link and its target are separate objects: deleting one does not delete the other, and the link can point at something that does not exist (a "dangling" link).
+
+> As an analogy: a symlink is a signpost that reads "Records — this way". Follow it and you reach the records room. Take the signpost down and the room is untouched; move the room and the signpost now points at nothing. The analogy breaks down because a symlink is followed automatically and invisibly — you do not "choose" to follow it the way you choose to follow a sign.
+
+## Finding symlinks
+
+`find <dir> -maxdepth 1 -type l` lists the symlinks directly inside a directory. `-type l` matches links specifically (not the directories or files they point to); `-maxdepth 1` keeps it to that one level. Adding `-ls` prints each with its target.
+
+> [!TIP]
+> **Try it — the symlinks at the root**
+>
+> ```sh
+> find / -maxdepth 1 -type l -ls
+> ls -ld /bin /sbin /lib
+> ```
+>
+> Expect something like:
+>
+> ```text
+>    12 0 lrwxrwxrwx 1 root root 7 ... /bin -> usr/bin
+>    13 0 lrwxrwxrwx 1 root root 8 ... /sbin -> usr/sbin
+>    14 0 lrwxrwxrwx 1 root root 7 ... /lib -> usr/lib
+>
+> lrwxrwxrwx 1 root root 7 ... /bin -> usr/bin
+> ```
+>
+> `/bin`, `/sbin`, and `/lib` are not directories on this system — they are symlinks into `/usr`. This "usrmerge" keeps decades-old scripts that hard-code `/bin/sh` working while the actual files live in one place under `/usr`.
+
+## Resolving where a link points
+
+Several tools answer "where does this go?", with increasing thoroughness:
+
+- `ls -ld <link>` — shows the target as stored in the link, often a *relative* path (`/bin -> usr/bin`).
+- `readlink <link>` — prints just that stored target, nothing else.
+- `readlink -f <link>` / `realpath <link>` — follow the chain all the way, including links that point at other links, and print the final **absolute** path.
+- `namei -l <path>` — shows every step of resolving a path, link by link, with permissions.
+
+> [!TIP]
+> **Try it — raw target versus fully resolved**
+>
+> ```sh
+> readlink /bin
+> readlink -f /bin
+> realpath /bin
+> namei -l /bin/ls
+> ```
+>
+> Expect something like:
+>
+> ```text
+> usr/bin
+> /usr/bin
+> /usr/bin
+> f: /bin/ls
+>  dr-xr-xr-x root root /
+>  lrwxrwxrwx root root bin -> usr/bin
+>  drwxr-xr-x root root   usr
+>  drwxr-xr-x root root   bin
+>  -rwxr-xr-x root root   ls
+> ```
+>
+> `readlink` alone gives the relative `usr/bin` actually stored in the link; `readlink -f` and `realpath` resolve it to the absolute `/usr/bin`. `namei -l` shows the resolution step where `bin` is followed to `usr/bin` — useful when a path has several links in it.
+
+## `du` and symlinks
+
+A symlink's own size is just the length of the path string it stores — a handful of bytes. `du` does not follow symlinks by default, so measuring a symlinked directory reports essentially nothing.
+
+> [!TIP]
+> **Try it — a symlink weighs nothing**
+>
+> ```sh
+> du -sh /bin
+> du -sh /usr/bin
+> ```
+>
+> Expect something like:
+>
+> ```text
+> 0       /bin
+> 180M    /usr/bin
+> ```
+>
+> `du -sh /bin` reports `0` because `/bin` is a 7-byte link and `du` stops there. The real space is under the target, `/usr/bin`. In a capacity audit this is what you want — otherwise a symlink would make you count the same data twice.
+
+## Removing a symlink safely
+
+To delete a symlink and leave its target alone, name the link with **no trailing slash**:
+
+```sh
+rm /tmp/rmdemo/link
 ```
 
-You will see that directories like `/bin` and `/sbin` are actually symlinks. If you try to run `du` against them to see how big they are, it will report 0 bytes, because a teleporter portal weighs nothing.
+This removes only the link; `/tmp/rmdemo/real` and its files are untouched. Repointing a link is `ln -sfn <new-target> <link>`.
 
-To see where the portal leads, you resolve the link. The simplest way is to use `ls -ld`.
+> [!TIP]
+> **Try it — remove the link, keep the data**
+>
+> ```sh
+> reset-symlink-demo
+> ls -ld /tmp/rmdemo/link
+> rm /tmp/rmdemo/link
+> ls /tmp/rmdemo/
+> ls /tmp/rmdemo/real/
+> ```
+>
+> Expect something like:
+>
+> ```text
+> rebuilt: /tmp/rmdemo/real (2 files) and /tmp/rmdemo/link -> /tmp/rmdemo/real
+> lrwxrwxrwx 1 root root 14 ... /tmp/rmdemo/link -> /tmp/rmdemo/real
+> (after rm:)
+> real
+> a.txt  b.txt
+> ```
+>
+> `link` is gone; `real/` and both files remain. That is the correct way to retire or repoint a symlink.
 
-```bash
-ls -ld /bin
-```
-
-The output points directly to the target: `lrwxrwxrwx 1 root root 7 /bin -> usr/bin`. This means any script trying to write to `/bin/script.sh` is physically writing to `/usr/bin/script.sh`.
-
-If you need to extract just the target path for use in a script, you use `readlink`.
-
-```bash
-readlink -f /bin
-```
-
-The `-f` (canonicalize) flag follows the link all the way to its final, absolute physical destination, even if the target is itself another symlink.
-
-## The Trailing Slash Disaster
-
-Symlinks act like directories when you `cd` into them, but they act like files when you modify them. This dual nature causes one of the most common, destructive mistakes in Linux administration.
-
-Imagine you have a symlink at `/var/www/active` pointing to a release folder at `/opt/releases/v2/`.
-
-You want to delete the symlink to point it somewhere else.
-
-If you type this:
-
-```bash
-rm -rf /var/www/active
-```
-
-You delete the symlink. The portal vanishes. The data at `/opt/releases/v2/` is perfectly safe.
-
-If you type this (perhaps relying on bash autocomplete, which automatically appends a slash):
-
-```bash
-rm -rf /var/www/active/
-```
-
-You destroy the application. The trailing slash tells the `rm` command, "Do not delete this item. Walk *through* this item into the directory behind it, and delete everything inside." The symlink portal survives, but the physical `/opt/releases/v2/` folder is entirely emptied of all data.
-
-Always verify your paths. Never append a trailing slash to a symlink unless you intend to destroy the target.
-
-## Self-Check and Verification
-
-To prove you understand symbolic links:
-
-1. Create a physical directory named `/tmp/real_data` and put a text file inside it.
-2. Create a symlink in your home directory pointing to it: `ln -s /tmp/real_data ~/fake_data`.
-3. Run `ls -ld ~/fake_data` to verify the link points to the correct location.
-4. Run `readlink -f ~/fake_data` to print the absolute canonical path.
-5. Run `rm ~/fake_data` (without a trailing slash) to delete the symlink.
-6. Verify the `/tmp/real_data` directory and its contents survived the deletion.
+> [!WARNING]
+> **The trailing slash on a symlink is dangerous**
+>
+> `rm /tmp/rmdemo/link` removes the link. `rm -rf /tmp/rmdemo/link/` — the same path **with a trailing slash** — does not. The slash tells `rm` to resolve the symlink and operate on the **directory it points to**: it deletes the contents of `/tmp/rmdemo/real/` (and, depending on your `rm` version, the `real` directory itself). Shell tab-completion often appends that slash for you.
+>
+> - Before `rm`-ing a symlink, check what it is and where it points: `ls -ld <path>`.
+> - Never let a trailing slash stay on a symlink path you are about to delete.
+> - To see your own system's exact behaviour safely, run `reset-symlink-demo`, then `rm -rf /tmp/rmdemo/link/` (with the slash), then `ls /tmp/rmdemo/real/` — and `reset-symlink-demo` again afterwards. Only do this in that disposable directory.
+>
+> **Other pitfalls**
+>
+> - **`readlink` without `-f` in a script.** The bare output can be a relative path that only makes sense from the link's own directory. Use `readlink -f` or `realpath` for an absolute path.
+> - **Assuming `find -type l` follows the link.** It matches the link itself. `find -L` would make `find` follow links, which is usually not what you want when auditing them.
+> - **A dangling symlink.** If the target was moved or deleted, the link remains and points at nothing. `ls -l` shows the target; trying to open it fails with "No such file or directory".

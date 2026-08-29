@@ -1,0 +1,56 @@
+# Enterprise Sharing with NFS (PLAYGROUND) — Playground environment
+# Two VMs on a private subnet:
+#   server (10.10.20.10) — nfs-kernel-server running, /nfs/share seeded,
+#                          /etc/exports left empty for you to fill
+#   client (10.10.20.5)  — nfs-common + showmount, mount point /mnt/nfs
+# No task, no grading, no `astrona submit`.
+# Schema: internal/config.LabConfig.
+
+metadata:
+  name: "section-020-module-02-playground"
+  docs:
+    guide: "docs/overview.md"
+
+runtime:
+  type: "qemu"
+  networks:
+    - name: "pg-net"
+      cidr: "10.10.20.0/24"
+  qemu:
+    - name: "server"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      networks:
+        - name: "pg-net"
+          ipv4: "10.10.20.10"
+      bootstrap:
+        init:
+          - name: "server-prepare"
+            description: "Install and start nfs-kernel-server, seed /nfs/share, leave /etc/exports empty."
+            type: "folder"
+            source: "bootstrap/server/"
+    - name: "client"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      networks:
+        - name: "pg-net"
+          ipv4: "10.10.20.5"
+      bootstrap:
+        init:
+          - name: "client-prepare"
+            description: "Install nfs-common, create /mnt/nfs, add server to /etc/hosts."
+            type: "folder"
+            source: "bootstrap/client/"
+
+teardown:
+  keepCluster: false

@@ -1,0 +1,39 @@
+# Advanced LVM Operations (PLAYGROUND) — Playground environment
+# A clean sandbox: it spins up, runs OS prep, then stays running for free
+# exploration. No task, no grading, no `astrona submit`.
+# Schema: internal/config.LabConfig.
+
+metadata:
+  name: "section-030-module-02-playground"
+  docs:
+    guide: "docs/overview.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+    - image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      extraDisks:
+        - sizeGB: 1
+          serial: "s30m02-a"
+        - sizeGB: 1
+          serial: "s30m02-b"
+        - sizeGB: 1
+          serial: "s30m02-c"
+      display: false
+      sshPasswordAuth: false
+
+bootstrap:
+  init:
+    - name: "prepare"
+      description: "OS prep: build VG 'vgdata' on two disks with a mounted ext4 LV; leave the third disk raw as a spare."
+      type: "file"
+      source: "bootstrap/prepare.sh"
+  manifests: []
+
+teardown:
+  keepCluster: false

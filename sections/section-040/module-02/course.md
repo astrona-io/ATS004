@@ -1,66 +1,166 @@
 # Permanent Swap Partitions & Priority Scheduling
 
-Swap files are excellent for emergencies, but they have overhead. Every read and write to a swap file must travel through the filesystem driver (like ext4 or XFS) before hitting the disk.
+<!-- astrona:playground -->
+> [!NOTE]
+> 🧪 **Hands-on playground for this module** — a clean, throwaway machine to explore on. No task, no grading. Folder: [`playground/`](https://github.com/astrona-io/ATS004/tree/main/sections/section-040/module-02/playground)
+>
+> ```sh
+> astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-040/module-02/playground
+> astrona destroy section-040-module-02-playground
+> ```
 
-For permanent, high-performance infrastructure, you use a dedicated swap partition. This bypasses the filesystem layer entirely. The kernel writes memory pages directly to the raw blocks of the hard drive. Think of it as a dedicated, high-speed automated storage bin built straight into the factory floor, rather than a generic filing cabinet.
+A swap file is convenient but every page it handles passes through the filesystem driver (ext4, XFS) on its way to disk. A dedicated swap partition skips that layer: the kernel writes memory pages straight to the partition's raw blocks. For a machine's baseline swap you use a partition (or an LVM volume); a swap file is the fast add-on.
 
-## Initializing Dedicated Partitions
+This module covers creating a swap partition, making swap persistent through `/etc/fstab`, and — when a machine has more than one swap area — using priorities so the kernel prefers the fast one.
 
-Creating a swap partition requires a dedicated block device. This could be a standard physical partition (`/dev/sdb1`) or an LVM Logical Volume (`/dev/mapper/vg_system-lv_swap`).
+## Learning objectives
 
-You do not format this device with a standard filesystem. You format it strictly for swap.
+After this module you can:
 
-```bash
-mkswap /dev/sdb1
-```
+- Explain why a swap partition avoids the overhead a swap file has.
+- Create a swap partition with `parted` + `mkswap` and activate it with `swapon`.
+- Write `/etc/fstab` entries that bring swap areas back after a reboot, keyed by `UUID=`.
+- Set swap priorities with `pri=` (on the command line and in `/etc/fstab`) and predict the fill order.
+- Apply an `/etc/fstab` swap change with `swapoff -a` / `swapon -a` and roll it back.
 
-Once formatted, you activate it manually using `swapon /dev/sdb1`.
+## Before you start
 
-However, manual activation does not survive a reboot. To make the swap space permanent, you must declare it in `/etc/fstab`.
+You need the previous module's material: what swap does, and `mkswap` / `swapon` / `swapoff` / `swapon --show` / `free`. Partitioning with `parted` (from the local-storage section) is assumed.
 
-You open `/etc/fstab` and append a new line. You should always use the UUID of the partition, which you find using `blkid`, rather than the `/dev` path. This ensures the system mounts the correct partition even if the drive letters change during boot.
+The linked playground gives you an Ubuntu server VM with 2 GB RAM, one spare 1 GB disk (commonly `/dev/vdb`, wiped raw each boot) to partition, and `/etc/fstab` pre-copied to `/etc/fstab.orig` so edits roll back with one command. Run the command blocks below in that VM after `astrona ssh section-040-module-02-playground`.
+
+## Partition vs file
+
+> As an analogy: a swap file is a drawer inside a shared filing cabinet — you reach it through the cabinet's mechanism. A swap partition is a chute in the floor that drops straight to the basement. Fewer moving parts in the path. The analogy breaks down because the real difference is modest on SSDs; the filesystem overhead of a swap file matters most on slow spinning disks and heavily loaded systems.
+
+A swap partition is any block device set aside for swap: a physical partition like `/dev/vdb1`, or an LVM logical volume like `/dev/mapper/vg-swap`. You do **not** put a filesystem on it — `mkswap` writes a swap header directly onto the device.
+
+## Creating the partition
+
+Give the spare disk a partition table and one partition spanning it, typed for swap. `parted`'s `linux-swap` filesystem keyword sets the correct partition type; it does not write a filesystem.
+
+> [!TIP]
+> **Try it — carve a swap partition**
+>
+> ```sh
+> lsblk /dev/vdb
+> sudo parted -s /dev/vdb mklabel gpt
+> sudo parted -s /dev/vdb mkpart swap linux-swap 1MiB 100%
+> sudo partprobe /dev/vdb
+> lsblk /dev/vdb
+> ```
+>
+> Expect something like:
+>
+> ```text
+> vdb    254:16   0   1G  0 disk
+>
+> vdb    254:16   0   1G  0 disk
+> └─vdb1 254:17   01022M  0 part
+> ```
+>
+> `/dev/vdb1` now exists, sized to the whole disk. It has a partition type of "Linux swap" but no header yet — `mkswap` adds that next.
+
+## Formatting and activating
+
+`mkswap <device>` writes the swap signature and a UUID onto the partition. `swapon <device>` activates it. Because there is no filesystem in the path, reads and writes go to the raw blocks.
+
+> [!TIP]
+> **Try it — make it swap and turn it on**
+>
+> ```sh
+> sudo mkswap /dev/vdb1
+> sudo swapon /dev/vdb1
+> swapon --show
+> ```
+>
+> Expect something like:
+>
+> ```text
+> Setting up swapspace version 1, size = 1022 MiB
+> no label, UUID=7c2e...9a
+>
+> NAME      TYPE      SIZE USED PRIO
+> /dev/vdb1 partition 1022M   0B   -2
+> ```
+>
+> `swapon --show` lists `/dev/vdb1` with `TYPE partition` (a swap file shows `TYPE file`). `PRIO -2` was assigned automatically — the next section sets it on purpose.
+
+## Priorities: preferring the fast area
+
+A machine can have several swap areas active at once. By default the kernel gives each an automatically decreasing negative priority and, for areas of *equal* priority, spreads writes across them. If one area is a fast NVMe partition and another is a slow file on a spinning disk, equal treatment drags the fast one down to the slow one's speed.
+
+The `pri=` value fixes this. User-set priorities run 0–32767; **higher wins**. The kernel fills the highest-priority area completely before it writes a single page to the next one down. So you give the fast device a high number and the slow fallback a low one.
+
+To see this you need a second area. Create a small swap file the same way as the previous module — `fallocate`, `chmod 600`, `mkswap` — then activate both with explicit priorities.
+
+> [!TIP]
+> **Try it — two areas, explicit fill order**
+>
+> ```sh
+> sudo fallocate -l 256M /swapfile
+> sudo chmod 600 /swapfile
+> sudo mkswap /swapfile
+> sudo swapoff -a
+> sudo swapon -p 10 /dev/vdb1
+> sudo swapon -p 5 /swapfile
+> swapon --show
+> ```
+>
+> Expect something like:
+>
+> ```text
+> NAME      TYPE      SIZE USED PRIO
+> /dev/vdb1 partition 1022M   0B   10
+> /swapfile file      256M    0B    5
+> ```
+>
+> The `PRIO` column shows `10` for the partition and `5` for the file. Under memory pressure the kernel would fill `/dev/vdb1` entirely before touching `/swapfile` — the slow fallback only comes into play in a real emergency.
+
+## Making it persistent
+
+`swapon` activations are lost on reboot. `/etc/fstab` restores them. A swap line has six fields:
 
 ```text
-UUID=a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d   none   swap   sw   0   0
+UUID=7c2e...9a   none   swap   sw,pri=10   0   0
+/swapfile        none   swap   sw,pri=5    0   0
 ```
 
-The mount point is `none` because swap doesn't live in the directory tree. The type is `swap`, and the default option is `sw`. The dump and pass checks at the end are `0`, as the filesystem checker does not run on raw swap space.
+- **device** — use `UUID=` for a partition (stable across disk reordering), found with `blkid`; a swap file is named by its path.
+- **mount point** — `none`; swap is not in the directory tree.
+- **type** — `swap`.
+- **options** — `sw` (the conventional placeholder for "swap defaults") plus `pri=` for priority.
+- **dump / pass** — `0` and `0`; neither backup nor `fsck` applies to swap.
 
-You verify your fstab configuration by deactivating all swap with `swapoff -a` and then reading the fstab file to activate them all with `swapon -a`.
+Apply changes without rebooting by deactivating all swap and reactivating from the file.
 
-## Tuning Priority Queues
+> [!TIP]
+> **Try it — write fstab entries and apply them**
+>
+> ```sh
+> sudo blkid /dev/vdb1
+> echo "UUID=$(sudo blkid -s UUID -o value /dev/vdb1)  none  swap  sw,pri=10  0  0" | sudo tee -a /etc/fstab
+> echo "/swapfile  none  swap  sw,pri=5  0  0" | sudo tee -a /etc/fstab
+> sudo swapoff -a
+> sudo swapon -a
+> swapon --show
+> ```
+>
+> Expect something like:
+>
+> ```text
+> NAME      TYPE      SIZE USED PRIO
+> /dev/vdb1 partition 1022M   0B   10
+> /swapfile file      256M    0B    5
+> ```
+>
+> `swapon -a` read both lines from `/etc/fstab` and brought the areas up with the priorities you wrote. This configuration now survives a reboot. To undo the edits: `sudo cp /etc/fstab.orig /etc/fstab`.
 
-Linux allows you to configure multiple swap devices simultaneously. You might have a small, lightning-fast swap partition on an NVMe drive, and a massive, slow 50GB swap file on a spinning disk for absolute emergencies.
-
-By default, if you activate multiple swap spaces, the kernel balances the load across them. It will write memory pages to the slow spinning disk just as often as the fast NVMe drive. This destroys performance.
-
-You must tune the priority queues. The kernel respects a priority scale from -1 to 32767. Higher numbers indicate higher priority. The kernel will completely fill the highest priority swap space before it writes a single byte to the lower priority spaces.
-
-You set this priority using the `pri=` option.
-
-For ad-hoc activation, you pass it to the command line.
-
-```bash
-swapon -p 100 /dev/nvme0n1p2
-swapon -p 10 /swapfile
-```
-
-For persistent configurations, you add it directly to the options column in `/etc/fstab`.
-
-```text
-UUID=a1b2...   none   swap   sw,pri=100   0   0
-/swapfile      none   swap   sw,pri=10    0   0
-```
-
-With this configuration, the kernel writes all overflow memory exclusively to the NVMe partition. It only touches the slow swap file if the NVMe partition reaches 100% capacity. This ensures your server degrades gracefully rather than crashing into an I/O bottleneck immediately.
-
-## Self-Check and Verification
-
-To prove you can architect persistent, prioritized swap:
-
-1. Identify a dedicated block device or create a small LVM volume.
-2. Initialize the device as swap space using `mkswap`.
-3. Add an entry to `/etc/fstab` using the device's UUID, configuring it as a high-priority swap space (`pri=50`).
-4. Create a secondary swap file, secure it, initialize it, and add it to `/etc/fstab` as a low-priority space (`pri=10`).
-5. Run `swapoff -a` followed by `swapon -a` to apply the fstab configuration.
-6. Run `swapon --show` to verify both devices are active and the priorities dictate the correct filling order.
+> [!WARNING]
+> **Common pitfalls**
+>
+> - **Putting a filesystem on a swap partition.** Do not run `mkfs.ext4` on it. `mkswap` is the only formatting a swap device needs; a filesystem there just wastes the `mkswap` step and confuses `blkid`.
+> - **Naming a swap partition by `/dev/vdb1` in fstab.** Kernel device names can change between boots; the wrong device could be activated as swap. Use `UUID=` from `blkid`.
+> - **Relying on the default with mixed-speed swap.** Equal (default) priorities make the kernel stripe writes across a fast and a slow area together. Set `pri=` so the fast one fills first.
+> - **Assuming `pri=` on the command line persists.** `swapon -p 10 ...` lasts until reboot only. The priority must be in the `/etc/fstab` options column to stick.
+> - **Editing `/etc/fstab` with no backup.** A malformed swap line makes `swapon -a` error (boot usually still continues, unlike a bad filesystem line). Keep a copy — the playground's is `/etc/fstab.orig` — and re-run `swapon -a` after editing to catch mistakes now rather than at the next reboot.

@@ -1,180 +1,179 @@
-# Chapter 2: Splitting the Acre: Partitioning Raw Storage
+# Splitting the Acre: Partitioning Raw Storage
 
-When you connect a brand-new storage drive to a Linux server, you are looking at a vast, open tract of land. You cannot simply start throwing furniture and building walls randomly across the entire terrain. Instead, you first hire a surveyor to draw boundaries, put up fences, and divide the property into distinct, registered lots: one for the main house, another for a garden, and a third for a guest cottage. 
+<!-- astrona:playground -->
+> [!NOTE]
+> 🧪 **Hands-on playground for this module** — a clean, throwaway machine to explore on. No task, no grading. Folder: [`playground/`](https://github.com/astrona-io/ATS004/tree/main/sections/section-010/module-02/playground)
+>
+> ```sh
+> astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-010/module-02/playground
+> astrona destroy section-010-module-02-playground
+> ```
 
-In the storage world, those fences are **partitions**. Dividing a single physical drive into logical segments makes it look and behave like several independent drives to the operating system. Even if a disk is destined to hold only a single filesystem, we almost always draw at least one partition boundary first. This boundary establishes the starting and ending points, preventing filesystems from stepping on each other's toes and ensuring the operating system knows exactly where to look for data.
+A raw disk is one continuous run of sectors. Before a filesystem goes on it, you almost always divide it into one or more **partitions**: numbered, fixed regions with a recorded start and end. Even a disk that will hold a single filesystem normally gets one partition first, because a partition gives the filesystem a defined boundary and lets tools reason about the disk's layout.
 
----
+This chapter covers the two partition-table formats you will meet (MBR and GPT), the two tools you will use to write them (`fdisk` and `parted`), why partitions start where they do, and what to do when the kernel does not immediately notice a change you made.
 
-## The Maps at the Gate: MBR vs. GPT
+## Learning objectives
 
-To maintain these boundaries, the drive needs a map. This map is stored at the very beginning of the disk in a structure called a **partition table**. Over the decades of personal computing, two primary standards have emerged to write this map: MBR (Master Boot Record) and GPT (GUID Partition Table).
+After this module you can:
 
-### The Legacy Sentinel: MBR
-Introduced in 1983 alongside PC DOS 2.0, the **Master Boot Record (MBR)** is a venerable but heavily limited partitioning standard. The entire MBR partition table is crammed into a tiny 512-byte sector at the absolute beginning of the disk. Because space in this sector is at a premium, the designers made a trade-off that still haunts system administrators today:
+- Explain what a partition table is and how MBR and GPT differ in partition count, capacity limit, and redundancy.
+- Choose GPT over MBR for any modern disk and say why.
+- Create a GPT label and an aligned partition with `parted` non-interactively, and describe the equivalent `fdisk` session.
+- Explain why partitions start at sector 2048 and check a partition's alignment.
+- Recognise the "kernel still uses the old table" condition and resolve it with `partprobe`.
 
-- **The Four-Partition Limit**: An MBR partition table can hold only four primary partition entries. If you want five partitions, you have to turn one of those primary slots into an **extended partition**. This extended partition acts as a container, inside of which you can carve out multiple **logical partitions**. It is a clunky workaround born of 1980s constraints.
-- **The 2TB Ceiling**: MBR uses 32-bit values to store sector numbers. With a standard sector size of 512 bytes, the absolute maximum disk space MBR can address is $2^{32} \times 512$ bytes, which equals exactly 2.19 Terabytes. If you plug a 4TB drive into a system and partition it with MBR, any space beyond 2.19TB is completely invisible and unusable.
+## Before you start
 
-### The Modern standard: GPT
-The **GUID Partition Table (GPT)** is the modern standard that replaces MBR. It is part of the Unified Extensible Firmware Interface (UEFI) specification and is designed to handle modern, high-capacity enterprise storage:
+You should have read the previous module or otherwise know what `lsblk` and `blkid` show, and be comfortable in a Linux shell with `sudo`.
 
-- **Nearly Unlimited Slices**: By default, GPT supports up to 128 primary partitions. You do not need to worry about extended or logical partitions; every slice is a primary, first-class citizen.
-- **Zettabyte-Scale Addressing**: GPT uses 64-bit logical block addressing. This allows it to address disks up to 9.4 Zettabytes (9.4 billion Terabytes), easily accommodating any storage array you will encounter in your career.
-- **Built-in Redundancy**: MBR stores its partition table in a single sector. If that sector is corrupted by a stray write or a failing drive head, your entire disk is lost. GPT, by contrast, stores a primary partition table at the beginning of the disk and a backup (or secondary) copy at the very end of the disk. If the primary map is damaged, the kernel automatically restores it using the backup copy.
-- **Globally Unique Identifiers**: GPT identifies every disk and partition using a Globally Unique Identifier (GUID), ensuring that no two partitions in the world share the same ID. This makes disk identification incredibly reliable, even when drives are moved between systems.
+The linked playground gives you an Ubuntu server VM with passwordless `sudo` and one spare 12 GB disk (commonly `/dev/vdb`) that has **no partition table** — its tables are cleared on every boot. Run the command blocks below in that VM after connecting with `astrona ssh section-010-module-02-playground`. `fdisk`, `parted`, `sfdisk`, `partprobe`, and `wipefs` are already installed.
 
----
+## What a partition is and why you draw one
 
-## The Administrator's Toolkit
+A **partition** is a recorded region of a disk with a start sector, an end sector, and a number (`vdb1`, `vdb2`, …). The list of those regions lives in a small area at the front of the disk called the **partition table**.
 
-To construct these boundaries, Linux provides several tools. The two most common are `fdisk` and `parted`.
+Partitioning a disk before formatting it buys you three things: filesystems get explicit boundaries so they cannot overlap; the disk can hold several independent filesystems if you later want that; and standard tooling (bootloaders, `lsblk`, cloud imaging systems) expects a partition table and behaves predictably when it finds one.
 
-### `fdisk`: The Interactive Conversationalist
-For most administrative tasks on a single server, `fdisk` is the classic choice. It is a menu-driven, interactive tool. When you run `sudo fdisk /dev/vdb`, you enter a specialized command loop where you use single-character keystrokes to design your disk layout in memory before committing any changes to the physical disk.
+> As an analogy: a partition table is the plot map filed with a county office. The land does not change, but the recorded boundaries let everyone agree where one lot ends and the next begins. The analogy breaks down because rewriting a partition table is instant and leaves the existing file data in place — unlike re-surveying real land.
 
-- `m`: Prints a helpful command cheat sheet.
-- `p`: Prints the partition table as it currently stands in memory.
-- `g`: Wipes any existing partition map and writes a clean, empty GPT partition table.
-- `o`: Wipes the disk and writes a legacy MBR partition table.
-- `n`: Creates a new partition, prompting you for a partition number, starting sector, and ending size.
-- `d`: Prompts you for a partition number to delete.
-- `t`: Changes a partition's type (e.g., marking it as a Linux Swap space or an LVM physical volume).
-- `w`: Writes the changes from memory to the physical disk headers and exits.
-- `q`: Quits without saving, abandoning any changes you drafted during the session.
+## Partition table formats: MBR vs GPT
 
-### `parted`: The Command-Line Surgeon
-While `fdisk` is fantastic for interactive use, it is difficult to automate in bash scripts because of its conversational prompt system. For scripting, or for working with massive enterprise arrays, we turn to `parted` (Partition Manipulator). 
+Two formats exist for that table.
 
-`parted` can execute commands directly from the command line in a single line, making it perfect for automated deployment scripts. For example, a single command can initialize a GPT label, and another can carve out a partition.
+**MBR (Master Boot Record)**, from 1983, stores the table in the first 512-byte sector of the disk. That tiny space forces two well-known limits:
 
----
+- **Four primary partitions.** A fifth requires turning one primary slot into an *extended* partition that acts as a container for *logical* partitions — an awkard workaround.
+- **A ~2.2 TB ceiling.** MBR addresses sectors with a 32-bit number; at 512 bytes per sector that caps the addressable space at 2^32 × 512 bytes ≈ 2.2 TB. Space beyond that on a larger disk is simply unreachable through MBR.
 
-## Scenario: Drawing boundaries on a Raw Disk
+**GPT (GUID Partition Table)**, part of the UEFI specification, replaces MBR:
 
-Let's walk through a real-world scenario. Your team has attached a brand-new, raw virtual disk identified as `/dev/vdb`. Your goal is to initialize it with a modern GPT partition table and slice out a single 10GB primary partition for data storage.
+| Property | MBR | GPT |
+| --- | --- | --- |
+| Primary partitions | 4 (more via extended/logical) | 128 by default |
+| Sector addressing | 32-bit (~2.2 TB max) | 64-bit (effectively unlimited) |
+| Table redundancy | single copy | primary at the start, backup copy at the end |
+| Partition/disk identity | none built in | every partition and disk has a globally unique GUID |
 
-### Step 1: Opening the Operating Table
-First, we launch `fdisk` and point it to our target disk:
+For any disk you provision today, use GPT. MBR is only relevant for very old systems that cannot boot from GPT.
 
-```bash
-sudo fdisk /dev/vdb
-```
+> The playground's disk is 12 GB, so the 2.2 TB MBR ceiling cannot be demonstrated here — it only bites on disks larger than that. The partition-count and redundancy differences are structural and apply at any size.
 
-The terminal screen changes, welcoming you to the `fdisk` interactive shell. 
+## The tools: fdisk and parted
 
-### Step 2: Surveying the Current State
-Before making any changes, we must print the current partition table to ensure we aren't about to overwrite active data. Type `p` and hit `Enter`:
+`fdisk` is an interactive, menu-driven editor. `sudo fdisk /dev/vdb` drops you into a prompt where single letters build the layout *in memory* until you write it:
+
+- `p` — print the current table
+- `g` — create a fresh GPT label (`o` creates a legacy MBR label)
+- `n` — new partition (prompts for number, first sector, last sector or a `+size` like `+10G`)
+- `d` — delete a partition
+- `t` — change a partition's type code
+- `w` — write the in-memory layout to disk and exit
+- `q` — quit **without** writing; drafted changes are discarded
+
+`parted` does the same job but takes its commands on the command line, which makes it scriptable. `sudo parted -s /dev/vdb mklabel gpt` writes a GPT label in one shot; `-s` means "script mode, do not ask questions".
+
+A worked `fdisk` session to put one 10 GB partition on an empty GPT disk looks like this: run `sudo fdisk /dev/vdb`; press `g` to lay down a GPT label; press `n`, accept the default partition number `1`, accept the default first sector `2048`, and answer the last-sector prompt with `+10G`; press `p` to review the draft; press `w` to commit. Nothing touches the disk until that final `w`.
+
+The `parted` equivalent is two commands and no prompts, which is what the checkpoint below runs.
+
+> [!TIP]
+> **Try it — create a GPT partition with parted**
+>
+> ```sh
+> sudo fdisk -l /dev/vdb
+> sudo parted -s /dev/vdb mklabel gpt
+> sudo parted -s /dev/vdb mkpart data ext4 1MiB 10GiB
+> lsblk /dev/vdb
+> ```
+>
+> Expect something like:
+>
+> ```text
+> Disk /dev/vdb: 12 GiB, 12884901888 bytes, 25165824 sectors
+> Disklabel type: dos            (or: the command reports no partition table)
+> ...
+>
+> NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINTS
+> vdb    254:16   0  12G  0 disk
+> └─vdb1 254:17   0  10G  0 part
+> ```
+>
+> After the two `parted` commands the disk has a GPT label and one 10 GiB child partition `vdb1`, ready to be formatted with `mkfs.ext4` exactly as in the previous module. The `mkpart` argument `ext4` only sets a type hint; it does not create a filesystem.
+
+## Why partitions start at sector 2048
+
+Left to their defaults, `fdisk` and `parted` both start the first partition at sector 2048, one full mebibyte in (2048 × 512 bytes = 1,048,576 bytes). The reason is physical alignment.
+
+Older drives used 512-byte physical sectors. Modern drives and SSDs use larger physical blocks — usually 4096 bytes — but still present 512-byte *logical* sectors to the OS for compatibility ("512e"). If a partition starts at a logical sector that is not a multiple of 8 (8 × 512 = 4096), every filesystem block straddles two physical blocks. A single 4 KiB write then forces the drive to read two physical blocks, modify parts of both, and write both back — **write amplification**, which can cut throughput substantially and wear an SSD faster.
+
+Sector 2048 is a multiple of 8, so partitions and filesystem blocks line up with the physical 4 KiB blocks underneath. Accept the default unless you have a specific reason not to.
+
+> [!TIP]
+> **Try it — check partition alignment**
+>
+> ```sh
+> sudo parted /dev/vdb align-check optimal 1
+> sudo fdisk -l /dev/vdb
+> ```
+>
+> Expect something like:
+>
+> ```text
+> 1 aligned
+>
+> Device     Start      End  Sectors Size Type
+> /dev/vdb1   2048 20973567 20971520  10G Linux filesystem
+> ```
+>
+> `align-check optimal 1` reports partition 1 as `aligned`, and `fdisk -l` shows it starting at sector `2048` — the default the tools chose for you.
+
+## When the kernel keeps the old partition table
+
+When you change a partition table, the kernel has to reload its in-memory picture of the disk. It will refuse to do that while any partition on the disk is mounted or otherwise in use, to avoid corrupting a live filesystem. You then see a message like:
 
 ```text
-Command (m for help): p
-Disk /dev/vdb: 20 GiB, 21474836480 bytes, 41943040 sectors
-Units: sectors of 1 * 512 = 512 bytes
-Sector size (logical/physical): 512 bytes / 512 bytes
-I/O size (minimum/optimal): 512 bytes / 512 bytes
-Disklabel type: gpt
+Re-reading the partition table failed.: Device or resource busy.
+The kernel still uses the old table.
 ```
 
-Here, we see that `/dev/vdb` is a 20GB disk with a GPT label, but no partitions are listed at the bottom of the output. It is a blank slate. 
+Two ways out, no reboot needed:
 
-If the disk had a legacy label, or if we wanted to make absolutely sure we were starting fresh with a GPT layout, we would type `g` and press `Enter`:
+1. Unmount every filesystem on the disk (and deactivate any LVM volume groups on it), then the write succeeds normally.
+2. Ask the kernel to rescan with `partprobe`:
 
-```text
-Command (m for help): g
-Created a new GPT disklabel (GUID: B4E8C23A-64D2-4B6A-9DFA-0F0394747A11).
-```
+   ```sh
+   sudo partprobe /dev/vdb
+   ```
 
-### Step 3: Carving out the 10GB Slice
-Now, we create our new partition. Type `n` and press `Enter`:
+The same lag shows up harmlessly: delete a partition with `parted` or `fdisk`, and `lsblk` may still list the deleted child until a `partprobe` (or the tool's own end-of-session sync) refreshes the kernel's view.
 
-```text
-Command (m for help): n
-Partition number (1-128, default 1): 
-```
+> [!TIP]
+> **Try it — force a partition-table rescan**
+>
+> ```sh
+> sudo parted -s /dev/vdb rm 1
+> lsblk /dev/vdb
+> sudo partprobe /dev/vdb
+> lsblk /dev/vdb
+> ```
+>
+> Expect something like:
+>
+> ```text
+> vdb    254:16   0  12G  0 disk
+> └─vdb1 254:17   0  10G  0 part       <-- still listed right after rm
+>
+> vdb    254:16   0  12G  0 disk        <-- gone after partprobe
+> ```
+>
+> `parted` removed the partition entry, but the kernel's device list lagged until `partprobe` told it to rescan. On a disk with a mounted partition, that rescan is exactly what the kernel declines to do automatically.
 
-The system asks for a partition number. GPT can handle up to 128 partitions, but since this is our first, we press `Enter` to accept the default of `1`.
-
-```text
-First sector (2048-41943006, default 2048): 
-```
-
-Next, it asks for the starting sector. By default, `fdisk` selects sector `2048`. This is an extremely important number, and we should always accept this default. Press `Enter`.
-
-```text
-Last sector, +/-sectors or +/-size{K,M,G,T,P} (2048-41943006, default 41943006): 
-```
-
-Finally, it asks where the partition should end. We do not want to calculate sectors manually. Instead, we use a human-readable size notation. To make the partition exactly 10 Gigabytes, we type `+10G` and press `Enter`:
-
-```text
-Created a new partition 1 of type 'Linux filesystem' and of size 10 GiB.
-```
-
-### Step 4: Inspecting our Work
-Before we write these changes to the physical disk platters, let's print the partition table one last time to verify our draft. Type `p`:
-
-```text
-Command (m for help): p
-Device       Start      End  Sectors  Size Type
-/dev/vdb1     2048 20973567 20971520   10G Linux filesystem
-```
-
-Everything looks perfect. We have a 10GB partition starting at sector 2048 and ending at sector 20973567.
-
-### Step 5: Committing the Layout
-To save our changes, we type `w` and press `Enter`. This is the point of no return. Up until this moment, we have only been editing a draft in our system's memory. Typing `w` instructs `fdisk` to write the new GPT partition table and partition entry to the actual disk blocks, then close:
-
-```text
-Command (m for help): w
-The partition table has been altered.
-Calling ioctl() to re-read partition table.
-Syncing disks.
-```
-
-The system has successfully committed the layout. If we run `lsblk /dev/vdb`, we will now see our new partition child sitting proudly underneath its parent disk:
-
-```text
-NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
-vdb     254:16   0   20G  0 disk 
-└─vdb1  254:17   0   10G  0 part 
-```
-
----
-
-## Under the Hood: Sector Alignment and Kernel Refusals
-
-As a professional administrator, you should understand the mechanics of what just happened.
-
-### The Mystery of Sector 2048
-Why does `fdisk` start partitions at sector 2048 instead of sector 1? 
-
-In older hard drives, physical sectors were exactly 512 bytes. Modern mechanical drives and solid-state drives (SSDs) use larger physical blocks—typically 4096 bytes (4KiB) or larger—to increase storage density and reliability. However, to maintain compatibility with older systems, these drives expose fake "logical" 512-byte sectors to the operating system. This is known as **512-byte Emulation (512e)**.
-
-If you start a partition at an odd logical sector (like sector 63, which was common in older operating systems), the partition's logical blocks will not align with the drive's physical 4KiB blocks. 
-
-When your database tries to write a single 4KiB block of data to a misaligned partition, the physical disk is forced to read two physical blocks, modify a portion of both, and write them both back. This phenomenon is known as **write amplification**, and it can slash your storage read and write performance by 30% to 50% while wearing out your SSDs prematurely.
-
-Sector 2048 corresponds to exactly 1 Megabyte ($2048 \times 512 \text{ bytes} = 1,048,576 \text{ bytes}$). Because 1MB is perfectly divisible by 4KiB, starting your partitions at sector 2048 ensures that every filesystem block aligns perfectly with the underlying physical storage, guaranteeing optimal hardware performance.
-
-### "Device or Resource Busy"
-Occasionally, when you write a partition table to an active disk, you might see this error message:
-
-`Re-reading the partition table failed.: Device or resource busy. The kernel still uses the old table.`
-
-When a partition table changes, the kernel must reload its internal map of the disk. However, if any filesystem on that disk is currently mounted, or if an active process is reading from any sector on that drive, the kernel will refuse to hot-reload the map to prevent data corruption.
-
-To resolve this without rebooting the server, you have two options:
-1.  **Unmount everything**: Ensure no filesystems on the target drive are mounted, and no LVM volume groups on the disk are active.
-2.  **Force a reload**: Use the `partprobe` command to ask the kernel to force-scan the drive and update its partition tracking:
-    ```bash
-    sudo partprobe /dev/vdb
-    ```
-
----
-
-## Self-Check and Verification
-
-Before moving to the next chapter, test your understanding of partitioning:
-1.  **The 2TB Boundary**: If you are setting up a new 8TB backup server, why must you avoid using `o` in `fdisk` to initialize the disk? *(Answer: The `o` key writes a legacy MBR partition table, which cannot address or use any storage space beyond 2.19 Terabytes. You must use `g` to write a GPT partition table instead.)*
-2.  **Sector Alignment**: Why is it crucial to accept `fdisk`'s default starting sector of 2048? *(Answer: Starting at sector 2048 aligns the partition with physical 4KiB pages on modern SSDs and advanced format drives, preventing write amplification and maintaining high I/O performance.)*
-3.  **Kernel Syncing**: You deleted a partition using `fdisk`, but running `lsblk` still shows the deleted partition. What command should you run to force the kernel to update its memory map? *(Answer: Run `sudo partprobe` to sync the kernel's partition table with the physical disk map.)*
+> [!WARNING]
+> **Common pitfalls**
+>
+> - **Initialising a large disk with `o` (MBR).** On a disk larger than ~2.2 TB, MBR makes the space past that point unusable. Use `g` in `fdisk`, or `parted mklabel gpt`, for any modern disk.
+> - **Overriding the default start sector.** Typing a custom first sector (an old habit from the sector-63 era) can misalign the partition and cause write amplification. Accept sector 2048.
+> - **Editing the wrong disk.** `fdisk` and `parted` act on whatever device you name. Confirm with `lsblk` — size and mount point — before writing a label.
+> - **Expecting `q` in `fdisk` to save.** `q` quits and discards; only `w` writes.
+> - **Assuming `lsblk` is instantly right after a change.** The kernel's view can lag a partition edit. Run `sudo partprobe <disk>` if `lsblk` and reality disagree.

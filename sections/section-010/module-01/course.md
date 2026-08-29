@@ -1,232 +1,281 @@
-# Chapter 1: The Lifecycle of Local Storage
+# The Lifecycle of Local Storage
 
-When you plug a storage drive into a computer, you might expect it to immediately appear as a new icon on your desktop, ready to hold files. In the world of enterprise Linux administration, however, things are different. Storage is not something that happens automatically; it is a structured, intentional lifecycle managed by you, the administrator.
+<!-- astrona:playground -->
+> [!NOTE]
+> 🧪 **Hands-on playground for this module** — a clean, throwaway machine to explore on. No task, no grading. Folder: [`playground/`](https://github.com/astrona-io/ATS004/tree/main/sections/section-010/module-01/playground)
+>
+> ```sh
+> astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-010/module-01/playground
+> astrona destroy section-010-module-01-playground
+> ```
 
-In this chapter, we will explore how Linux interacts with physical disks. We will walk through how the operating system identifies raw block storage, how we prepare those blocks to hold data, and how we integrate those storage spaces into a single, unified file tree. Finally, we will learn how to handle one of the most common real-world administrative headaches: diagnosing and evicting rogue processes that refuse to let go of a disk when you need to unmount it.
+When you plug a USB stick into a laptop, a file manager window usually pops open a few seconds later. On a Linux server, nothing happens. A newly attached disk is just a block of raw sectors that the kernel can see but has not been told what to do with. Turning that raw hardware into a directory you can write files to is a deliberate, several-step process, and doing it is a core part of a system administrator's job.
 
----
+This chapter walks through that process end to end: how Linux presents a disk before it is usable, how you put a filesystem on it, how you attach that filesystem to the directory tree, and how you deal with the common problem of a disk that refuses to detach because something is still using it.
 
-## The Unified File Tree: Linux Storage Philosophy
+## Learning objectives
 
-Before we type a single command, we must understand the fundamental philosophy of Linux storage. 
+After this module you can:
 
-If you come from a Windows background, you are likely used to **drive letters** (such as `C:`, `D:`, or `E:`). Each physical hard drive or partition is isolated under its own letter. 
+- Tell a raw, unformatted block device apart from a formatted one using `lsblk` and `blkid`.
+- Create an ext4 filesystem on a raw disk with `mkfs.ext4`.
+- Mount a filesystem onto a directory and confirm the result with `df -h`.
+- Explain why the kernel refuses to unmount a filesystem that is in use.
+- Identify which process is holding a mount open using `lsof` and `fuser`.
+- Stop a blocking process safely by sending `SIGTERM` before escalating to `SIGKILL`.
 
-Linux does not use drive letters. Instead, Linux organizes everything into a single, massive tree that starts at the root directory: `/`. 
+## Before you start
 
-Whether you have one hard drive, ten hard drives, or network storage shares located thousands of miles away in a cloud datacenter, they must all be mapped into folders within this single root tree. If you want to use a secondary hard drive to store backups, you do not open a "Backup Drive." Instead, you mount that hard drive to a folder inside your root tree, such as `/mnt/backup`. When an application writes files to `/mnt/backup`, the Linux kernel silently routes those files out of the main root drive and writes them directly to the physical sectors of the secondary drive.
+You should be comfortable moving around a Linux shell: `cd`, `ls`, `sudo`, and reading command output. You do not need any prior storage experience.
 
-This abstraction is managed by the kernel's **Virtual Filesystem (VFS)**. It is a translation layer that makes different storage technologies look and behave exactly the same way to your applications.
+The linked playground gives you an Ubuntu server VM with passwordless `sudo` and one spare 2 GB disk attached raw and unformatted (commonly `/dev/vdb`). Every command block below is meant to be run in that VM's shell after you have connected with `astrona ssh section-010-module-01-playground`. All the tools used here — `lsblk`, `blkid`, `mkfs.ext4`, `mount`, `df`, `lsof`, `fuser` — are already installed.
 
----
+## The unified file tree
 
-## Part I: Discovering the Unseen
+On Windows, each disk gets its own letter: `C:`, `D:`, `E:`. The drives sit side by side, and you pick one by its letter.
 
-When you attach a brand new physical solid-state drive (SSD) or virtual hard drive to a Linux server, it starts its life as a "raw block device." It is completely blank, has no filesystem, and is invisible to the standard directory tree.
+Linux does not work that way. There is exactly one directory tree, and it starts at the root directory, written `/`. Every disk, whether it is an internal SSD, a USB drive, or a network share on another continent, has to be attached to *some directory inside that one tree* before you can use it. Attaching a disk to a directory is called **mounting**, and the directory it gets attached to is the disk's **mount point**. Once a disk is mounted at, say, `/mnt/backup`, writing a file to `/mnt/backup/report.txt` sends that data to the mounted disk; the kernel handles the redirection invisibly.
 
-To find it, we must ask the kernel to show us all the block devices it currently recognizes. We do this with the `lsblk` (List Block Devices) command:
+The layer that makes every kind of storage behave the same way to your programs is the kernel's **Virtual Filesystem (VFS)**. Because of VFS, an application writing a file does not need to know or care whether the target directory is on a local disk, a USB stick, or a remote server.
 
-```bash
-lsblk
-```
+> As an analogy: mounting is like connecting a new wing to an existing building rather than parking a separate trailer outside. Visitors walk through the same front door and down the same hallways to reach the new rooms. The analogy breaks down in that a mounted disk can be detached cleanly at any time, which is not true of a building wing.
 
-When you run this, you will see a structured list that looks like a tree. It displays your disk drives (usually named something like `sda`, `sdb`, or in virtual environments, `vda`, `vdb`) and any partitions sliced out of them (indicated by numbers, like `vda1` or `vda2`).
+## Discovering an unformatted disk
 
-```text
-NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
-vda     254:0    0   40G  0 disk 
-└─vda1  254:1    0   40G  0 part /
-vdb     254:16   0   10G  0 disk 
-```
+A brand-new disk shows up to the kernel as a **raw block device**: the kernel knows its size and can read and write its sectors, but there is no filesystem on it, so it has no UUID, no label, and cannot be mounted yet.
 
-Take a close look at this output. Notice that `/dev/vda` has a child partition called `vda1`, which has a mount point of `/`. This is our system's main drive. 
+The command to list what block devices the kernel currently sees is `lsblk` ("list block devices"). It prints a tree: whole disks (named `sda`, `sdb`, … on physical hardware, or `vda`, `vdb`, … on virtual machines) with any partitions carved out of them shown as indented children (`vda1`, `vda2`, …).
 
-Now look at `/dev/vdb`. It is a 10 Gigabyte disk, but it has no partitions underneath it, and the `MOUNTPOINT` column is completely blank. This is our raw, unformatted target disk.
+A disk that has a filesystem also has a 128-bit **UUID** (universally unique identifier) written into its header. The `blkid` ("block ID") command reads those headers and reports the UUID and filesystem type of every formatted device. A raw disk has no header for `blkid` to read, so it simply does not appear in the output. That absence is how you confirm a disk is safe to format: if `blkid` does not mention it, there is no filesystem there to destroy.
 
-Before we write data to `/dev/vdb`, we must verify whether it has any existing formatted filesystem on it. We do this using the `blkid` (Block ID) command, which queries the disk headers:
+> [!TIP]
+> **Try it — spot the raw disk**
+>
+> ```sh
+> lsblk
+> sudo blkid
+> ```
+>
+> Expect something like:
+>
+> ```text
+> NAME    MAJ:MIN RM SIZE RO TYPE MOUNTPOINTS
+> vda     254:0    0  15G  0 disk
+> └─vda1  254:1    0  15G  0 part /
+> vdb     254:16   0   2G  0 disk
+>
+> /dev/vda1: UUID="a1b2c3d4-..." TYPE="ext4" PARTUUID="..."
+> ```
+>
+> `vda1` is mounted at `/` and shows up in `blkid` with a UUID and `TYPE`. `vdb` has no mount point, no children, and no line in `blkid` at all — that is the raw 2 GB disk, unformatted and safe to work on. Device names vary; confirm which one is the spare by its 2 GB size and empty mount point.
 
-```bash
-sudo blkid
-```
+## Formatting: putting a filesystem on the disk
 
-`blkid` scans all devices and displays their unique identifiers (UUIDs) and filesystem types (TYPE). If `/dev/vdb` is truly blank, it will not appear in the `blkid` output at all. This is our green light: the disk is raw, unformatted, and safe for us to prepare.
+**Formatting** a disk means writing a **filesystem** onto it: an on-disk data structure that tracks file names, where each file's data blocks live, and metadata like permissions and timestamps. Without a filesystem, the disk is just an undifferentiated array of sectors.
 
----
+This module uses **ext4** (the "fourth extended filesystem"), the long-standing default on many Linux distributions. It is a **journaling** filesystem, which matters for reliability: before changing its on-disk tables, ext4 writes a short description of the intended change to a reserved area called the journal. If power is lost mid-write, the kernel replays the journal on the next boot and the filesystem stays consistent instead of corrupting.
 
-## Part II: Paving the Road
+The tool that creates a filesystem is `mkfs` ("make filesystem"). You call the ext4-specific version directly:
 
-A raw disk is like an open field of dirt. You cannot drive a cargo truck across a dirt field without getting stuck; you need roads, lanes, and marked parking stalls first. 
-
-In the storage world, **formatting** a disk is the process of paving those roads. It creates a structured database on the disk called a **filesystem**. The filesystem defines how files are named, how they are indexed, and where their physical blocks are located on the drive.
-
-In this module, we will format our disk with **ext4** (the fourth extended filesystem), which is the standard, highly resilient journaling filesystem used across many Linux distributions.
-
-To format our raw disk, we use the `mkfs` (Make Filesystem) tool, specifying `ext4`:
-
-```bash
+```sh
 sudo mkfs.ext4 /dev/vdb
 ```
 
-When you execute this command, the system performs several critical steps:
-1.  **Sizing and Alignment**: It calculates the total block count of the device.
-2.  **Writing Inode Tables**: It reserves space for **inodes** (index nodes). In Linux, files do not store their metadata (like permissions, ownership, and modification times) within the file contents. Instead, every file is allocated an inode, which acts as its catalog card.
-3.  **Initializing the Journal**: It creates a transaction log. If the power suddenly cuts out while your system is writing a file, the kernel can read this journal upon reboot to quickly repair any half-written data, preventing the filesystem from corrupting.
+This command overwrites the target. Running it on the wrong device destroys that device's data, so always confirm the device name with `lsblk` first. During the run, `mkfs.ext4` calculates the block count, reserves space for **inodes** (the per-file metadata records), and initializes the journal.
 
-Once the command finishes, run `sudo blkid` again. You will see that `/dev/vdb` now proudly boasts a unique UUID and a `TYPE="ext4"` attribute. Our road is paved.
+> [!TIP]
+> **Try it — before and after formatting**
+>
+> ```sh
+> sudo blkid /dev/vdb
+> sudo mkfs.ext4 /dev/vdb
+> sudo blkid /dev/vdb
+> ```
+>
+> Expect something like:
+>
+> ```text
+> (first blkid prints nothing and exits non-zero — no filesystem yet)
+>
+> mke2fs 1.47.0 (5-Feb-2023)
+> Creating filesystem with 524288 4k blocks and 131072 inodes
+> ...
+> Writing superblocks and filesystem accounting information: done
+>
+> /dev/vdb: UUID="9f8e7d6c-5b4a-3210-fedc-ba9876543210" TYPE="ext4"
+> ```
+>
+> The first `blkid` says nothing because there is no filesystem to identify. After `mkfs.ext4`, the same command reports a fresh UUID and `TYPE="ext4"` — the disk now carries a filesystem.
 
----
+## Mounting: attaching the disk to the tree
 
-## Part III: Opening the Gate
+A formatted disk still is not usable until it is mounted. Trying to `cd /dev/vdb` fails, because `/dev/vdb` is a device file, not a directory.
 
-Even though our disk is formatted and has a filesystem, it is still isolated. If you try to run `cd /dev/vdb`, the shell will reject you. You cannot navigate into a raw device path. We must connect this disk to our main file tree.
+Mounting needs two things: an existing empty directory to serve as the mount point, and the `mount` command to connect the disk to it. Secondary disks are conventionally mounted under `/mnt`.
 
-This connection process is called **mounting**. 
-
-First, we must create an empty directory somewhere in our filesystem to serve as the gateway to the disk. Traditionally, temporary or secondary mounts are placed inside the `/mnt` directory:
-
-```bash
+```sh
 sudo mkdir -p /mnt/backup-black
-```
-
-At this moment, `/mnt/backup-black` is just an empty folder residing on our main root drive (`/dev/vda1`). 
-
-Now, we perform the mount operation:
-
-```bash
 sudo mount /dev/vdb /mnt/backup-black
 ```
 
-The moment you hit `Enter`, a silent overlay occurs. The folder `/mnt/backup-black` ceases to point to your main hard drive. Instead, the kernel redirects any request to read or write within that folder directly to `/dev/vdb`. 
+After the `mount` call, any read or write under `/mnt/backup-black` goes to `/dev/vdb` instead of to the root disk. If the mount-point directory already contained files, those files are not deleted — they are hidden underneath the mount until you unmount, at which point they reappear.
 
-To verify this, run the `df` (Disk Free) command with the `-h` (human-readable) option:
+The `df` ("disk free") command lists mounted filesystems with their capacity and usage; the `-h` flag makes the sizes human-readable.
 
-```bash
-df -h
+> [!TIP]
+> **Try it — confirm the mount**
+>
+> ```sh
+> sudo mkdir -p /mnt/backup-black
+> sudo mount /dev/vdb /mnt/backup-black
+> df -h /mnt/backup-black
+> sudo touch /mnt/backup-black/completed
+> ls -l /mnt/backup-black
+> ```
+>
+> Expect something like:
+>
+> ```text
+> Filesystem      Size  Used Avail Use% Mounted on
+> /dev/vdb        2.0G   24K  1.9G   1% /mnt/backup-black
+> ...
+> -rw-r--r-- 1 root root 0 Aug 29 12:00 /mnt/backup-black/completed
+> ```
+>
+> `df` now lists `/dev/vdb` against the mount point `/mnt/backup-black`, and the `completed` file you created lives on the new disk's sectors, not on the root disk.
+
+## When a disk will not unmount
+
+Detaching a filesystem is done with `umount` (note the spelling — one `n`), taking either the device or the mount point:
+
+```sh
+sudo umount /mnt/backup-black
 ```
 
-You will see `/dev/vdb` listed, showing its total capacity, used space, and confirming that it is actively mounted to `/mnt/backup-black`. You can now create a marker file to test your storage:
-
-```bash
-sudo touch /mnt/backup-black/completed
-```
-
-This file is now safely written directly to the physical sectors of your new drive.
-
----
-
-## Part IV: The Mystery of the Locked Disk
-
-As a system administrator, your storage duties include maintenance. Suppose you need to unmount `/mnt/data-processing` to run disk diagnostics or swap the physical drive. 
-
-You run the unmount command:
-
-```bash
-sudo umount /mnt/data-processing
-```
-
-Instead of succeeding, the operating system throws a frustrating error:
-`umount: /mnt/data-processing: target is busy.`
-
-The kernel is protecting you. If it unmounted the disk right now while an active application was writing to a file, that file would be instantly corrupted, and the application would likely crash. The kernel will refuse to unmount any disk that has "active references."
-
-To resolve this, we must act as system detectives. We need to find out who is holding the gate open, why they are holding it, and how to safely evict them.
-
-### Clue 1: Listing Open Files with `lsof`
-Our first investigative tool is `lsof` (List Open Files). This tool queries the kernel to find every process that currently has an open file descriptor pointing to a path on our disk:
-
-```bash
-sudo lsof +D /mnt/data-processing
-```
-
-The `+D` option tells `lsof` to recursively search the specified directory. The output will show you the name of the command, its Process ID (PID), the user running it, and the exact file path it is reading or writing.
-
-### Clue 2: Finding Active Processes with `fuser`
-Our second tool is `fuser` (File User). While `lsof` lists files, `fuser` is designed to show us the raw Process IDs (PIDs) that are accessing a filesystem, and can even execute evictions for us:
-
-```bash
-sudo fuser -mv /mnt/data-processing
-```
-
-*   `-m` (mount): Tells `fuser` to resolve the entire mounted filesystem, even if we query a subfolder inside it.
-*   `-v` (verbose): Formats the output with detailed process metadata, including the command name and how the process is accessing the path (e.g., `c` for current directory, `e` for running executable, or `f` for open file).
-
-Suppose the output of `fuser` reveals a rogue process:
+Often this just works. But if any process has a file open under the mount, or has its working directory inside it, the kernel refuses:
 
 ```text
-                     USER        PID ACCESS COMMAND
-/mnt/data-processing:
-                     root       4025 ..c..  dark-matter-v2
+umount: /mnt/backup-black: target is busy.
 ```
 
-We have found our culprit. A process named `dark-matter-v2` with PID `4025` is active inside the directory.
+This is a safety feature. Unmounting a filesystem out from under a running program would drop its unwritten data and likely crash it, so the kernel blocks the unmount until nothing is using the filesystem any more. The most common culprit is your own shell sitting inside the directory — a shell's working directory counts as "in use".
 
----
+Two tools identify what is holding a mount:
 
-## Part V: Executing the Eviction
+- `lsof` ("list open files") lists every open file on the system; `lsof +D <dir>` narrows that to files open under a directory tree. Its output includes the command name, the process ID (PID), the user, and the exact path.
+- `fuser` ("file user") reports the PIDs using a path. With `-m` it treats the argument as a whole mounted filesystem, and with `-v` it prints a readable table including an `ACCESS` column (`c` = the process's current directory is here, `e` = its running executable is here, `f` = it has a file open here).
 
-Now that we have identified the process, we must evict it. We cannot unmount the disk until this process is terminated or leaves the directory.
+> [!TIP]
+> **Try it — make a mount busy, then find the cause**
+>
+> Open a second shell into the same VM (`astrona ssh section-010-module-01-playground` again) and park it inside the mount:
+>
+> ```sh
+> cd /mnt/backup-black
+> sleep 600 &
+> ```
+>
+> Back in the first shell:
+>
+> ```sh
+> sudo umount /mnt/backup-black        # fails: target is busy
+> sudo lsof +D /mnt/backup-black
+> sudo fuser -mv /mnt/backup-black
+> ```
+>
+> Expect something like:
+>
+> ```text
+> umount: /mnt/backup-black: target is busy.
+>
+> COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+> bash     4025 ubuntu  cwd    DIR  254,16     4096    2 /mnt/backup-black
+>
+>                      USER        PID ACCESS COMMAND
+> /mnt/backup-black:    ubuntu     4025 ..c..  bash
+> ```
+>
+> Both tools point at the second shell's `bash` (PID `4025` here — yours will differ), and `fuser`'s `..c..` shows the reason: that shell's *current directory* is inside the mount. Nothing has a file open; just standing in the directory is enough to block the unmount.
 
-As a professional administrator, you should always follow the **escalation ladder** when terminating processes. Never jump straight to extreme options.
+## Evicting the process that holds the mount
 
-### Step 1: The Polite Request (SIGTERM)
-First, send a standard termination signal (`SIGTERM` or signal `15`). This signal politely asks the process to save its active work, flush its memory buffers to disk, close its open files, and exit cleanly:
+Sometimes the fix is gentle: if it is only a shell's working directory, running `cd` somewhere else (for example `cd ~`) releases the hold with nothing killed. Try that first.
 
-```bash
-sudo kill -15 4025
-```
+When an actual process must be stopped, follow the **signal escalation ladder** and start with the least forceful option:
 
-Wait a few seconds. If the process is well-behaved, it will shut down, close its files, and release its lock on the disk.
+1. **`SIGTERM` (signal 15)** — the default `kill` signal. It asks the process to shut down cleanly: flush buffers, close files, exit. A well-behaved program obeys within a second or two.
 
-### Step 2: The Forced Eviction (SIGKILL)
-If the process is frozen, hung, or poorly programmed, it may ignore your polite request. In this scenario, you must escalate to a `SIGKILL` (signal `9`):
+   ```sh
+   sudo kill 4025          # same as: kill -15 4025
+   ```
 
-```bash
-sudo kill -9 4025
-```
+2. **`SIGKILL` (signal 9)** — used only if `SIGTERM` was ignored. The kernel terminates the process immediately without letting it run any cleanup code. Unwritten data in that process is lost, but its file descriptors are closed at once, releasing the mount.
 
-Unlike `SIGTERM`, a `SIGKILL` cannot be ignored or blocked by the application. The kernel intercepts this signal and instantly terminates the process mid-execution, wiping it from system memory and immediately closing all of its open file descriptors.
+   ```sh
+   sudo kill -9 4025
+   ```
 
-Once the process is evicted, verify the disk is clear:
+> [!TIP]
+> **Try it — release the mount and detach it**
+>
+> Using the PID that `fuser` reported for your second shell:
+>
+> ```sh
+> sudo kill <PID>
+> sudo fuser -mv /mnt/backup-black     # should now print no process
+> sudo umount /mnt/backup-black
+> lsblk /dev/vdb
+> ```
+>
+> Expect something like:
+>
+> ```text
+>                      USER        PID ACCESS COMMAND
+> /mnt/backup-black:
+>
+> NAME MAJ:MIN RM SIZE RO TYPE MOUNTPOINTS
+> vdb  254:16   0   2G  0 disk
+> ```
+>
+> Once no process is listed, `umount` succeeds and `lsblk` shows `vdb` with an empty mount point again — back to a detached, formatted disk.
 
-```bash
-sudo fuser -mv /mnt/data-processing
-```
+## Reclaiming space from hidden directories
 
-If it returns empty, you can safely unmount the drive:
+Storage work is not only setup; it is also keeping disks from filling. When `df -h` shows a mount near 100 percent, you need to find what is consuming it.
 
-```bash
-sudo umount /mnt/data-processing
-```
+A frequent surprise is a directory whose name starts with a dot (`.trash`, `.Trash-1000`, `.cache`), created by a desktop environment or an application at the root of a mount. Names beginning with a dot are hidden from a plain `ls`, so `ls /mnt/data` can look empty while gigabytes sit in `/mnt/data/.trash`. Use `ls -la` to show dotfiles, and `du` ("disk usage") with `-sh` to total a directory's size.
 
----
+> [!TIP]
+> **Try it — reveal hidden space**
+>
+> ```sh
+> sudo mount /dev/vdb /mnt/backup-black
+> sudo mkdir /mnt/backup-black/.trash
+> sudo dd if=/dev/zero of=/mnt/backup-black/.trash/junk bs=1M count=64
+> ls /mnt/backup-black            # looks empty
+> ls -la /mnt/backup-black        # .trash is visible
+> du -sh /mnt/backup-black/.trash
+> ```
+>
+> Expect something like:
+>
+> ```text
+> total 24
+> drwxr-xr-x 4 root root  4096 Aug 29 12:10 .
+> drwxr-xr-x 3 root root  4096 Aug 29 12:00 ..
+> drwx------ 2 root root 16384 Aug 29 12:05 lost+found
+> drwxr-xr-x 2 root root  4096 Aug 29 12:10 .trash
+>
+> 64M     /mnt/backup-black/.trash
+> ```
+>
+> The plain `ls` hides `.trash`; `ls -la` shows it, and `du -sh` confirms it holds the 64 MB you just wrote. Emptying such a directory (`sudo rm -rf /mnt/backup-black/.trash/*`) is how you would recover the space on a real full disk — check what is inside before deleting.
 
-## Part VI: Storage Housekeeping
-
-Storage administration is also about capacity maintenance. Over time, disks fill up with log files, temporary caches, and garbage.
-
-If a disk shows high utilization in `df -h` (e.g., 98% full), you must hunt down where the space is being consumed. Often, applications or desktop environments create hidden trash directories, such as `.trash` or `.Trash-1000`, at the root of their mount point.
-
-Because these directories start with a dot (`.`), they are hidden from standard `ls` listings. Beginners often run `ls /mnt/data` and assume the disk is empty, missing the hidden garbage folders.
-
-To find these hidden consumers, use `ls -la` (which lists all files, including hidden dotfiles):
-
-```bash
-ls -la /mnt/data-processing
-```
-
-If you locate a hidden `.trash` directory that is consuming valuable megabytes, you can safely purge its contents to restore your disk capacity:
-
-```bash
-sudo rm -rf /mnt/data-processing/.trash/*
-```
-
-Run `df -h` once more to verify that your active capacity has returned to a healthy, green state.
-
----
-
-## Self-Check and Verification
-
-Test your understanding of these storage operations before moving forward:
-1.  **Block Devices**: Can you explain the difference between a raw block device like `/dev/vdb` and a formatted partition like `/dev/vda1`?
-2.  **Mount States**: If you mount a drive to `/mnt/test`, and that folder already contained files before the mount, what happens to those files? *(Answer: They are safely hidden by the kernel's overlay until you unmount the drive; you will only see the files residing on the mounted drive)*.
-3.  **Active Locks**: If you run `cd /mnt/data-processing` in your current terminal session, and then try to run `sudo umount /mnt/data-processing` in the exact same terminal, why does it fail with "device is busy"? *(Answer: Your own terminal shell is a running process that has its current working directory set inside the mount, creating an active lock. Run `cd ~` to leave the directory first!)*.
+> [!WARNING]
+> **Common pitfalls**
+>
+> - **Running `mkfs` on the wrong device.** `mkfs.ext4 /dev/vda` would wipe the running system. There is no confirmation prompt and no undo. Always run `lsblk` and match the size and mount point before formatting.
+> - **Confusing `umount` with `unmount`.** The command is `umount`, with a single `n`. `unmount` is not a command.
+> - **Assuming "target is busy" means a bug.** It almost always means a shell (often your own) has its working directory inside the mount, or a background job is reading a file there. `lsof +D` and `fuser -mv` tell you which; `cd ~` frequently fixes it without killing anything.
+> - **Jumping straight to `kill -9`.** `SIGKILL` gives the process no chance to flush data or remove lock files. Send the default `SIGTERM` first and only escalate if the process ignores it.
+> - **Trusting a plain `ls` on a full disk.** Hidden dot-directories do not show up. Use `ls -la` and `du -sh` when hunting for consumed space.

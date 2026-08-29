@@ -1,0 +1,55 @@
+# Network Automount Maps & Tuning (PLAYGROUND) — Playground environment
+# Two VMs on a private subnet:
+#   client (10.10.50.5)  — autofs + nfs-common, /etc/auto.master backed up
+#   nfs    (10.10.50.10) — NFS server exporting /export/eng and /export/mkt
+# No task, no grading, no `astrona submit`.
+# Schema: internal/config.LabConfig.
+
+metadata:
+  name: "section-050-module-02-playground"
+  docs:
+    guide: "docs/overview.md"
+
+runtime:
+  type: "qemu"
+  networks:
+    - name: "pg-net"
+      cidr: "10.10.50.0/24"
+  qemu:
+    - name: "client"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      networks:
+        - name: "pg-net"
+          ipv4: "10.10.50.5"
+      bootstrap:
+        init:
+          - name: "client-prepare"
+            description: "Install autofs + nfs-common, add nfs to /etc/hosts, back up /etc/auto.master."
+            type: "folder"
+            source: "bootstrap/client/"
+    - name: "nfs"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      networks:
+        - name: "pg-net"
+          ipv4: "10.10.50.10"
+      bootstrap:
+        init:
+          - name: "nfs-prepare"
+            description: "Install nfs-kernel-server, seed /export/eng and /export/mkt, export ro to the subnet."
+            type: "folder"
+            source: "bootstrap/nfs/"
+
+teardown:
+  keepCluster: false

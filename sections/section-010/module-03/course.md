@@ -1,180 +1,192 @@
-# Chapter 3: Under Lock and Key: Securing Data-at-Rest with LUKS
+# Under Lock and Key: Securing Data-at-Rest with LUKS
 
-For physical servers in a busy server room, laptops carried through airports, or virtual disks rented in a multi-tenant cloud, raw hardware protection is rarely enough. If a physical hard drive is extracted from a tray, or if a cloud storage volume is cloned offline, anyone with raw block access can read your database files, configuration secrets, and user records. 
+<!-- astrona:playground -->
+> [!NOTE]
+> 🧪 **Hands-on playground for this module** — a clean, throwaway machine to explore on. No task, no grading. Folder: [`playground/`](https://github.com/astrona-io/ATS004/tree/main/sections/section-010/module-03/playground)
+>
+> ```sh
+> astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-010/module-03/playground
+> astrona destroy section-010-module-03-playground
+> ```
 
-In Linux, we defend against physical and offline threats by deploying the **Linux Unified Key Setup (LUKS)**. This is the industry-standard specification for block-device encryption. Working closely with the kernel's device-mapper subsystem, LUKS ensures that data is scrambled before it is committed to physical media, rendering it unreadable to anyone who does not possess the correct key.
+Filesystem permissions protect data only while the operating system that enforces them is running. Pull the disk out and read it on another machine, or clone a cloud volume offline, and the permissions are irrelevant — the bytes are right there. Protecting data **at rest**, against someone who has the storage but not your running system, needs encryption on the disk itself.
 
----
+On Linux the standard tool for this is **LUKS** (Linux Unified Key Setup): full-block-device encryption built into the kernel. This chapter covers what LUKS defends against, how its keys are arranged, and the `cryptsetup` commands to create, open, use, and close an encrypted volume.
 
-## The Safe in the Office: Cryptographic Delegation
+## Learning objectives
 
-To understand how LUKS works, imagine your organization purchases a heavy-duty steel safety locker to store physical manuals and records. 
+After this module you can:
 
-If you leave the locker's door swung wide open in a public hallway, anyone walking by can read or walk off with the documents. To secure them, you shut the heavy steel door, spin the lock, and scramble the combination. Now, the contents are safe. When you need to read a file, you walk up to the locker, punch in your combination passcode, and open the door. For the duration of your shift, you can read, edit, and add documents. When your workday ends, you push the door shut and spin the dial again. Even if a burglar breaks into your office tonight and carries the entire heavy locker out to their truck, they cannot read a single word of your documents without destroying the locker's contents.
+- Describe the offline / data-at-rest threat that LUKS addresses and what it does not protect against.
+- Create a LUKS container on a block device with `cryptsetup luksFormat`.
+- Explain the roles of the master key and the keyslots, and add a second passphrase with `luksAddKey`.
+- Open a LUKS device to a `/dev/mapper/` name, put a filesystem on the *mapped* device, mount it, then unmount and `close` it.
+- Predict what the raw device shows to someone without the passphrase.
 
-In Linux, a raw disk partition (like `/dev/vdb1`) is that heavy steel locker. The combination lock is **LUKS encryption**. 
+## Before you start
 
-We do not write filesystems directly to the raw, locked partition. Instead, we use our combination (a passphrase) to open the lock. Once opened, the kernel creates a special virtual gateway—a decrypted virtual block device—usually located inside `/dev/mapper/`. This virtual gateway is our active work table. We format this virtual gateway with a standard filesystem (like ext4) and mount it to our file tree. 
+You should know how to format and mount a filesystem (`mkfs.ext4`, `mount`, `umount`) from the earlier modules, and be comfortable with `sudo`.
 
-When an application writes a file to the mounted folder, the kernel's **dm-crypt** driver intercepts the blocks, encrypts them in system memory using a military-grade symmetric cipher, and then passes the scrambled gibberish down to the physical sectors of `/dev/vdb1`. When we unmount the folder and close the mapping, the decrypted virtual block device vanishes. The physical sectors on `/dev/vdb1` remain scrambled, locked, and completely secure.
+The linked playground gives you an Ubuntu server VM with passwordless `sudo`, the `cryptsetup` tool, the `dm_crypt` kernel module loaded, and one spare 2 GB raw disk (commonly `/dev/vdb`) wiped clean on every boot. Run the command blocks below in that VM after connecting with `astrona ssh section-010-module-03-playground`. The examples encrypt the whole disk `/dev/vdb`; on a real system you would usually encrypt a partition such as `/dev/vdb1` instead, but the commands are identical.
 
----
+## What LUKS protects against
 
-## Under the Hood: Master Keys, Keyslots, and dm-crypt
+LUKS encrypts every block before it reaches the physical media and decrypts it on the way back, using a key derived from a passphrase you supply. It defends against:
 
-As a systems engineer, you should understand the elegant mechanics that make LUKS both highly secure and flexible.
+- a disk removed from a server and read elsewhere,
+- an offline copy or snapshot of a cloud volume,
+- a discarded or RMA'd drive that still holds readable data.
 
-### The Master Key and the Keyslots
-When you run a LUKS format command, the system does not use your personal passphrase to encrypt your data. Your passphrase is too short, has too little entropy, and is vulnerable to dictionary attacks. 
+It does **not** protect a running system where the volume is already unlocked and mounted — at that point the kernel is decrypting reads for anyone with filesystem access. Nor does it help if the passphrase is weak or written on a sticky note. LUKS is one layer, aimed squarely at the "someone has the disk" case.
 
-Instead, the system generates a long, cryptographically strong, and completely random **Master Key** (typically a 256-bit or 512-bit key). This master key is what actually encrypts and decrypts every block written to the physical storage media.
+## The mental model: lock the disk, work through a mapping
 
-But how does LUKS protect the master key itself? It uses **Keyslots**. 
+You never write a filesystem onto the locked device directly. Instead:
 
-A LUKS device contains a header at the beginning of the partition that holds several slots (traditionally 8 slots in LUKS1, and up to 32 or dynamically allocated slots in LUKS2). When you establish a passphrase, the system takes your password, passes it through a heavy key-derivation function (like **Argon2i** or **PBKDF2**), and uses the resulting hash to encrypt the master key. It then stores this encrypted master key inside Keyslot 0.
+1. `cryptsetup luksFormat` writes a **LUKS header** to the start of the device and marks the rest as an encrypted region.
+2. `cryptsetup open` asks for the passphrase and, if it checks out, creates a decrypted **virtual device** under `/dev/mapper/`. Reads and writes to that virtual device are encrypted and decrypted on the fly by the kernel's `dm-crypt` layer.
+3. You format and mount the `/dev/mapper/` device like any normal disk.
+4. `cryptsetup close` removes the virtual device. The physical disk is back to being an opaque encrypted blob.
 
-If your team later wants to grant a secondary administrator access to the same drive, you do not have to share your passphrase. You can ask LUKS to decrypt Keyslot 0 using your passcode, retrieve the master key, prompt the second administrator for their unique passcode, encrypt the master key with their password, and store it in Keyslot 1. The drive now has two completely different passphrases that can unlock the exact same data.
+> As an analogy: the locked device is a heavy safe. `open` is spinning the dial to the right combination, which lets a service window (`/dev/mapper/secure_vault`) appear that you can pass documents through. `close` shuts the safe and the window disappears. The analogy breaks down because the "documents" (your filesystem) are never physically inside anything — `dm-crypt` transforms each block as it passes through the window, and nothing readable is ever stored.
 
-### The Decryption Pipeline
-When you open a LUKS device:
-1.  You provide your passphrase.
-2.  The kernel hashes your password and attempts to decrypt the header's keyslots.
-3.  Once it finds a matching keyslot, it decrypts the slot to retrieve the raw master key.
-4.  The master key is loaded directly into the kernel's volatile system RAM. It is never written to disk.
-5.  The kernel's **dm-crypt** driver uses this master key to decrypt read requests and encrypt write requests on the fly.
-6.  When you "close" the LUKS device, the master key is instantly purged and zeroed out from the kernel's active RAM, slam-shutting the virtual vault door.
+## Creating a LUKS container
 
----
+`cryptsetup luksFormat <device>` initializes the encryption. It overwrites the start of the device, so it demands you type `YES` in capitals, then asks for a passphrase twice. On current systems it creates a **LUKS2** header by default.
 
-## The Cryptsetup Toolkit
+> [!TIP]
+> **Try it — format and inspect the header**
+>
+> ```sh
+> sudo cryptsetup luksFormat /dev/vdb
+> sudo cryptsetup luksDump /dev/vdb
+> ```
+>
+> `luksFormat` prompts:
+>
+> ```text
+> WARNING!
+> ========
+> This will overwrite data on /dev/vdb irrevocably.
+>
+> Are you sure? (Type 'yes' in capital letters): YES
+> Enter passphrase for /dev/vdb:
+> Verify passphrase:
+> ```
+>
+> `luksDump` then prints something like:
+>
+> ```text
+> LUKS header information
+> Version:        2
+> ...
+> Data segments:
+>   0: crypt
+>         offset: 16777216 [bytes]
+>         cipher: aes-xts-plain64
+> Keyslots:
+>   0: luks2
+>         Key:        512 bits
+>         PBKDF:      argon2id
+> ```
+>
+> The header records the cipher (`aes-xts-plain64`) and one active keyslot (`0`) holding your passphrase. The data region starts 16 MiB in, after the header. No filesystem exists yet — that comes after you open the device.
+>
+> *Scripting note:* to avoid the prompts you can pipe the passphrase in:
+> `printf 'my-pass' | sudo cryptsetup luksFormat /dev/vdb --batch-mode --key-file=-`.
 
-To interact with these cryptographic layers, Linux provides the `cryptsetup` command-line utility.
+## Master key and keyslots
 
-- `sudo cryptsetup luksFormat /dev/vdb1`: Wipes the target partition, generates a new master key, prompts you for a passphrase, and initializes the LUKS header.
-- `sudo cryptsetup open /dev/vdb1 vault`: Prompts for the passphrase, decrypts the keyslot, loads the master key into kernel memory, and maps the decrypted virtual block device to `/dev/mapper/vault`.
-- `sudo cryptsetup close vault`: Unmaps the decrypted path, wipes the master key from kernel memory, and locks `/dev/vdb1`.
-- `sudo cryptsetup luksDump /dev/vdb1`: Prints the metadata headers of `/dev/vdb1`, showing active keyslots, ciphers used, and PBKDF parameters without revealing the keys.
+Your passphrase does not encrypt your data directly. It is too short and too guessable. Instead, `luksFormat` generates a long random **master key** and it is the master key that encrypts every data block.
 
----
+The master key itself is then stored — encrypted — in a **keyslot** in the header. Your passphrase is run through a deliberately slow key-derivation function (Argon2id on LUKS2) and the result encrypts the master key into keyslot 0. LUKS2 has room for many keyslots, so several different passphrases can each unlock the *same* master key.
 
-## Scenario: Building a Secure Cryptographic Vault
+That is how you grant a second person access without sharing your passphrase: `cryptsetup luksAddKey <device>` authenticates with an existing passphrase, then encrypts the master key under a new one and stores it in the next free slot.
 
-Your security team has requested a new encrypted vault to store highly sensitive system logs. They have allocated a 10GB partition identified as `/dev/vdb1`. Let's walk through building, mounting, and locking down this cryptographic storage space.
+> [!TIP]
+> **Try it — add a second passphrase**
+>
+> ```sh
+> sudo cryptsetup luksAddKey /dev/vdb
+> sudo cryptsetup luksDump /dev/vdb | grep -A1 '^  [0-9]*: luks2'
+> ```
+>
+> Expect something like:
+>
+> ```text
+> Enter any existing passphrase:
+> Enter new passphrase for key slot:
+> Verify passphrase:
+>
+>   0: luks2
+>         Key:        512 bits
+>   1: luks2
+>         Key:        512 bits
+> ```
+>
+> There are now two keyslots. Either passphrase decrypts its slot to recover the one shared master key, so both unlock the same data. Removing a person's access is `cryptsetup luksKillSlot /dev/vdb 1`.
 
-### Step 1: Laying the Cryptographic Foundation
-First, we use `cryptsetup` to initialize our encryption envelope on `/dev/vdb1`. This step destroys any existing headers or data on the partition:
+## Opening, using, and closing the vault
 
-```bash
-sudo cryptsetup luksFormat /dev/vdb1
-```
+`cryptsetup open <device> <name>` prompts for a passphrase and, on success, creates `/dev/mapper/<name>`. You then treat that path as the disk: `mkfs.ext4 /dev/mapper/<name>`, `mount`, use it, `umount`, and finally `cryptsetup close <name>`.
 
-To prevent accidental wipeouts, `cryptsetup` demands a specific confirmation. You must type uppercase `YES` to proceed:
+Formatting must target the mapped device, never the raw one. Running `mkfs.ext4 /dev/vdb` now would overwrite the LUKS header and make the data permanently unrecoverable even with the right passphrase.
 
-```text
-WARNING!
-========
-This will overwrite data on /dev/vdb1 irrevocably.
+> [!TIP]
+> **Try it — open, write, close**
+>
+> ```sh
+> sudo cryptsetup open /dev/vdb secure_vault
+> ls -l /dev/mapper/secure_vault
+> sudo mkfs.ext4 /dev/mapper/secure_vault
+> sudo mkdir -p /mnt/vault
+> sudo mount /dev/mapper/secure_vault /mnt/vault
+> echo "top secret" | sudo tee /mnt/vault/notes.txt
+> df -h /mnt/vault
+> sudo umount /mnt/vault
+> sudo cryptsetup close secure_vault
+> ls /dev/mapper/
+> ```
+>
+> Expect something like:
+>
+> ```text
+> lrwxrwxrwx 1 root root 7 Aug 29 12:00 /dev/mapper/secure_vault -> ../dm-0
+> ...
+> Filesystem                Size  Used Avail Use% Mounted on
+> /dev/mapper/secure_vault  1.9G   24K  1.8G   1% /mnt/vault
+> ...
+> (after close: only 'control' remains under /dev/mapper/)
+> ```
+>
+> While open, `secure_vault` behaves exactly like a plain disk and `df` shows the ext4 filesystem mounted through it. After `close`, the mapper entry is gone and the data on `/dev/vdb` is inert encrypted bytes again. `close` fails with "Device secure_vault is busy" if you skip the `umount` — release the filesystem first.
 
-Are you sure? (Type 'yes' in capital letters): YES
-Enter passphrase for /dev/vdb1: 
-Verify passphrase: 
-```
+## What the locked disk looks like from outside
 
-Type a strong passphrase and press `Enter`. The system will run its key-derivation algorithms, write the LUKS headers to the start of `/dev/vdb1`, and exit.
+With the device closed, someone who copies `/dev/vdb` gets the LUKS header — a small, clearly labelled structure — followed by the encrypted data region, which is statistically indistinguishable from random noise. No filenames, no sizes, no content.
 
-### Step 2: Swinging the Vault Door Open
-Now that the partition is encrypted, we cannot write a filesystem directly to it. We must open the vault and let the kernel create our decrypted virtual block mapping. We will name this mapping `secure_vault`:
+> [!TIP]
+> **Try it — read the raw bytes**
+>
+> ```sh
+> sudo xxd -l 96 /dev/vdb
+> sudo xxd -s 20000000 -l 64 /dev/vdb
+> ```
+>
+> Expect something like:
+>
+> ```text
+> 00000000: 4c55 4b53 babe 0002 ...   LUKS............     <-- 'LUKS' magic + version
+> ...
+> 01312d00: 9c3e a71f 4b02 ...        .>..K...........     <-- deep in the data area: noise
+> ```
+>
+> The first four bytes spell `LUKS` and the header advertises the version and cipher — that part is meant to be readable so tools know how to unlock it. Everything in the data region is high-entropy: nothing about your files is visible without the passphrase.
 
-```bash
-sudo cryptsetup open /dev/vdb1 secure_vault
-```
-
-The system prompts you for the passcode you just created:
-
-```text
-Enter passphrase for /dev/vdb1: 
-```
-
-Once validated, the kernel creates a virtual device path at `/dev/mapper/secure_vault`. Let's verify it exists using the `ls` command:
-
-```bash
-ls -l /dev/mapper/secure_vault
-```
-
-You will see it is a symbolic link pointing to a device-mapper block file:
-
-```text
-lrwxrwxrwx 1 root root 7 Oct 24 12:34 /dev/mapper/secure_vault -> ../dm-0
-```
-
-### Step 3: Paving the Cryptographic Road
-With our mapping active, we format this unencrypted gateway with our ext4 filesystem database. **Crucial Rule**: Never run formatting commands on the raw partition `/dev/vdb1` now! Doing so will destroy the LUKS headers we just wrote. Always format the mapped device:
-
-```bash
-sudo mkfs.ext4 /dev/mapper/secure_vault
-```
-
-The system will write the ext4 journaling tables, block markers, and inode maps inside our encrypted envelope.
-
-### Step 4: Accessing the Vault
-Now, we create an empty directory to act as our gateway and mount the decrypted device-mapper path to it:
-
-```bash
-sudo mkdir -p /mnt/vault
-sudo mount /dev/mapper/secure_vault /mnt/vault
-```
-
-Run `df -h` to verify the mount state:
-
-```bash
-df -h /mnt/vault
-```
-
-The system confirms that the mapped vault is active and ready:
-
-```text
-Filesystem                     Size  Used Avail Use% Mounted on
-/dev/mapper/secure_vault       9.8G   24M  9.3G   1% /mnt/vault
-```
-
-We can now write a sensitive file directly to the vault:
-
-```bash
-echo "Top-Secret-Payload" | sudo tee /mnt/vault/keys.txt
-```
-
-### Step 5: Slamming the Door Shut
-Once our maintenance work is complete, we must secure the storage space before leaving the terminal. 
-
-First, we unmount the filesystem to ensure all dirty blocks are flushed out of the system's memory cache and written down to the disk:
-
-```bash
-sudo umount /mnt/vault
-```
-
-Second, we close the LUKS mapping:
-
-```bash
-sudo cryptsetup close secure_vault
-```
-
-This command instantly instructs the kernel to drop the master key from its active memory tables and destroy the virtual path `/dev/mapper/secure_vault`. 
-
-If you try to run `cat /mnt/vault/keys.txt` now, the folder is empty. If you run `ls /dev/mapper/`, your `secure_vault` target is completely gone. The underlying partition `/dev/vdb1` is locked tight, containing only scrambled, high-entropy noise.
-
----
-
-## Common Pitfalls
-
-- **The Lost Passphrase**: Because LUKS uses strong, unbreakable ciphers, if you lose your passphrase and have not configured secondary keyslots or backup headers, **your data is permanently and absolutely unrecoverable**. There is no "forgot password" link or administrative override.
-- **Wiping the Raw Partition**: If an automated script or a sleepy administrator accidentally runs `mkfs.ext4 /dev/vdb1` on the raw, encrypted partition, it will overwrite the first few megabytes of the disk, obliterating the LUKS header and keyslots. Even if you know the password, you will never be able to decrypt the master key again.
-- **Attempting an Early Close**: If a shell session is active inside `/mnt/vault` or an application is reading an open file descriptor from it, running `cryptsetup close secure_vault` will fail, complaining that the device is busy. You must unmount the filesystem first to release all active kernel references.
-
----
-
-## Self-Check and Verification
-
-Test your command of LUKS-encrypted systems with these questions:
-1.  **Direct Reading**: If an attacker runs `sudo head -n 20 /dev/vdb1` on your locked LUKS disk, what will they see? *(Answer: They will see only a stream of high-entropy, randomized binary data with a tiny text header at the absolute beginning indicating it is a LUKS partition; no file paths, metadata, or actual text contents are readable.)*
-2.  **Mapping Safety**: Why must you format and write files to `/dev/mapper/secure_vault` instead of `/dev/vdb1`? *(Answer: `/dev/vdb1` holds the raw, scrambled bytes. Writing to it directly bypasses the encryption mapping, overwriting and corrupting both your LUKS headers and the encrypted filesystem tables.)*
-3.  **Key Removal**: When you run `sudo cryptsetup close secure_vault`, where does the cryptographic key go? *(Answer: The master key is completely erased and zeroed out from the kernel's active volatile RAM, ensuring it cannot be extracted from a memory dump if the server is compromised later.)*
+> [!WARNING]
+> **Common pitfalls**
+>
+> - **A lost passphrase means lost data.** If no keyslot's passphrase is known and you have no header backup, the master key cannot be recovered. There is no reset. Record passphrases in a real secret store and consider `cryptsetup luksHeaderBackup`.
+> - **Formatting the raw device after LUKS.** `mkfs.ext4 /dev/vdb` (instead of `/dev/mapper/...`) overwrites the LUKS header and keyslots. The passphrase becomes useless. Always act on the `/dev/mapper/` name once the device is open.
+> - **`close` while still mounted or in use.** `cryptsetup close` fails with "device is busy" if the filesystem is mounted or a process holds a file open. `umount` (and clear any process, as in the first module) before closing.
+> - **Treating LUKS as protection for a live system.** Once the volume is open and mounted, its contents are readable to anyone with normal access. LUKS only helps when the device is closed.

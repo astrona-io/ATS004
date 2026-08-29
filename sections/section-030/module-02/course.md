@@ -1,77 +1,204 @@
 # Advanced LVM Operations
 
-The true power of LVM is not abstracting storage; it is manipulating that storage while the system is under heavy load. If LVM basics are laying out the cubicles, advanced operations are dynamically sliding the cubicle walls back and forth without disturbing the workers actively typing at their desks.
+<!-- astrona:playground -->
+> [!NOTE]
+> 🧪 **Hands-on playground for this module** — a clean, throwaway machine to explore on. No task, no grading. Folder: [`playground/`](https://github.com/astrona-io/ATS004/tree/main/sections/section-030/module-02/playground)
+>
+> ```sh
+> astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-030/module-02/playground
+> astrona destroy section-030-module-02-playground
+> ```
 
-These are high-stakes operations. A mistake here destroys data. You must understand exactly how the extents map to the hardware.
+The previous module built an LVM stack. This one changes it while it is in use: moving a volume's data off a dying disk, pulling that disk out of the pool, and growing a volume and its filesystem — all with the filesystem mounted and applications writing to it.
 
-## Zero-Downtime Hardware Migration
+These operations rewrite where real data lives. A wrong device name or a missing `+` sign destroys data. The commands are short; the care is in reading the current state first.
 
-Hard drives fail. Usually, they start throwing read errors or SMART warnings before they die completely. In a traditional setup, replacing a failing drive means scheduled downtime, tape backups, and data restoration.
+## Learning objectives
 
-With LVM, you migrate the data off the failing disk while applications are still writing to it.
+After this module you can:
 
-If `/dev/sdb` is throwing errors, but it is part of your `data_pool` Volume Group, your first step is to add a healthy replacement disk to the pool.
+- Add a disk to a live volume group with `pvcreate` + `vgextend`.
+- Evacuate all extents off a physical volume with `pvmove` while its volume stays mounted.
+- Remove an emptied disk from a pool with `vgreduce` and clear its LVM label with `pvremove`.
+- Grow a logical volume with `lvextend` and then grow the filesystem with `resize2fs` (ext4) or `xfs_growfs` (XFS).
+- Explain why `lvextend -L 20G` and `lvextend -L +20G` are dangerously different.
 
-```bash
-pvcreate /dev/sdd
-vgextend data_pool /dev/sdd
-```
+## Before you start
 
-Now you have free, healthy extents in the pool. You command LVM to evacuate all used extents off the failing drive.
+You need the previous module's material: what PVs, VGs, LVs, and extents are, and the `pvs` / `vgs` / `lvs` inspection commands.
 
-```bash
-pvmove /dev/sdb
-```
+The linked playground gives you an Ubuntu server VM with a **pre-built stack**: volume group `vgdata` on two 1 GB disks, logical volume `applv` (400 MiB ext4) with all its extents on the first disk, mounted at `/mnt/applv` with sample files, and a third disk left raw as the replacement. The three disks' kernel names are in `/etc/playground-disks` as `source_disk`, `second_disk`, `spare_disk` — read that file rather than assuming `vdb`/`vdc`/`vdd` order. Run the command blocks below in that VM after `astrona ssh section-030-module-02-playground`.
 
-The `pvmove` command tracks every block. It copies the data from the failing `/dev/sdb` to the new `/dev/sdd`. If an application writes to a block during the copy, LVM intercepts the write, updates the new location, and continues. The filesystem mounted on top never notices the underlying physical hardware is changing out from under it.
+## Reading the current state
 
-Once `pvmove` finishes, `/dev/sdb` is completely empty of LVM data. You then remove it from the pool.
+Every operation here depends on knowing which extents are where. Before touching anything, look.
 
-```bash
-vgreduce data_pool /dev/sdb
-```
+> [!TIP]
+> **Try it — survey the stack**
+>
+> ```sh
+> cat /etc/playground-disks
+> sudo pvs
+> sudo vgs
+> sudo lvs -o +devices
+> df -h /mnt/applv
+> ```
+>
+> Expect something like:
+>
+> ```text
+> source_disk=/dev/vdb   # holds all of applv's extents (the 'failing' disk)
+> second_disk=/dev/vdc
+> spare_disk=/dev/vdd
+>
+>   PV         VG     Fmt  Attr PSize    PFree
+>   /dev/vdb   vgdata lvm2 a--  1020.00m 620.00m
+>   /dev/vdc   vgdata lvm2 a--  1020.00m 1020.00m
+>
+>   LV    VG     Attr       LSize   Devices
+>   applv vgdata -wi-ao---- 400.00m /dev/vdb(0)
+>
+>   Filesystem               Size  Used Avail Use% Mounted on
+>   /dev/mapper/vgdata-applv 380M   14K  350M   1% /mnt/applv
+> ```
+>
+> `lvs -o +devices` confirms every extent of `applv` is on `source_disk` (`/dev/vdb` here). `spare_disk` is not listed by `pvs` at all — it is still raw. That is the situation the rest of the chapter changes.
 
-Finally, you wipe the LVM header from the drive so it can be physically unplugged.
+## Adding a replacement disk to the pool
 
-```bash
-pvremove /dev/sdb
-```
+A disk that is throwing SMART warnings has not failed yet, so you can still read from it. The migration strategy is: add a healthy disk to the same VG, move the data across, then drop the sick one.
 
-## Live Volume Expansion
+`pvcreate <spare>` initialises the new disk as a PV; `vgextend <vg> <spare>` folds it into the existing pool. Both are safe on a running system — they add capacity without moving anything.
 
-When a filesystem fills up, LVM allows you to expand it on the fly. This is a two-step process: you must first enlarge the block device (the container), and then command the filesystem to expand into the newly available space.
+> [!TIP]
+> **Try it — extend the volume group onto the spare**
+>
+> ```sh
+> . /etc/playground-disks
+> sudo pvcreate "$spare_disk"
+> sudo vgextend vgdata "$spare_disk"
+> sudo vgs
+> sudo pvs
+> ```
+>
+> Expect something like:
+>
+> ```text
+>   Physical volume "/dev/vdd" successfully created.
+>   Volume group "vgdata" successfully extended
+>
+>   VG     #PV #LV #SN Attr   VSize  VFree
+>   vgdata   3   0   1 wz--n- <2.99g <2.61g
+> ```
+>
+> `vgdata` now spans three PVs and its free space jumped by ~1 GB. Nothing about `applv` changed yet — you only added room.
 
-First, you instruct LVM to assign more extents to the Logical Volume.
+## Migrating extents with `pvmove`
 
-```bash
-lvextend -L +20G /dev/data_pool/app_data
-```
+`pvmove <source>` copies every allocated extent off `<source>` onto other PVs in the same VG that have free space, updating LVM's map as it goes. If an application writes to a block mid-copy, LVM applies the write to the new location and carries on. The mounted filesystem sees nothing.
 
-The `-L +20G` flag is critical. The `+` sign means "add 20 Gigabytes to the current size". If you omit the `+` sign, you are telling LVM to "make the absolute size exactly 20 Gigabytes". If the volume was 50G, omitting the `+` shrinks the volume, truncates the filesystem, and immediately destroys 30G of data. Always double-check your signs.
+It can take a while and prints progress. You can re-run it if interrupted; it resumes.
 
-The block device is now larger, but the filesystem sitting inside it doesn't know that yet. You must resize the filesystem.
+> [!TIP]
+> **Try it — evacuate the source disk while applv stays mounted**
+>
+> ```sh
+> . /etc/playground-disks
+> sudo pvmove "$source_disk"
+> sudo lvs -o +devices
+> cat /mnt/applv/data.txt
+> df -h /mnt/applv
+> ```
+>
+> Expect something like:
+>
+> ```text
+>   /dev/vdb: Moved: 4.00%
+>   /dev/vdb: Moved: 71.00%
+>   /dev/vdb: Moved: 100.00%
+>
+>   LV    VG     Attr       LSize   Devices
+>   applv vgdata -wi-ao---- 400.00m /dev/vdc(0),/dev/vdd(0)
+>
+> important production data
+> ```
+>
+> `applv`'s extents are now on `second_disk` and `spare_disk`; none remain on `source_disk`. The file is intact and `df` is unchanged — the migration happened underneath a live, mounted filesystem.
 
-If the filesystem is `ext4`, use `resize2fs`.
+## Removing the emptied disk
 
-```bash
-resize2fs /dev/data_pool/app_data
-```
+With no extents left on it, `source_disk` can leave the pool. `vgreduce <vg> <source>` detaches it; `pvremove <source>` wipes the LVM label so the disk is plain again and safe to physically pull.
 
-If the filesystem is `XFS`, the command is different and it requires the mount point, not the device path.
+> [!TIP]
+> **Try it — retire the source disk**
+>
+> ```sh
+> . /etc/playground-disks
+> sudo vgreduce vgdata "$source_disk"
+> sudo pvremove "$source_disk"
+> sudo pvs
+> sudo vgs
+> ```
+>
+> Expect something like:
+>
+> ```text
+>   Removed "/dev/vdb" from volume group "vgdata"
+>   Labels on physical volume "/dev/vdb" successfully wiped.
+>
+>   PV         VG     Fmt  Attr PSize    PFree
+>   /dev/vdc   vgdata lvm2 a--  1020.00m  620.00m
+>   /dev/vdd   vgdata lvm2 a--  1020.00m  620.00m
+>
+>   VG     #PV #LV #SN Attr   VSize  VFree
+>   vgdata   2   0   1 wz--n-  1.99g  1.21g
+> ```
+>
+> `source_disk` no longer appears in `pvs`, and `vgdata` is back to two PVs — the sick disk is fully removed with no downtime taken.
 
-```bash
-xfs_growfs /mnt/app-data
-```
+## Growing a volume live: `lvextend` then the filesystem
 
-Both commands will recognize the new boundary of the block device and instantly expand the filesystem structure to use the new space. The applications writing to the disk experience zero interruption.
+Enlarging a mounted volume is two steps, in order: grow the block device, then grow the filesystem inside it.
 
-## Self-Check and Verification
+`lvextend -L +<size> <lv-path>` adds space. The `+` is critical:
 
-To prove you can handle live LVM maintenance:
+- `lvextend -L +200M /dev/vgdata/applv` — **add** 200 MiB to the current size.
+- `lvextend -L 200M /dev/vgdata/applv` — set the absolute size **to** 200 MiB. If `applv` is 400 MiB, this shrinks it and truncates the filesystem, destroying data.
 
-1. Identify a Volume Group with an active, mounted Logical Volume spanning at least one physical disk.
-2. Add a new physical disk to the machine and extend the Volume Group using `vgextend`.
-3. Perform a live evacuation of the original disk using `pvmove`. Watch the progress until completion.
-4. Safely remove the evacuated disk from the Volume Group using `vgreduce`.
-5. Add 5GB of capacity to the active Logical Volume using `lvextend -L +5G`.
-6. Run `df -h` to note the current filesystem size, execute `resize2fs` (or `xfs_growfs`), and verify the filesystem reflects the new capacity instantly.
+After the LV is bigger, the filesystem still thinks it ends at the old boundary. Grow it: `resize2fs <lv-path>` for ext4, or `xfs_growfs <mountpoint>` for XFS (XFS takes the mount point, not the device, and can only grow, never shrink). `lvextend -r` will call the right resize tool for you in one step.
+
+> [!TIP]
+> **Try it — add space and extend the ext4 filesystem**
+>
+> ```sh
+> df -h /mnt/applv
+> sudo lvextend -L +200M /dev/vgdata/applv
+> df -h /mnt/applv
+> sudo resize2fs /dev/vgdata/applv
+> df -h /mnt/applv
+> ```
+>
+> Expect something like:
+>
+> ```text
+> /dev/mapper/vgdata-applv 380M ... 350M   1% /mnt/applv
+>
+>   Size of logical volume vgdata/applv changed from 400.00 MiB to 600.00 MiB.
+>
+> /dev/mapper/vgdata-applv 380M ... 350M   1% /mnt/applv     <-- LV bigger, FS not yet
+>
+> The filesystem on /dev/vgdata/applv is now 614400 (1k) blocks long.
+>
+> /dev/mapper/vgdata-applv 570M ... 540M   1% /mnt/applv     <-- FS now uses the space
+> ```
+>
+> After `lvextend` the block device is 600 MiB but `df` is unchanged — the filesystem has not noticed. `resize2fs` extends it online and `df` jumps. The playground's filesystem is ext4; on XFS you would run `sudo xfs_growfs /mnt/applv` instead and see the same result.
+
+> [!WARNING]
+> **Common pitfalls**
+>
+> - **`lvextend -L 20G` without the `+`.** That sets the absolute size. On a volume already larger than 20G it shrinks and truncates, destroying data with no prompt. Always write `-L +20G` to add.
+> - **Forgetting the filesystem step.** `lvextend` alone leaves the extra space unusable — the filesystem still ends at the old size. Follow with `resize2fs` / `xfs_growfs`, or use `lvextend -r`.
+> - **`pvmove` with nowhere to move to.** It needs enough free extents on the *other* PVs in the VG. Run `vgextend` with a fresh disk first if the pool is nearly full.
+> - **`pvremove` before `vgreduce`.** A PV still in a VG will not `pvremove` cleanly. Detach it with `vgreduce` first, and only after `pvmove` has emptied it.
+> - **Assuming XFS can shrink.** `resize2fs` can grow or shrink ext4 (shrink offline); `xfs_growfs` only grows. There is no supported XFS shrink — plan capacity accordingly.

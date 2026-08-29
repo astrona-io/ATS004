@@ -1,59 +1,165 @@
 # Ad-Hoc Mounting with SSHFS
 
-Think of SSHFS as a personal bicycle courier. It is not designed to haul shipping containers of cargo across the country. It is designed to take a small package, securely hand it off to a rider, and deliver it exactly where you tell it to go, without needing permission from the city planners. It is fast to set up, requires zero infrastructure changes, and runs entirely in the background using the secure channels you already have.
+<!-- astrona:playground -->
+> [!NOTE]
+> 🧪 **Hands-on playground for this module** — a clean, throwaway machine to explore on. No task, no grading. Folder: [`playground/`](https://github.com/astrona-io/ATS004/tree/main/sections/section-020/module-01/playground)
+>
+> ```sh
+> astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-020/module-01/playground
+> astrona destroy section-020-module-01-playground
+> ```
 
-When you need access to a remote folder immediately, configuring a dedicated file server is a waste of time. If you have SSH access to a machine, you already have everything you need to mount its filesystem locally.
+Sometimes you need a remote directory mounted on your machine *right now* — to read a colleague's logs, edit files on a build box, copy data off a server — and setting up a real file server would be overkill. If you can already SSH to the machine, SSHFS lets you mount any directory you can reach over that same SSH connection, with no server-side software to install and no root required on either end.
 
-## The FUSE Architecture
+This module covers how SSHFS works (the FUSE mechanism underneath it), why it is fine for ad-hoc use but poor for heavy workloads, and the mount options that control who on your local machine can see the mounted files.
 
-Linux filesystems traditionally live deep inside the kernel. The kernel handles the raw block devices, manages the memory buffers, and enforces the rules. To write a new filesystem driver historically meant writing kernel code. A bug in that code would bring down the entire server.
+## Learning objectives
 
-Filesystem in Userspace (FUSE) changes the rules. It allows regular users to create filesystems without touching the kernel. FUSE acts as a bridge. When a program tries to read a file from a FUSE mount, the kernel intercepts the request and hands it back up to a normal, user-space program to figure out the answer.
+After this module you can:
 
-This is exactly how SSHFS works. When you run `sshfs user@remote:/path/to/files /mnt/local`, you start a background program on your local machine. You open a local mount point. When you list the files in `/mnt/local`, the kernel asks the local SSHFS process what is there. The SSHFS process sends an encrypted message over your SSH connection to the remote server, asks it to list the directory, gets the answer, and passes it back to the kernel.
+- Explain what FUSE is and how an SSHFS read turns into an SSH request to the remote host.
+- Mount a remote directory with `sshfs` and confirm the mount with `mount`.
+- Explain why an SSHFS mount is private to the mounting user by default, and open it up with `-o allow_other`.
+- Describe what `-o default_permissions` changes about where file permissions are enforced.
+- Unmount an SSHFS filesystem with `umount` or `fusermount -u`.
 
-### The Cost of Context Switching
+## Before you start
 
-Because the bicycle courier has to cross the bridge between user-space and kernel-space for every single operation, FUSE filesystems carry overhead. This crossing is called a context switch.
+You should know how to mount and unmount a local filesystem and be comfortable with `sudo` and basic SSH.
 
-If you read a massive continuous file over SSHFS, the performance is decent. However, if you compile a large codebase with thousands of tiny files over SSHFS, performance drops. Every file open, read, and close triggers a context switch. SSHFS is for ad-hoc access and development, not high-performance production workloads.
+The linked playground gives you two VMs on a private network: `client` (where you run every command below, reached with `astrona ssh client`) and `srv` (a plain SSH host exposing `/srv/logs`). On `client`, `sshfs` and FUSE are installed, `/etc/fuse.conf` already has the `user_allow_other` opt-in, there is a spare local user `bob`, and **root on `client` has passwordless SSH to `srv`**, so `sudo sshfs srv:...` works without a password prompt. `/srv/logs` on `srv` holds `app.log` and `access.log` (world-readable) plus `secret.txt` (mode 600, root-only).
 
-## Mounting and Securing SSHFS
+## What SSHFS is for
 
-Mounting a remote path requires the `sshfs` command. The syntax mirrors `scp` or `rsync`.
+> As an analogy: SSHFS is a bicycle courier. It is quick to dispatch, needs no loading dock, and uses roads that already exist. It is not a freight line — you would not move a datacentre's worth of data through it. The analogy breaks down because a courier makes one trip, while SSHFS handles every `open`, `read`, and `write` your programs make against the mount, indefinitely.
 
-```bash
-sshfs alice@db-server:/var/log/app /mnt/app-logs
+Concretely: `sshfs alice@db-server:/var/log/app /mnt/app-logs` makes the remote `/var/log/app` appear at your local `/mnt/app-logs`. Listing, reading, and (if permitted) writing all work through the existing SSH channel. Nothing is installed on `db-server` beyond the SSH server it already runs.
+
+## The FUSE mechanism underneath
+
+Traditionally a filesystem driver is kernel code. A bug in it can crash the whole machine, and only root can load one.
+
+**FUSE** — Filesystem in Userspace — changes that. It is a kernel module that forwards filesystem requests *back out* to an ordinary user-space program. When a program reads a file under a FUSE mount, the kernel does not answer directly; it hands the request to the user-space program that owns that mount and waits for its reply.
+
+SSHFS is one such program. The chain for a single directory listing on `/mnt/app-logs` is:
+
+```text
+ls  ->  kernel (VFS)  ->  FUSE  ->  sshfs process  ->  SSH  ->  remote sshd  ->  remote directory
 ```
 
-By default, FUSE mounts are heavily restricted. If the user `alice` mounts a directory, only `alice` can see it. Even the `root` user on the local machine gets an "Access denied" error if they try to read `/mnt/app-logs`. The kernel blocks everyone else to prevent security leaks.
+and the answer travels back the same way. Because the `sshfs` process runs as a normal user, you can create the mount without root.
 
-Sometimes you need other local users, or an application running under a different service account, to read the mounted files. You bypass this restriction using the `-o allow_other` flag.
+> [!TIP]
+> **Try it — mount a remote directory and see the FUSE type**
+>
+> On `client`:
+>
+> ```sh
+> sudo sshfs srv:/srv/logs /mnt/remote
+> mount | grep /mnt/remote
+> ls -l /mnt/remote
+> cat /mnt/remote/app.log
+> ```
+>
+> Expect something like:
+>
+> ```text
+> srv:/srv/logs on /mnt/remote type fuse.sshfs (rw,nosuid,nodev,relatime,user_id=0,group_id=0)
+> -rw-r--r-- 1 root root 18 Aug 29 12:00 app.log
+> -rw-r--r-- 1 root root 21 Aug 29 12:00 access.log
+> -rw------- 1 root root 20 Aug 29 12:00 secret.txt
+> srv app.log line 1
+> ```
+>
+> The filesystem type is `fuse.sshfs`, not a kernel filesystem like `ext4` or `nfs`. Every `ls` and `cat` you just ran was answered by the local `sshfs` process fetching the data from `srv` over SSH.
 
-```bash
-sshfs -o allow_other alice@db-server:/var/log/app /mnt/app-logs
+## Why SSHFS is slow for many small files
+
+Each of those hops crosses the boundary between user space and kernel space — a **context switch** — and then waits for a network round trip to `srv`.
+
+Streaming one large file is fine: the round trips amortise over a lot of data. But an operation like compiling a source tree, which does thousands of tiny `open`/`read`/`close` sequences, pays the context-switch-plus-round-trip cost thousands of times and crawls. Use SSHFS for ad-hoc access and light editing; use NFS (the next module) or a local copy for anything throughput-sensitive.
+
+## Who can see the mount: `allow_other`
+
+By default a FUSE mount is readable only by the user who created it. If root runs the `sshfs` command, only root can enter `/mnt/remote`; every other local user, even ones who would normally have permission, gets "Permission denied" from the kernel. This is a deliberate safety default — it stops one user from exposing another user's remote credentials' reach.
+
+To let other local users and service accounts into the mount, add `-o allow_other`. On most systems this also requires a one-time root opt-in: the line `user_allow_other` in `/etc/fuse.conf` (already set in the playground).
+
+> [!TIP]
+> **Try it — the private-by-default rule, then open it up**
+>
+> On `client`, with the mount from the previous checkpoint still active:
+>
+> ```sh
+> sudo -u bob ls /mnt/remote
+> sudo umount /mnt/remote
+> sudo sshfs -o allow_other srv:/srv/logs /mnt/remote
+> sudo -u bob ls /mnt/remote
+> ```
+>
+> Expect something like:
+>
+> ```text
+> ls: cannot access '/mnt/remote': Permission denied
+>
+> (after remounting with allow_other:)
+> access.log  app.log  secret.txt
+> ```
+>
+> As user `bob`, the first `ls` fails even though the directory listing itself is harmless — the mount is private to root, who ran `sshfs`. After remounting with `-o allow_other`, `bob` can list it. The `mount` line now includes `allow_other` in its options.
+
+## Where permissions are enforced: `default_permissions`
+
+There is a subtlety in *how* access is checked. Without `default_permissions`, the local kernel does **not** consult each file's mode; it only gated the mount as a whole (that is what `allow_other` relaxed). The `sshfs` process then reads whatever the remote server lets *it* read — and it connects to `srv` as whoever ran `sshfs`.
+
+So with `-o allow_other` alone, local user `bob` reading `secret.txt` succeeds: the local kernel does not check the `600` mode, and the `sshfs` process is connected as root, who *can* read it on `srv`.
+
+Adding `-o default_permissions` tells the local kernel to enforce the file modes it sees before the request ever reaches `sshfs`. Now `bob` reading a `600` file owned by root is denied locally, matching what you would expect from the permission bits.
+
+> [!TIP]
+> **Try it — flip where the check happens**
+>
+> On `client`:
+>
+> ```sh
+> sudo -u bob cat /mnt/remote/secret.txt
+> sudo umount /mnt/remote
+> sudo sshfs -o allow_other,default_permissions srv:/srv/logs /mnt/remote
+> sudo -u bob cat /mnt/remote/secret.txt
+> ```
+>
+> Expect something like:
+>
+> ```text
+> credentials: hunter2
+>
+> (after remounting with default_permissions:)
+> cat: /mnt/remote/secret.txt: Permission denied
+> ```
+>
+> Same file, same user, opposite result. Without `default_permissions` the `600` mode was never checked locally and the root-connected `sshfs` process happily read the file for `bob`. With `default_permissions`, the local kernel applied the mode and stopped `bob` first.
+
+## Unmounting
+
+Detach an SSHFS mount like any other filesystem:
+
+```sh
+sudo umount /mnt/remote
 ```
 
-This tells the kernel to let other users access the mount point. But there is a catch. The local kernel enforces the permissions it sees. If the remote files are owned by user ID 1000, the local kernel checks if the local user requesting access is user ID 1000. It doesn't care about usernames, only numbers.
+If you mounted as a non-root user (no `sudo` on the `sshfs` command), use the FUSE-specific unmount, which does not need root:
 
-If you want the remote filesystem to enforce the access rules based on who you logged in as over SSH, you add `default_permissions`. This forces the local kernel to actually check the permissions reported by the remote server before granting access.
-
-```bash
-sshfs -o allow_other,default_permissions alice@db-server:/var/log/app /mnt/app-logs
+```sh
+fusermount -u /mnt/remote
 ```
 
-When you are finished with the mount, you unmount it like any other disk using `umount`.
+Either way, a "target is busy" error means something still has the mount open — the same diagnosis (`lsof +D`, `fuser -mv`, `cd` out of the directory) as for a local disk applies.
 
-```bash
-umount /mnt/app-logs
-```
-
-## Self-Check and Verification
-
-To prove your SSHFS setup is working as intended:
-
-1. Connect to a remote server using `sshfs` and mount a directory.
-2. Run `mount | grep fuse` to verify the filesystem is active and see the options applied.
-3. Switch to a different local user account and attempt to read the mount point. Confirm it is blocked.
-4. Unmount, remount with `-o allow_other`, and test access again as the second user.
-5. Use `umount` to cleanly detach the filesystem and verify the mount point is empty.
+> [!WARNING]
+> **Common pitfalls**
+>
+> - **Expecting others to see your mount.** A FUSE mount is private to the mounting user unless you pass `-o allow_other` *and* `/etc/fuse.conf` contains `user_allow_other`. Missing either one keeps everyone else locked out.
+> - **Assuming `allow_other` also enforces file permissions.** It does not. Without `default_permissions`, the local kernel skips per-file mode checks and the `sshfs` process's own remote access decides what is readable. Add `default_permissions` when you want the mode bits honoured locally.
+> - **Using SSHFS for build trees or databases.** The per-operation context switch plus network round trip makes many-small-file workloads extremely slow. It is an ad-hoc tool.
+> - **Forgetting `fusermount -u` for user mounts.** `umount` needs root; a mount you made as a normal user comes down with `fusermount -u <dir>` instead.
+> - **Leaving stale mounts after the remote host goes away.** If `srv` disappears, the mount can hang on access. Unmount it (`fusermount -u`, add `-z` for a lazy detach if it resists) rather than leaving processes stuck on it.

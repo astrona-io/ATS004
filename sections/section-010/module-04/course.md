@@ -1,173 +1,163 @@
-# Chapter 4: The Digital Auditor: Filesystem Maintenance, Labeling, & Tuning
+# The Digital Auditor: Filesystem Maintenance, Labeling, and Tuning
 
-Filesystems are high-performance relational databases. Every time you write a line of text, compile a program, or rotate a log, the kernel is running complex transaction sequences under the hood: modifying inode tables, updating directory indices, reserving data blocks, and updating free-space maps. 
+<!-- astrona:playground -->
+> [!NOTE]
+> 🧪 **Hands-on playground for this module** — a clean, throwaway machine to explore on. No task, no grading. Folder: [`playground/`](https://github.com/astrona-io/ATS004/tree/main/sections/section-010/module-04/playground)
+>
+> ```sh
+> astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-010/module-04/playground
+> astrona destroy section-010-module-04-playground
+> ```
 
-But what happens when the power suddenly cuts out in the middle of a database write? What happens when a storage controller briefly drops offline or a block of physical memory degrades? 
+A filesystem is a database on disk: tables of file metadata, maps of which blocks are free, indexes from directory names to those records. A clean shutdown leaves that database consistent. A power cut, a controller glitch, or a failing sector mid-write can leave it inconsistent, and then you need tools to check it, repair it, and identify it reliably afterwards.
 
-To keep storage reliable, a system administrator must act as a digital auditor. You must understand how to inspect filesystems for structural integrity, repair corrupted indices, configure performance tunables, and assign stable, human-readable labels so the system can boot reliably under any condition.
+This chapter covers the structures a filesystem keeps (the superblock and the journal), how to run a consistency check safely with `fsck`, and how to give a filesystem a stable label and UUID so it always mounts as the right thing.
 
----
+## Learning objectives
 
-## The Library in the Windstorm: Filesystem Integrity
+After this module you can:
 
-To grasp why filesystem maintenance is necessary, imagine your storage drive is a massive physical archives library containing millions of books (files). The library's search desk uses a central card catalog (the metadata index) that records the exact shelf and box (block coordinates) for every book.
+- Explain what the superblock and the journal store and why journaling makes most crashes cheap to recover from.
+- State the rule about never running `fsck` on a mounted filesystem, and say why.
+- Run `fsck` in read-only (`-n`) and automatic-repair (`-y`) modes and read its pass output.
+- Set a filesystem label with `tune2fs -L` and read a filesystem's UUID with `blkid`.
+- Mount a filesystem by `LABEL=` or `UUID=` instead of by `/dev/sdX`, and explain why that is safer in `/etc/fstab`.
 
-Now, imagine a sudden power outage occurs—the digital equivalent of a brief, violent windstorm blowing through the doors. The wind knocks catalog drawers onto the floor and scatters index cards. 
+## Before you start
 
-If you try to operate the library right away, you will face chaos. Some cards will point to empty shelves. Some books will be lying on the floor with no matching index cards. If a customer tries to checkout a book under these conditions, they might end up writing over an existing manuscript, causing permanent damage.
+You should know how to create and mount an ext4 filesystem from the earlier modules and be comfortable with `sudo`.
 
-To restore order, you must close the library's doors to the public, lock the entrance, and bring in a professional archive auditor. 
+The linked playground gives you an Ubuntu server VM with passwordless `sudo` and one spare 2 GB disk (commonly `/dev/vdb`) that already holds an **unmounted** ext4 filesystem, labelled `OLD_LABEL`, with a few sample files. Because it is unmounted, it is safe to run `fsck` against it. Run the command blocks below in that VM after connecting with `astrona ssh section-010-module-04-playground`. `fsck`, `tune2fs`, `dumpe2fs`, and `blkid` are already installed.
 
-This auditor is the **Filesystem Consistency Check (`fsck`)** utility. 
+## Filesystems as databases, and how they get damaged
 
-The auditor systematically walks through every room, matching index cards to physical books. If they find an index card pointing to a non-existent box, they shred the card. If they find a stack of valuable book pages on the floor with no title page or index card, they place those pages into a specialized box at the front desk named **`lost+found`** so that historians can inspect them later. Once the audit is complete, the doors are reopened, and operations resume safely.
+Every write you do is several coordinated changes: update the file's metadata record, mark data blocks as used, update the directory index, adjust the free-space count. If the machine dies between those changes, the on-disk structures disagree with each other — a directory entry pointing at a metadata record that was never written, blocks marked used that no file claims, and so on.
 
----
+The tool that walks the whole structure and reconciles it is **`fsck`** (filesystem consistency check). When it finds a fragment of file data that has lost its directory entry, it does not throw it away; it links it into a directory called **`lost+found`** at the root of that filesystem, named by number, so you can inspect it later.
 
-## Under the Hood: Superblocks, Journals, and Mounted Hazards
+> As an analogy: the filesystem is a library and its card catalogue. A crash is a gust of wind that scatters some cards. `fsck` is the archivist who goes shelf by shelf, matches books to cards, shreds cards for books that are not there, and puts unlabelled loose pages in a box at the front desk (`lost+found`). The analogy breaks down because `fsck` works from redundant on-disk bookkeeping, not guesswork, and on a journaling filesystem it usually has almost nothing to do.
 
-As an enterprise administrator, you must understand the underlying disk structures that `fsck` and tuning tools interact with.
+## The superblock and the journal
 
-### The Superblock: The Master Registry
-At the beginning of every ext4 filesystem sits a critical data structure called the **Superblock**. The superblock is the filesystem's master registry. It records the total number of blocks, the number of free blocks, the total count of inodes, the filesystem state (whether it was unmounted cleanly or is "dirty"), and the unique identifier of the filesystem. Because the superblock is so critical, the formatting process writes backup copies of it at regular block intervals across the drive. If the primary superblock is corrupted, you can point tuning tools to one of these backup blocks to salvage the disk.
+At a fixed spot near the start of an ext4 filesystem sits the **superblock**: the master record holding total block and inode counts, the free counts, the filesystem UUID and label, feature flags, and a "clean / not clean" state bit. It is important enough that `mkfs` writes backup copies at intervals across the disk; if the primary is damaged, tools can be pointed at a backup.
 
-### The Journal: Preventing the Worst
-In older filesystems (like ext2), every unexpected shutdown required a complete, time-consuming disk scan by `fsck` upon reboot. Modern filesystems (like ext4 and XFS) use a technique called **journaling** to avoid this bottleneck. 
+The **journal** is a small circular log. Before changing its main tables, ext4 writes a description of the intended change to the journal, then applies it. After a crash, mount replays completed journal entries and discards incomplete ones — a few seconds of work instead of a full scan. This is why `fsck` rarely runs at boot on a modern system: the journal has already handled the common case, and `fsck` is reserved for deeper damage.
 
-When you write a file, the kernel first records the intended modifications in a dedicated, circular log on the disk called the journal. Once the journal write is safe, the kernel applies the changes to the actual metadata and data blocks. 
+`tune2fs -l <device>` prints the whole superblock in readable form.
 
-If power cuts out mid-write, the reboot process does not need to scan the entire multi-terabyte drive. The kernel simply reads the journal, replays any completed transactions that didn't make it to the main tables, rolls back incomplete ones, and marks the filesystem clean in seconds. `fsck` is now reserved for deep, structural repairs when hardware anomalies or driver bugs corrupt the tables themselves.
+> [!TIP]
+> **Try it — read the superblock**
+>
+> ```sh
+> sudo tune2fs -l /dev/vdb | grep -Ei 'volume name|state|mount count|UUID|features'
+> ```
+>
+> Expect something like:
+>
+> ```text
+> Filesystem volume name:   OLD_LABEL
+> Filesystem UUID:          3f2b1c9a-7d6e-4a5b-8c0d-1e2f3a4b5c6d
+> Filesystem features:      has_journal ext_attr resize_inode dir_index filetype extent 64bit flex_bg ...
+> Filesystem state:         clean
+> Mount count:              0
+> Maximum mount count:      -1
+> ```
+>
+> `has_journal` in the feature list confirms this is a journaling filesystem. `state: clean` means it was unmounted properly. `Maximum mount count: -1` means no automatic check is scheduled by mount count.
 
-### The Cardinal Rule of FSCK
-There is one absolute, non-negotiable rule in Linux storage administration:
+## Running fsck safely
 
-**Never, under any circumstances, run `fsck` on a mounted filesystem.**
+The one hard rule: **never run `fsck` on a mounted filesystem.** A mounted filesystem has the kernel caching and flushing changes to the same sectors `fsck` wants to read and rewrite, assuming it has them to itself. The two writing at once corrupts the filesystem. Unmount first; for the root filesystem, that means booting from rescue media or using a boot-time check.
 
-Why is this so dangerous? When a filesystem is mounted, the kernel is constantly caching reads and writes in system memory and periodically flushing them down to disk sectors. The filesystem's blocks are in a fluid, active state. 
+`fsck` is a wrapper that calls the right checker for the filesystem type (`e2fsck` for ext4). Its main modes:
 
-`fsck` is designed to read and directly modify those exact same physical disk sectors, operating under the assumption that it has exclusive, frozen control of the storage. 
+- `sudo fsck /dev/vdb` — interactive; stops at each problem and asks.
+- `sudo fsck -y /dev/vdb` — answers "yes" to every repair; used in unattended boot scripts.
+- `sudo fsck -n /dev/vdb` — read-only; reports problems, changes nothing. Safe to run any time the filesystem is unmounted.
 
-If you run `fsck` on an active mount, the kernel and `fsck` will enter a silent, horrific race condition, writing conflicting structures to the same sectors. A slightly misaligned block will quickly escalate into a catastrophic wipeout, destroying your filesystem beyond repair. Always unmount the disk first.
+> [!TIP]
+> **Try it — a read-only check**
+>
+> ```sh
+> sudo fsck -n /dev/vdb
+> ```
+>
+> Expect something like:
+>
+> ```text
+> fsck from util-linux 2.39.3
+> e2fsck 1.47.0 (5-Feb-2023)
+> Pass 1: Checking inodes, blocks, and sizes
+> Pass 2: Checking directory structure
+> Pass 3: Checking directory connectivity
+> Pass 4: Checking reference counts
+> Pass 5: Checking group summary information
+> OLD_LABEL: clean, 13/131072 files, 26156/524288 blocks
+> ```
+>
+> The five passes check different parts of the structure; a healthy filesystem reports `clean` with file and block counts. If you run the same command while the disk is mounted, `e2fsck` warns `WARNING!!! ... filesystem is mounted` and asks you to confirm — the correct answer is no.
 
----
+## Stable identifiers: labels and UUIDs
 
-## The Administration Toolkit
+Kernel device names like `/dev/vdb` are assigned in detection order and are **not stable**. Add another disk, or boot with a USB drive plugged in, and yesterday's `/dev/vdb` might be today's `/dev/vdc`. An `/etc/fstab` line that mounts `/dev/vdb` would then mount the wrong disk.
 
-To inspect and modify our filesystems, we use three primary tools: `fsck`, `tune2fs`, and `blkid`.
+Two stable identifiers solve this:
 
-### `fsck`: The Inspector General
-`fsck` is actually a wrapper script that auto-detects the filesystem type on a device and calls the appropriate system checker, such as `e2fsck` for ext4 or `fsck.xfs` for XFS.
-- `sudo fsck /dev/vdb1`: Runs an interactive scan. It will stop at every anomaly it finds and ask you for permission to repair it.
-- `sudo fsck -y /dev/vdb1`: Runs a non-interactive repair. It automatically answers "yes" to every repair prompt, making it suitable for boot-time rescue scripts.
-- `sudo fsck -n /dev/vdb1`: Executes a read-only dry run. It reports what issues exist without changing a single byte on the physical disk.
+- The **UUID**, a random 128-bit value written into the superblock at format time. Unique and unchanging for the life of the filesystem.
+- The **label**, a short human-chosen string. Convenient but you must keep them unique yourself.
 
-### `tune2fs`: The Surgical Tuner
-Designed exclusively for the ext2, ext3, and ext4 filesystem families, `tune2fs` allows you to adjust filesystem parameters directly in the superblock metadata without reformatting the drive.
-- `sudo tune2fs -L "BACKUP_DATA" /dev/vdb1`: Sets a human-readable volume label.
-- `sudo tune2fs -c 20 /dev/vdb1`: Configures the filesystem to trigger a mandatory automatic `fsck` scan after every 20 mounts.
-- `sudo tune2fs -i 2m /dev/vdb1`: Configures the filesystem to trigger a mandatory scan every 2 months.
-- `sudo tune2fs -l /dev/vdb1`: Reads the superblock and lists all metadata, including mount counts, filesystem state, features, block counts, and UUIDs.
+`blkid <device>` prints both. `tune2fs -L <label> <device>` sets or changes the label (for ext filesystems only — XFS uses `xfs_admin -L`). You can then `mount LABEL=<label> <dir>` or `mount UUID=<uuid> <dir>`, and in `/etc/fstab` the first field is normally `UUID=...` for exactly this reason.
 
-### `blkid`: The Identity Finder
-Every time you format a filesystem, the kernel generates a 128-bit Universally Unique Identifier (UUID). Traditional device names like `/dev/sdb1` are not stable; if you reboot a server with a new USB drive attached, the kernel might assign `/dev/sdb1` to the USB drive and rename your internal data disk to `/dev/sdc1`. 
+> [!TIP]
+> **Try it — relabel, then mount by identifier**
+>
+> ```sh
+> sudo tune2fs -L "DB_REPLICA" /dev/vdb
+> sudo blkid /dev/vdb
+> sudo mkdir -p /mnt/db-data
+> sudo mount UUID="$(sudo blkid -s UUID -o value /dev/vdb)" /mnt/db-data
+> findmnt /mnt/db-data
+> sudo umount /mnt/db-data
+> ```
+>
+> Expect something like:
+>
+> ```text
+> /dev/vdb: LABEL="DB_REPLICA" UUID="3f2b1c9a-7d6e-4a5b-8c0d-1e2f3a4b5c6d" BLOCK_SIZE="4096" TYPE="ext4"
+>
+> TARGET     SOURCE   FSTYPE OPTIONS
+> /mnt/db-data /dev/vdb ext4  rw,relatime
+> ```
+>
+> The label changed from `OLD_LABEL` to `DB_REPLICA`, and the mount succeeded without naming `/dev/vdb` directly — the UUID resolved to the right device no matter what kernel name it currently has.
 
-To prevent catastrophic mounting mistakes, we use `blkid` to find the stable, unchanging UUID of a filesystem:
-- `sudo blkid`: Lists all recognized block devices, showing their UUIDs, filesystem types, and volume labels.
+## Tuning check intervals
 
----
+`tune2fs` also adjusts when the system forces a check. `-c N` schedules a check after every `N` mounts; `-i <time>` schedules one after an interval like `2m` (two months). Setting `-c 0 -i 0` disables both, which is common on servers that rely on the journal and monitoring instead.
 
-## Scenario: Auditing and Re-labeling a Volume
+> [!TIP]
+> **Try it — set and confirm a mount-count check**
+>
+> ```sh
+> sudo tune2fs -c 20 /dev/vdb
+> sudo tune2fs -l /dev/vdb | grep -Ei 'mount count'
+> ```
+>
+> Expect something like:
+>
+> ```text
+> Setting maximal mount count to 20
+>
+> Mount count:              0
+> Maximum mount count:      20
+> ```
+>
+> `Maximum mount count` is now 20, so the 20th mount will trigger an automatic `fsck`. Re-running with `sudo tune2fs -c 0 /dev/vdb` sets it back to disabled.
 
-Your database server recently experienced a kernel panic and hard crash. The database replica disk at `/dev/vdb1` was unmounted dirty. Before mounting it back into production, you need to audit its integrity, tag it with a clean production label, and find its UUID for a secure mount entry.
-
-### Step 1: Guaranteeing Isolation
-Before letting `fsck` touch the disk, we must guarantee it is unmounted. Let's run a query check:
-
-```bash
-df -h | grep vdb1
-```
-
-If it returns any active line, we instantly unmount the target path:
-
-```bash
-sudo umount /dev/vdb1
-```
-
-### Step 2: Running the Audit Sweep
-Now we execute a clean-up and repair sweep on `/dev/vdb1`. We will use the `-y` flag to let `fsck` automatically resolve any orphaned inodes or block anomalies it encounters:
-
-```bash
-sudo fsck -y /dev/vdb1
-```
-
-The tool scans the filesystem in five distinct passes, checking block pointers, directory connections, and sizes:
-
-```text
-fsck from util-linux 2.37.2
-e2fsck 1.46.5 (30-Dec-2021)
-/dev/vdb1: recovering journal
-Pass 1: Checking inodes, blocks, and sizes
-Pass 2: Checking directory structure
-Pass 3: Checking directory connectivity
-Pass 4: Checking reference counts
-Pass 5: Checking group summary information
-/dev/vdb1: clean, 11/655360 files, 154122/2621440 blocks
-```
-
-The output shows that the journal was safely recovered and the filesystem is now clean.
-
-### Step 3: Tagging the Volume
-Next, we want to label this filesystem as `DB_REPLICA` so that other team members can easily identify its purpose without guessing:
-
-```bash
-sudo tune2fs -L "DB_REPLICA" /dev/vdb1
-```
-
-Let's read the disk's superblock to confirm our label was written successfully:
-
-```bash
-sudo tune2fs -l /dev/vdb1 | grep "volume name"
-```
-
-The superblock confirms the tag is saved:
-
-```text
-Filesystem volume name:   DB_REPLICA
-```
-
-### Step 4: Finding the Stable UUID
-Now we query the block identity database to retrieve our UUID:
-
-```bash
-sudo blkid /dev/vdb1
-```
-
-The command returns the unchanging attributes of the partition:
-
-```text
-/dev/vdb1: LABEL="DB_REPLICA" UUID="e1a2f345-bc67-4d89-9ef0-123456789abc" BLOCK_SIZE="4096" TYPE="ext4"
-```
-
-### Step 5: Secure Mounting
-We can now mount this drive using its volume label or its UUID, completely bypassing the unstable `/dev/vdb1` path name. Let's mount using the label:
-
-```bash
-sudo mount LABEL="DB_REPLICA" /mnt/db-data
-```
-
-Or, for absolute boot safety inside `/etc/fstab`, we use the UUID:
-
-```bash
-sudo mount UUID="e1a2f345-bc67-4d89-9ef0-123456789abc" /mnt/db-data
-```
-
-Both methods route directly to the exact same physical blocks, ensuring your data mounting is resilient to hardware rearrangement.
-
----
-
-## Self-Check and Verification
-
-Verify your grasp of filesystem maintenance and tuning before moving forward:
-1.  **Safety First**: You notice that a server's root filesystem `/` is exhibiting strange read errors, but you cannot unmount it because it is active. Can you run `sudo fsck -y /` directly on the live root mount? *(Answer: No! Running `fsck` on any mounted filesystem, especially the root system, can result in total filesystem destruction. To check a root filesystem, you must reboot the system and use boot parameters to trigger a scan before mounting, or boot from a live recovery USB/ISO).*
-2.  **Missing Files**: After running a deep repair with `fsck`, your disk space is freed up, but some of your recently written data files have vanished from their target folders. Where should you look on the mounted disk? *(Answer: Look inside the hidden `lost+found` directory located at the root of that partition. Files that lost their directory name entries during corruption are restored there as numbered block files).*
-3.  **Tuning Failures**: You try to run `sudo tune2fs -L "FAST_STORE" /dev/vdc1` but receive a command failure. What is the likely cause? *(Answer: `tune2fs` is designed exclusively for the ext filesystem family (ext2/3/4). If `/dev/vdc1` is formatted with XFS or another filesystem type, you must use the native tools for that filesystem, such as `xfs_admin -L "FAST_STORE" /dev/vdc1`.)*
+> [!WARNING]
+> **Common pitfalls**
+>
+> - **Running `fsck` on a mounted filesystem.** This is the fastest way to destroy a filesystem. Always unmount first; for `/`, use rescue media or a boot-time check. `fsck -n` on an unmounted device is the safe way to look without touching.
+> - **`tune2fs` on a non-ext filesystem.** `tune2fs` only handles ext2/3/4. On XFS it fails; use `xfs_admin` (for example `xfs_admin -L LABEL /dev/vdb`). Check the type with `blkid` first.
+> - **Mounting by `/dev/sdX` in `/etc/fstab`.** Device names can change between boots. Use `UUID=` (or `LABEL=` if you manage labels carefully) so the right filesystem always mounts.
+> - **Assuming missing files after a repair are gone.** `fsck` moves recovered fragments into `lost+found` at the root of the filesystem, named by inode number. Look there before concluding data was lost.

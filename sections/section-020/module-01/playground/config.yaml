@@ -1,0 +1,58 @@
+# Ad-Hoc Mounting with SSHFS (PLAYGROUND) — Playground environment
+# Two VMs on a private subnet:
+#   client (10.10.20.5)  — has sshfs + FUSE, a spare local user "bob",
+#                          passwordless root SSH to srv
+#   srv    (10.10.20.10) — plain SSH host exporting /srv/logs with sample files
+# No task, no grading, no `astrona submit`.
+# Schema: internal/config.LabConfig.
+
+metadata:
+  name: "section-020-module-01-playground"
+  docs:
+    guide: "docs/overview.md"
+
+runtime:
+  type: "qemu"
+  networks:
+    - name: "pg-net"
+      cidr: "10.10.20.0/24"
+  qemu:
+    - name: "client"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      sshAccess:
+        - "srv"
+      networks:
+        - name: "pg-net"
+          ipv4: "10.10.20.5"
+      bootstrap:
+        init:
+          - name: "client-prepare"
+            description: "Install sshfs + FUSE opt-in, add local user bob, wire passwordless root SSH to srv."
+            type: "folder"
+            source: "bootstrap/client/"
+    - name: "srv"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      networks:
+        - name: "pg-net"
+          ipv4: "10.10.20.10"
+      bootstrap:
+        init:
+          - name: "srv-prepare"
+            description: "Ensure sshd is running and seed /srv/logs with sample files (one mode 600)."
+            type: "folder"
+            source: "bootstrap/srv/"
+
+teardown:
+  keepCluster: false
