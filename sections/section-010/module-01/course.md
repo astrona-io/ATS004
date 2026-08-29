@@ -28,7 +28,7 @@ After this module you can:
 
 You should be comfortable moving around a Linux shell: `cd`, `ls`, `sudo`, and reading command output. You do not need any prior storage experience.
 
-The linked playground gives you an Ubuntu server VM with passwordless `sudo` and one spare 2 GB disk attached raw and unformatted (commonly `/dev/vdb`). Every command block below is meant to be run in that VM's shell after you have connected with `astrona ssh section-010-module-01-playground`. All the tools used here — `lsblk`, `blkid`, `mkfs.ext4`, `mount`, `df`, `lsof`, `fuser` — are already installed.
+The linked playground gives you an Ubuntu server VM with passwordless `sudo` and one spare 2 GB disk attached raw and unformatted (commonly `/dev/vdb`). Every command block below is meant to be run in that VM's shell after you have connected with `astrona ssh astro-section-010-module-01-playground`. All the tools used here — `lsblk`, `blkid`, `mkfs.ext4`, `mount`, `df`, `lsof`, `fuser` — are already installed.
 
 ## The unified file tree
 
@@ -168,7 +168,7 @@ Two tools identify what is holding a mount:
 > [!TIP]
 > **Try it — make a mount busy, then find the cause**
 >
-> Open a second shell into the same VM (`astrona ssh section-010-module-01-playground` again) and park it inside the mount:
+> Open a second shell into the same VM (`astrona ssh astro-section-010-module-01-playground` again) and park it inside the mount:
 >
 > ```sh
 > cd /mnt/backup-black
