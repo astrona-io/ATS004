@@ -27,7 +27,7 @@ After this module you can:
 
 This module builds directly on the previous one. The next section recaps the pieces you need — the three LVM layers, the physical extent, and the `pvs` / `vgs` / `lvs` inspection commands — but if none of those terms are familiar, read *LVM Fundamentals* first.
 
-The linked playground gives you an Ubuntu server VM with a **pre-built stack**: volume group `vgdata` on two 1 GB disks, logical volume `applv` (400 MiB ext4) with all its extents on the first disk, mounted at `/mnt/applv` with sample files, and a third disk left raw as the replacement. The three disks' kernel names are in `/etc/playground-disks` as `source_disk`, `second_disk`, `spare_disk` — read that file rather than assuming `vdb`/`vdc`/`vdd` order. Connect with `astrona ssh astro-section-030-module-02-playground` and run every command block below inside that VM.
+The linked playground gives you an Ubuntu server VM with a **pre-built stack**: volume group `vgdata` on two 1 GB disks, logical volume `applv` (400 MiB ext4) with all its extents on the first disk, mounted at `/mnt/applv` with sample files, and a third disk left raw as the replacement. The three disks' kernel names are written to `/etc/playground-disks` as `source_disk`, `second_disk`, `spare_disk` — read that file rather than assuming a `vdX` order, because the letters can shift between boots. On the current image they land as `/dev/vdc`, `/dev/vdd`, `/dev/vde` (`/dev/vda` is the OS disk and `/dev/vdb` is a tiny boot-config disk — leave both alone). Connect with `astrona ssh astro-section-030-module-02-playground` and run every command block below inside that VM.
 
 ## The LVM stack, recapped
 
@@ -38,7 +38,7 @@ The previous module built this stack from the bottom up. This module rearranges 
   -----------------------------------
   Volume group      vgdata            <- one pool of 4 MiB extents
   -----------------------------------
-  Physical volumes  /dev/vdb /dev/vdc <- disks with an LVM label on them
+  Physical volumes  /dev/vdc /dev/vdd <- disks with an LVM label on them
 ```
 
 - A **physical volume (PV)** is a disk or partition with a small LVM label written at its start. Only that label changes — `pvcreate` does not format the rest of the disk.
@@ -91,25 +91,28 @@ Every operation here depends on knowing which extents are where. Before touching
 > df -h /mnt/applv
 > ```
 >
-> Expect something like:
+> Expect something like (disk letters and exact free-space figures vary):
 >
 > ```text
-> source_disk=/dev/vdb   # holds all of applv's extents (the 'failing' disk)
-> second_disk=/dev/vdc
-> spare_disk=/dev/vdd
+> source_disk=/dev/vdc   # holds all of applv's extents (the 'failing' disk)
+> second_disk=/dev/vdd   # also in vgdata
+> spare_disk=/dev/vde    # raw, not yet a PV
 >
 >   PV         VG     Fmt  Attr PSize    PFree
->   /dev/vdb   vgdata lvm2 a--  1020.00m 620.00m
->   /dev/vdc   vgdata lvm2 a--  1020.00m 1020.00m
+>   /dev/vdc   vgdata lvm2 a--  1020.00m  620.00m
+>   /dev/vdd   vgdata lvm2 a--  1020.00m 1020.00m
+>
+>   VG     #PV #LV #SN Attr   VSize VFree
+>   vgdata   2   1   0 wz--n- 1.99g 1.60g
 >
 >   LV    VG     Attr       LSize   Devices
->   applv vgdata -wi-ao---- 400.00m /dev/vdb(0)
+>   applv vgdata -wi-ao---- 400.00m /dev/vdc(0)
 >
->   Filesystem               Size  Used Avail Use% Mounted on
->   /dev/mapper/vgdata-applv 380M   14K  350M   1% /mnt/applv
+>   Filesystem                Size  Used Avail Use% Mounted on
+>   /dev/mapper/vgdata-applv  359M   36K  331M   1% /mnt/applv
 > ```
 >
-> `lvs -o +devices` confirms every extent of `applv` is on `source_disk` (`/dev/vdb` here). `spare_disk` is not listed by `pvs` at all — it is still raw. That is the situation the rest of the chapter changes.
+> `lvs -o +devices` confirms every extent of `applv` is on `source_disk` (`/dev/vdc` here) — `/dev/vdc(0)` means "from physical extent 0 of that PV onward". `pvs` shows only two PVs: `spare_disk` is not a PV yet, so it is absent. `vgs` reports the pool as two PVs holding one LV (`#LV 1`) and no snapshots (`#SN 0`). That is the situation the rest of the chapter changes.
 
 ## Adding a replacement disk to the pool
 
@@ -136,14 +139,19 @@ Both commands are safe on a running system — they add capacity without moving 
 > Expect something like:
 >
 > ```text
->   Physical volume "/dev/vdd" successfully created.
+>   Physical volume "/dev/vde" successfully created.
 >   Volume group "vgdata" successfully extended
 >
 >   VG     #PV #LV #SN Attr   VSize  VFree
->   vgdata   3   0   1 wz--n- <2.99g <2.61g
+>   vgdata   3   1   0 wz--n- <2.99g <2.60g
+>
+>   PV         VG     Fmt  Attr PSize    PFree
+>   /dev/vdc   vgdata lvm2 a--  1020.00m  620.00m
+>   /dev/vdd   vgdata lvm2 a--  1020.00m 1020.00m
+>   /dev/vde   vgdata lvm2 a--  1020.00m 1020.00m
 > ```
 >
-> `vgdata` now spans three PVs and its free space jumped by ~1 GB. Nothing about `applv` changed yet — you only added room.
+> `vgdata` now spans three PVs (`#PV 3`) and its free space jumped by ~1 GB. The spare shows up in `pvs` with a `VG` of `vgdata` and all of its space free. The `<` in `<2.99g` means "a little under" — the metadata area on each PV is rounded off the reported total. Nothing about `applv` changed yet: `#LV` is still `1` and no extents moved. You only added room.
 
 ## Migrating extents with `pvmove`
 
@@ -164,20 +172,19 @@ It can take a while on a real disk and prints a running percentage. If it is int
 > df -h /mnt/applv
 > ```
 >
-> Expect something like:
+> Expect something like (the percentage lines and where the extents land both vary):
 >
 > ```text
->   /dev/vdb: Moved: 4.00%
->   /dev/vdb: Moved: 71.00%
->   /dev/vdb: Moved: 100.00%
+>   /dev/vdc: Moved: 29.00%
+>   /dev/vdc: Moved: 100.00%
 >
 >   LV    VG     Attr       LSize   Devices
->   applv vgdata -wi-ao---- 400.00m /dev/vdc(0),/dev/vdd(0)
+>   applv vgdata -wi-ao---- 400.00m /dev/vdd(0)
 >
 > important production data
 > ```
 >
-> `applv`'s extents are now on `second_disk` and `spare_disk`; none remain on `source_disk`. The file is intact and `df` is unchanged — the migration happened underneath a live, mounted filesystem.
+> None of `applv`'s extents remain on `source_disk`. Here they all landed on `second_disk` (`/dev/vdd`) because it had one contiguous run of free space big enough; if no single PV had room, `Devices` would list two or more, e.g. `/dev/vdd(0),/dev/vde(0)`. The file is intact and `df` is unchanged — the migration happened underneath a live, mounted filesystem.
 
 ## Removing the emptied disk
 
@@ -202,18 +209,18 @@ Order matters: `pvremove` refuses to run on a disk that is still a VG member, so
 > Expect something like:
 >
 > ```text
->   Removed "/dev/vdb" from volume group "vgdata"
->   Labels on physical volume "/dev/vdb" successfully wiped.
+>   Removed "/dev/vdc" from volume group "vgdata"
+>   Labels on physical volume "/dev/vdc" successfully wiped.
 >
 >   PV         VG     Fmt  Attr PSize    PFree
->   /dev/vdc   vgdata lvm2 a--  1020.00m  620.00m
 >   /dev/vdd   vgdata lvm2 a--  1020.00m  620.00m
+>   /dev/vde   vgdata lvm2 a--  1020.00m 1020.00m
 >
->   VG     #PV #LV #SN Attr   VSize  VFree
->   vgdata   2   0   1 wz--n-  1.99g  1.21g
+>   VG     #PV #LV #SN Attr   VSize VFree
+>   vgdata   2   1   0 wz--n- 1.99g 1.60g
 > ```
 >
-> `source_disk` no longer appears in `pvs`, and `vgdata` is back to two PVs — the sick disk is fully removed with no downtime taken.
+> `source_disk` no longer appears in `pvs`, and `vgdata` is back to two PVs — the sick disk is fully removed with no downtime taken. The PV that received the migrated extents (`/dev/vdd` here) now shows `620.00m` free; the untouched spare still shows its full `1020.00m`.
 
 ## Growing a volume live: `lvextend` then the filesystem
 
@@ -237,21 +244,23 @@ After the LV is bigger, the filesystem still thinks it ends at the old boundary.
 > df -h /mnt/applv
 > ```
 >
-> Expect something like:
+> Expect something like (block counts depend on the filesystem's block size):
 >
 > ```text
-> /dev/mapper/vgdata-applv 380M ... 350M   1% /mnt/applv
+> /dev/mapper/vgdata-applv  359M ... 331M   1% /mnt/applv
 >
->   Size of logical volume vgdata/applv changed from 400.00 MiB to 600.00 MiB.
+>   Size of logical volume vgdata/applv changed from 400.00 MiB (100 extents) to 600.00 MiB (150 extents).
+>   Logical volume vgdata/applv successfully resized.
 >
-> /dev/mapper/vgdata-applv 380M ... 350M   1% /mnt/applv     <-- LV bigger, FS not yet
+> /dev/mapper/vgdata-applv  359M ... 331M   1% /mnt/applv     <-- LV bigger, FS not yet
 >
-> The filesystem on /dev/vgdata/applv is now 614400 (1k) blocks long.
+> Filesystem at /dev/vgdata/applv is mounted on /mnt/applv; on-line resizing required
+> The filesystem on /dev/vgdata/applv is now 153600 (4k) blocks long.
 >
-> /dev/mapper/vgdata-applv 570M ... 540M   1% /mnt/applv     <-- FS now uses the space
+> /dev/mapper/vgdata-applv  553M ... 522M   1% /mnt/applv     <-- FS now uses the space
 > ```
 >
-> After `lvextend` the block device is 600 MiB but `df` is unchanged — the filesystem has not noticed. `resize2fs` extends it online and `df` jumps. The playground's filesystem is ext4; on XFS you would run `sudo xfs_growfs /mnt/applv` instead and see the same result.
+> `lvextend` reports the change in both MiB and extents (50 more 4 MiB extents = 200 MiB). After it, the block device is 600 MiB but `df` is unchanged — the filesystem has not noticed. `resize2fs` grows it online (`153600` blocks of 4 KiB ≈ 600 MiB) and `df` jumps. The playground's filesystem is ext4; on XFS you would run `sudo xfs_growfs /mnt/applv` instead and see the same result.
 
 > [!WARNING]
 > **Common pitfalls**
