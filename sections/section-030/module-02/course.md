@@ -25,9 +25,56 @@ After this module you can:
 
 ## Before you start
 
-You need the previous module's material: what PVs, VGs, LVs, and extents are, and the `pvs` / `vgs` / `lvs` inspection commands.
+This module builds directly on the previous one. The next section recaps the pieces you need — the three LVM layers, the physical extent, and the `pvs` / `vgs` / `lvs` inspection commands — but if none of those terms are familiar, read *LVM Fundamentals* first.
 
-The linked playground gives you an Ubuntu server VM with a **pre-built stack**: volume group `vgdata` on two 1 GB disks, logical volume `applv` (400 MiB ext4) with all its extents on the first disk, mounted at `/mnt/applv` with sample files, and a third disk left raw as the replacement. The three disks' kernel names are in `/etc/playground-disks` as `source_disk`, `second_disk`, `spare_disk` — read that file rather than assuming `vdb`/`vdc`/`vdd` order. Run the command blocks below in that VM after `astrona ssh section-030-module-02-playground`.
+The linked playground gives you an Ubuntu server VM with a **pre-built stack**: volume group `vgdata` on two 1 GB disks, logical volume `applv` (400 MiB ext4) with all its extents on the first disk, mounted at `/mnt/applv` with sample files, and a third disk left raw as the replacement. The three disks' kernel names are in `/etc/playground-disks` as `source_disk`, `second_disk`, `spare_disk` — read that file rather than assuming `vdb`/`vdc`/`vdd` order. Connect with `astrona ssh astro-section-030-module-02-playground` and run every command block below inside that VM.
+
+## The LVM stack, recapped
+
+The previous module built this stack from the bottom up. This module rearranges the bottom two layers while the top layer stays mounted and in use, so keep the picture in mind:
+
+```text
+  Logical volume    applv             <- what you format and mount
+  -----------------------------------
+  Volume group      vgdata            <- one pool of 4 MiB extents
+  -----------------------------------
+  Physical volumes  /dev/vdb /dev/vdc <- disks with an LVM label on them
+```
+
+- A **physical volume (PV)** is a disk or partition with a small LVM label written at its start. Only that label changes — `pvcreate` does not format the rest of the disk.
+- A **volume group (VG)** pools one or more PVs into a single space, divided into **physical extents (PEs)** of 4 MiB each. Every allocation LVM makes is a whole number of extents.
+- A **logical volume (LV)** is a run of extents handed out from the VG. It appears at `/dev/<vg>/<lv>` and behaves exactly like a partition. Its extents can come from several PVs at once, and the filesystem stacked on top cannot tell the difference.
+
+`vgdata` in this playground is a VG built on two PVs, with one LV, `applv`, carved from it.
+
+### Reading the command names
+
+Every LVM command is a **layer prefix** — `pv`, `vg`, or `lv` — followed by an **action**. The prefix says which layer you are touching; the suffix says what you are doing to it. Once that clicks, the names read themselves: `vgextend` is "volume group, extend"; `pvremove` is "physical volume, remove"; `lvs` is "logical volumes, short list".
+
+| Action              | On a PV (`pv…`) | On a VG (`vg…`) | On an LV (`lv…`) |
+|---------------------|-----------------|-----------------|-----------------|
+| create it           | `pvcreate`      | `vgcreate`      | `lvcreate`      |
+| list, one line each  | `pvs`           | `vgs`           | `lvs`           |
+| list, full detail   | `pvdisplay`     | `vgdisplay`     | `lvdisplay`     |
+| add capacity        | —               | `vgextend`      | `lvextend`      |
+| take a member out   | —               | `vgreduce`      | —               |
+| wipe / destroy it   | `pvremove`      | `vgremove`      | `lvremove`      |
+| relocate extents    | `pvmove`        | —               | —               |
+
+Two patterns cover almost everything in this module:
+
+- **Build upward, tear down from the top.** Growing the stack runs `pvcreate` → `vgextend` → `lvextend`. Retiring a disk runs the other way: `pvmove` the data off it, `vgreduce` the disk out of the pool, `pvremove` the label. Each teardown verb is the exact inverse of a build verb — `vgreduce` undoes `vgextend`, `pvremove` undoes `pvcreate`.
+- **`…s` for a glance, `…display` for the full record.** `pvs`, `vgs`, and `lvs` print one line per object with the columns you check most often; the `…display` forms print everything.
+
+`pvmove` is the odd one out — extents are a PV-level idea, so there is no `vgmove` or `lvmove`. You name the PV to drain, and LVM moves whatever LVs happen to have extents on it.
+
+The three `…s` commands are what you run before and after every change here:
+
+- **`pvs`** — one line per PV: which disk, which VG it belongs to (blank if none), its size, and how much is free.
+- **`vgs`** — one line per VG: how many PVs and LVs it holds, its total size, its free size.
+- **`lvs`** — one line per LV: name, VG, size. Add `-o +devices` to append the PVs its extents currently sit on — the single most important thing to know before a `pvmove`.
+
+You will see all three in the first checkpoint below.
 
 ## Reading the current state
 
@@ -68,7 +115,12 @@ Every operation here depends on knowing which extents are where. Before touching
 
 A disk that is throwing SMART warnings has not failed yet, so you can still read from it. The migration strategy is: add a healthy disk to the same VG, move the data across, then drop the sick one.
 
-`pvcreate <spare>` initialises the new disk as a PV; `vgextend <vg> <spare>` folds it into the existing pool. Both are safe on a running system — they add capacity without moving anything.
+This is the "build upward" pattern from the recap, stopping one layer short of the LV:
+
+- `pvcreate <spare>` writes an LVM label to the front of the raw disk. It goes from "not LVM's" to "a PV that belongs to no VG yet". Nothing else on the disk is touched, but the disk must hold no data you want to keep.
+- `vgextend <vg> <spare>` hands that PV to an existing volume group. LVM slices it into 4 MiB extents and adds them to the pool's free space. It is the mirror image of `vgreduce`, which you run later to take the disk back out.
+
+Both commands are safe on a running system — they add capacity without moving a single byte of existing data, so no LV and no filesystem is affected.
 
 > [!TIP]
 > **Try it — extend the volume group onto the spare**
@@ -95,9 +147,11 @@ A disk that is throwing SMART warnings has not failed yet, so you can still read
 
 ## Migrating extents with `pvmove`
 
-`pvmove <source>` copies every allocated extent off `<source>` onto other PVs in the same VG that have free space, updating LVM's map as it goes. If an application writes to a block mid-copy, LVM applies the write to the new location and carries on. The mounted filesystem sees nothing.
+`pvmove <source>` walks every allocated extent on `<source>`, copies it to free space on the other PVs in the same VG, and rewrites LVM's map to point at the new location — one extent at a time. Because the map is updated as it goes, the LV never has a gap: if an application writes to a block that is mid-copy, LVM applies the write to the new location and continues. The mounted filesystem sees nothing but its own normal I/O.
 
-It can take a while and prints progress. You can re-run it if interrupted; it resumes.
+`pvmove` is the only "relocate" verb in LVM — there is no `vgmove` or `lvmove` — because extents are a property of the PV they sit on. You point it at the disk you want emptied, not at a volume; it moves whichever LVs have extents there.
+
+It can take a while on a real disk and prints a running percentage. If it is interrupted (a reboot, a Ctrl-C), re-running the same command resumes from where it stopped. Give it somewhere to go first: it needs enough free extents on the *other* PVs in the VG, which is why `vgextend` with the spare comes before it.
 
 > [!TIP]
 > **Try it — evacuate the source disk while applv stays mounted**
@@ -127,7 +181,12 @@ It can take a while and prints progress. You can re-run it if interrupted; it re
 
 ## Removing the emptied disk
 
-With no extents left on it, `source_disk` can leave the pool. `vgreduce <vg> <source>` detaches it; `pvremove <source>` wipes the LVM label so the disk is plain again and safe to physically pull.
+With no extents left on it, `source_disk` can leave the pool. This is the "tear down from the top" half of the recap, undoing the two build steps in reverse:
+
+- `vgreduce <vg> <source>` detaches the PV from the volume group — the inverse of `vgextend`. It only succeeds when the PV is empty, which is what the `pvmove` guaranteed.
+- `pvremove <source>` erases the LVM label written by `pvcreate`, returning the disk to a plain, unclaimed state that is safe to physically unplug or repurpose.
+
+Order matters: `pvremove` refuses to run on a disk that is still a VG member, so `vgreduce` has to come first.
 
 > [!TIP]
 > **Try it — retire the source disk**
@@ -158,9 +217,9 @@ With no extents left on it, `source_disk` can leave the pool. `vgreduce <vg> <so
 
 ## Growing a volume live: `lvextend` then the filesystem
 
-Enlarging a mounted volume is two steps, in order: grow the block device, then grow the filesystem inside it.
+Enlarging a mounted volume is two steps, in order: grow the block device, then grow the filesystem inside it. The first step is `lvextend` — the LV-layer counterpart of `vgextend`, one level up the stack. `vgextend` adds a disk's extents to the *pool*; `lvextend` hands some of the pool's free extents to a *volume*.
 
-`lvextend -L +<size> <lv-path>` adds space. The `+` is critical:
+`lvextend -L +<size> <lv-path>` adds space. Unlike `vgextend`, it takes a size, and the `+` is critical:
 
 - `lvextend -L +200M /dev/vgdata/applv` — **add** 200 MiB to the current size.
 - `lvextend -L 200M /dev/vgdata/applv` — set the absolute size **to** 200 MiB. If `applv` is 400 MiB, this shrinks it and truncates the filesystem, destroying data.
