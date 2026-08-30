@@ -27,7 +27,7 @@ After this module you can:
 
 You should know how to mount a filesystem manually (`mount`, `umount`) and read `blkid` / `lsblk` output.
 
-The linked playground gives you an Ubuntu server VM with two spare 1 GB ext4 filesystems (labels `DATA1`, `DATA2`), `/etc/fstab` backed up to `/etc/fstab.orig`, and passwordless `sudo`. Editing `/etc/fstab` in the VM is safe — it is a throwaway machine and the backup restores it. Run the command blocks below in that VM after `astrona ssh section-010-module-05-playground`.
+The linked playground gives you an Ubuntu server VM with two spare 1 GB ext4 filesystems (labels `DATA1`, `DATA2`, commonly `/dev/vdb` and `/dev/vdc` — run `sudo blkid` to see which is which), `/etc/fstab` backed up to `/etc/fstab.orig`, and passwordless `sudo`. Editing `/etc/fstab` in the VM is safe — it is a throwaway machine and the backup restores it. Run the command blocks below in that VM after `astrona ssh astro-section-010-module-05-playground`.
 
 ## An entry, field by field
 
@@ -122,7 +122,7 @@ The `dump` field is a historical artifact — set it to `0`. The `pass` field is
 
 An unmountable entry without `nofail` can leave a booting system dropping to an emergency shell. Check every new entry while the system is up and easy to fix.
 
-`sudo mount -a` tries to mount everything in the file and reports failures. `findmnt --verify` parses `/etc/fstab` and flags problems — unknown filesystem types, missing mount points, suspicious options — without mounting anything.
+`sudo mount -a` tries to mount everything in the file and reports failures. `findmnt` (*find mount*) inspects mounts and the fstab; `findmnt --verify` parses `/etc/fstab` and flags problems — unknown filesystem types, missing mount points, suspicious options — without mounting anything.
 
 > [!TIP]
 > **Try it — catch a broken entry before reboot**

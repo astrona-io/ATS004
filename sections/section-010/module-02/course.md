@@ -27,7 +27,7 @@ After this module you can:
 
 You should have read the previous module or otherwise know what `lsblk` and `blkid` show, and be comfortable in a Linux shell with `sudo`.
 
-The linked playground gives you an Ubuntu server VM with passwordless `sudo` and one spare 12 GB disk (commonly `/dev/vdb`) that has **no partition table** — its tables are cleared on every boot. Run the command blocks below in that VM after connecting with `astrona ssh section-010-module-02-playground`. `fdisk`, `parted`, `sfdisk`, `partprobe`, and `wipefs` are already installed.
+The linked playground gives you an Ubuntu server VM with passwordless `sudo` and one spare 12 GB disk (commonly `/dev/vdb`) that has **no partition table** — its tables are cleared on every boot. Run the command blocks below in that VM after connecting with `astrona ssh astro-section-010-module-02-playground`. `fdisk`, `parted`, `sfdisk`, `partprobe`, and `wipefs` are already installed.
 
 ## What a partition is and why you draw one
 
@@ -43,7 +43,7 @@ Two formats exist for that table.
 
 **MBR (Master Boot Record)**, from 1983, stores the table in the first 512-byte sector of the disk. That tiny space forces two well-known limits:
 
-- **Four primary partitions.** A fifth requires turning one primary slot into an *extended* partition that acts as a container for *logical* partitions — an awkard workaround.
+- **Four primary partitions.** A fifth requires turning one primary slot into an *extended* partition that acts as a container for *logical* partitions — an awkward workaround.
 - **A ~2.2 TB ceiling.** MBR addresses sectors with a 32-bit number; at 512 bytes per sector that caps the addressable space at 2^32 × 512 bytes ≈ 2.2 TB. Space beyond that on a larger disk is simply unreachable through MBR.
 
 **GPT (GUID Partition Table)**, part of the UEFI specification, replaces MBR:
@@ -61,7 +61,7 @@ For any disk you provision today, use GPT. MBR is only relevant for very old sys
 
 ## The tools: fdisk and parted
 
-`fdisk` is an interactive, menu-driven editor. `sudo fdisk /dev/vdb` drops you into a prompt where single letters build the layout *in memory* until you write it:
+`fdisk` (short for *fixed disk*, an old term for a hard drive) is an interactive, menu-driven editor. `sudo fdisk /dev/vdb` drops you into a prompt where single letters build the layout *in memory* until you write it:
 
 - `p` — print the current table
 - `g` — create a fresh GPT label (`o` creates a legacy MBR label)
@@ -71,7 +71,7 @@ For any disk you provision today, use GPT. MBR is only relevant for very old sys
 - `w` — write the in-memory layout to disk and exit
 - `q` — quit **without** writing; drafted changes are discarded
 
-`parted` does the same job but takes its commands on the command line, which makes it scriptable. `sudo parted -s /dev/vdb mklabel gpt` writes a GPT label in one shot; `-s` means "script mode, do not ask questions".
+`parted` (short for *partition editor*) does the same job but takes its commands on the command line, which makes it scriptable. `sudo parted -s /dev/vdb mklabel gpt` writes a GPT label in one shot; `-s` means "script mode, do not ask questions".
 
 A worked `fdisk` session to put one 10 GB partition on an empty GPT disk looks like this: run `sudo fdisk /dev/vdb`; press `g` to lay down a GPT label; press `n`, accept the default partition number `1`, accept the default first sector `2048`, and answer the last-sector prompt with `+10G`; press `p` to review the draft; press `w` to commit. Nothing touches the disk until that final `w`.
 
@@ -140,7 +140,7 @@ The kernel still uses the old table.
 Two ways out, no reboot needed:
 
 1. Unmount every filesystem on the disk (and deactivate any LVM volume groups on it), then the write succeeds normally.
-2. Ask the kernel to rescan with `partprobe`:
+2. Ask the kernel to rescan with `partprobe` (*partition probe* — it tells the kernel to re-probe the disk and reload its partition list):
 
    ```sh
    sudo partprobe /dev/vdb

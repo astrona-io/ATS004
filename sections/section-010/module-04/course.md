@@ -27,7 +27,7 @@ After this module you can:
 
 You should know how to create and mount an ext4 filesystem from the earlier modules and be comfortable with `sudo`.
 
-The linked playground gives you an Ubuntu server VM with passwordless `sudo` and one spare 2 GB disk (commonly `/dev/vdb`) that already holds an **unmounted** ext4 filesystem, labelled `OLD_LABEL`, with a few sample files. Because it is unmounted, it is safe to run `fsck` against it. Run the command blocks below in that VM after connecting with `astrona ssh section-010-module-04-playground`. `fsck`, `tune2fs`, `dumpe2fs`, and `blkid` are already installed.
+The linked playground gives you an Ubuntu server VM with passwordless `sudo` and one spare 2 GB disk (commonly `/dev/vdb`) that already holds an **unmounted** ext4 filesystem, labelled `OLD_LABEL`, with a few sample files. Because it is unmounted, it is safe to run `fsck` against it. Run the command blocks below in that VM after connecting with `astrona ssh astro-section-010-module-04-playground`. `fsck`, `tune2fs`, `dumpe2fs`, and `blkid` are already installed.
 
 ## Filesystems as databases, and how they get damaged
 
@@ -43,7 +43,7 @@ At a fixed spot near the start of an ext4 filesystem sits the **superblock**: th
 
 The **journal** is a small circular log. Before changing its main tables, ext4 writes a description of the intended change to the journal, then applies it. After a crash, mount replays completed journal entries and discards incomplete ones — a few seconds of work instead of a full scan. This is why `fsck` rarely runs at boot on a modern system: the journal has already handled the common case, and `fsck` is reserved for deeper damage.
 
-`tune2fs -l <device>` prints the whole superblock in readable form.
+`tune2fs` (*tune ext2/3/4 filesystem*) reads and adjusts ext-filesystem parameters that live in the superblock. `tune2fs -l <device>` prints the whole superblock in readable form.
 
 > [!TIP]
 > **Try it — read the superblock**
@@ -106,7 +106,7 @@ Two stable identifiers solve this:
 - The **UUID**, a random 128-bit value written into the superblock at format time. Unique and unchanging for the life of the filesystem.
 - The **label**, a short human-chosen string. Convenient but you must keep them unique yourself.
 
-`blkid <device>` prints both. `tune2fs -L <label> <device>` sets or changes the label (for ext filesystems only — XFS uses `xfs_admin -L`). You can then `mount LABEL=<label> <dir>` or `mount UUID=<uuid> <dir>`, and in `/etc/fstab` the first field is normally `UUID=...` for exactly this reason.
+`blkid` (*block ID*) reads filesystem headers; `blkid <device>` prints both the label and the UUID. `tune2fs -L <label> <device>` sets or changes the label (for ext filesystems only — XFS uses `xfs_admin -L`). You can then `mount LABEL=<label> <dir>` or `mount UUID=<uuid> <dir>`, and in `/etc/fstab` the first field is normally `UUID=...` for exactly this reason. `findmnt <path>` (*find mount*) shows what is mounted at a path and which device the identifier resolved to.
 
 > [!TIP]
 > **Try it — relabel, then mount by identifier**

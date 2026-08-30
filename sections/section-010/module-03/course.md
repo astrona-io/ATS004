@@ -27,7 +27,7 @@ After this module you can:
 
 You should know how to format and mount a filesystem (`mkfs.ext4`, `mount`, `umount`) from the earlier modules, and be comfortable with `sudo`.
 
-The linked playground gives you an Ubuntu server VM with passwordless `sudo`, the `cryptsetup` tool, the `dm_crypt` kernel module loaded, and one spare 2 GB raw disk (commonly `/dev/vdb`) wiped clean on every boot. Run the command blocks below in that VM after connecting with `astrona ssh section-010-module-03-playground`. The examples encrypt the whole disk `/dev/vdb`; on a real system you would usually encrypt a partition such as `/dev/vdb1` instead, but the commands are identical.
+The linked playground gives you an Ubuntu server VM with passwordless `sudo`, the `cryptsetup` tool, the `dm_crypt` kernel module loaded, and one spare 2 GB raw disk (commonly `/dev/vdb`) wiped clean on every boot. Run the command blocks below in that VM after connecting with `astrona ssh astro-section-010-module-03-playground`. The examples encrypt the whole disk `/dev/vdb`; on a real system you would usually encrypt a partition such as `/dev/vdb1` instead, but the commands are identical.
 
 ## What LUKS protects against
 
@@ -44,7 +44,7 @@ It does **not** protect a running system where the volume is already unlocked an
 You never write a filesystem onto the locked device directly. Instead:
 
 1. `cryptsetup luksFormat` writes a **LUKS header** to the start of the device and marks the rest as an encrypted region.
-2. `cryptsetup open` asks for the passphrase and, if it checks out, creates a decrypted **virtual device** under `/dev/mapper/`. Reads and writes to that virtual device are encrypted and decrypted on the fly by the kernel's `dm-crypt` layer.
+2. `cryptsetup open` asks for the passphrase and, if it checks out, creates a decrypted **virtual device** under `/dev/mapper/`. Reads and writes to that virtual device are encrypted and decrypted on the fly by the kernel's `dm-crypt` (device-mapper crypt) layer.
 3. You format and mount the `/dev/mapper/` device like any normal disk.
 4. `cryptsetup close` removes the virtual device. The physical disk is back to being an opaque encrypted blob.
 
@@ -167,6 +167,8 @@ With the device closed, someone who copies `/dev/vdb` gets the LUKS header — a
 
 > [!TIP]
 > **Try it — read the raw bytes**
+>
+> `xxd` is a hex viewer: `-l` limits how many bytes it dumps, `-s` seeks to a byte offset first.
 >
 > ```sh
 > sudo xxd -l 96 /dev/vdb

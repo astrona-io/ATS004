@@ -27,7 +27,7 @@ After this module you can:
 
 You need the previous module's material: the six `/etc/fstab` fields and identifying devices by `UUID=`. Basic `systemctl` usage (`start`, `status`, `enable`) is assumed.
 
-The linked playground gives you an Ubuntu server VM with one spare ext4 filesystem (label `DATA`, commonly `/dev/vdb`), `/etc/fstab` backed up to `/etc/fstab.orig`, and passwordless `sudo`. Run the command blocks below in that VM after `astrona ssh section-010-module-06-playground`.
+The linked playground gives you an Ubuntu server VM with one spare ext4 filesystem (label `DATA`, commonly `/dev/vdb`), `/etc/fstab` backed up to `/etc/fstab.orig`, and passwordless `sudo`. Run the command blocks below in that VM after `astrona ssh astro-section-010-module-06-playground`.
 
 ## fstab entries are already units
 
@@ -85,7 +85,7 @@ A `.mount` unit's filename **must** be the mount path, run through systemd's pat
 
 ## Writing a native `.mount` unit
 
-A `.mount` unit lives in `/etc/systemd/system/`. Its `[Mount]` section carries the same information as an fstab line: `What=` (the device — `UUID=` works), `Where=` (the mount point, matching the filename), `Type=`, and `Options=`. After creating or editing it, run `systemctl daemon-reload` so systemd re-reads unit files.
+A `.mount` unit lives in `/etc/systemd/system/`. Its `[Mount]` section carries the same information as an fstab line: `What=` (the device — `UUID=` works), `Where=` (the mount point, matching the filename), `Type=`, and `Options=`. After creating or editing it, run `systemctl daemon-reload` so systemd re-reads unit files. (The checkpoints below confirm each mount with `findmnt` — *find mount* — which reports what is mounted where.)
 
 > [!TIP]
 > **Try it — mount via a unit**
