@@ -27,7 +27,9 @@ After this module you can:
 
 You should know how to format and mount a filesystem (`mkfs.ext4`, `mount`, `df`) from the earlier sections and be comfortable with `sudo`.
 
-The linked playground gives you an Ubuntu server VM with passwordless `sudo`, the `lvm2` toolset installed, and **three spare 1 GB disks** (commonly `/dev/vdb`, `/dev/vdc`, `/dev/vdd`) that carry no LVM metadata and no filesystem. They are wiped on every boot. Run the command blocks below in that VM after connecting with `astrona ssh section-030-module-01-playground`.
+The linked playground gives you an Ubuntu server VM with passwordless `sudo`, the `lvm2` toolset installed, and **three spare 1 GB disks** — `/dev/vdc`, `/dev/vdd`, `/dev/vde` (also reachable by their stable serial names `/dev/disk/by-id/virtio-s30m01-a`, `…-b`, `…-c`) — that carry no LVM metadata and no filesystem. They are wiped on every boot. Connect to the VM with `astrona ssh astro-section-030-module-01-playground`, then run the command blocks below there.
+
+A quick note on the disk names before you touch anything: `/dev/vda` is the system disk with the OS on it, and `/dev/vdb` is a tiny (~366 KiB) read-only disk the platform uses for boot configuration — leave both alone. Only `vdc`, `vdd`, and `vde` are yours to experiment with. Always run `lsblk` first and match on the serial column, not on the letter.
 
 ## Why LVM exists
 
@@ -44,7 +46,7 @@ LVM stacks three layers, each built from the one below:
   ------------------------------------------------
   Volume Group       data_pool  (one pool of extents)
   ------------------------------------------------
-  Physical Volumes   /dev/vdb   /dev/vdc             <- initialised disks/partitions
+  Physical Volumes   /dev/vdc   /dev/vdd             <- initialised disks/partitions
 ```
 
 - A **physical volume (PV)** is a whole disk or a partition that you have marked for LVM use.
@@ -58,29 +60,39 @@ LVM stacks three layers, each built from the one below:
 `pvs` gives a one-line-per-PV summary; `pvdisplay` gives the full detail.
 
 > [!TIP]
-> **Try it — initialise two disks as PVs**
+> **Try it — see the raw disks, then initialise two as PVs**
 >
 > ```sh
-> lsblk
+> lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,SERIAL
 > sudo pvs
-> sudo pvcreate /dev/vdb /dev/vdc
+> sudo pvcreate /dev/vdc /dev/vdd
 > sudo pvs
 > ```
 >
-> Expect something like:
+> Expect something like (columns and exact sizes vary):
 >
 > ```text
-> (first pvs: no output — nothing is a PV yet)
+>   NAME     SIZE TYPE MOUNTPOINT SERIAL
+>   vda       25G disk
+>   ├─vda1    24G part /
+>   ├─vda15   99M part /boot/efi
+>   └─vda16  923M part /boot
+>   vdb      366K disk
+>   vdc        1G disk            s30m01-a
+>   vdd        1G disk            s30m01-b
+>   vde        1G disk            s30m01-c
 >
->   Physical volume "/dev/vdb" successfully created.
+>   (first pvs: no output — nothing is a PV yet)
+>
 >   Physical volume "/dev/vdc" successfully created.
+>   Physical volume "/dev/vdd" successfully created.
 >
->   PV         VG   Fmt  Attr PSize    PFree
->   /dev/vdb        lvm2 ---  1020.00m 1020.00m
->   /dev/vdc        lvm2 ---  1020.00m 1020.00m
+>   PV         VG Fmt  Attr PSize PFree
+>   /dev/vdc      lvm2 ---  1.00g 1.00g
+>   /dev/vdd      lvm2 ---  1.00g 1.00g
 > ```
 >
-> Both disks now show `Fmt = lvm2`. The `VG` column is blank because they are not in a volume group yet, and `PFree` equals `PSize` because none of their space is assigned.
+> `lsblk` shows the layout: `vda` is the OS disk (it has partitions and mount points), `vdb` is the tiny boot-config disk, and `vdc`/`vdd`/`vde` are the three empty 1 GB disks — no `FSTYPE`, no `MOUNTPOINT`, matched by the `SERIAL` column. After `pvcreate`, `/dev/vdc` and `/dev/vdd` show `Fmt = lvm2`. The `VG` column is blank because they are not in a volume group yet, and `PFree` equals `PSize` because none of their space is assigned.
 
 ## Volume groups and physical extents
 
@@ -94,7 +106,7 @@ When a PV joins a VG, LVM divides it into equal blocks called **physical extents
 > **Try it — pool the PVs and read the extent size**
 >
 > ```sh
-> sudo vgcreate vgdata /dev/vdb /dev/vdc
+> sudo vgcreate vgdata /dev/vdc /dev/vdd
 > sudo vgs
 > sudo vgdisplay vgdata | grep -E 'VG Size|PE Size|Total PE|Free  PE'
 > ```
@@ -133,24 +145,24 @@ The resulting device is formatted and mounted exactly like a partition. Its exte
 > df -h /mnt/applv
 > ```
 >
-> Expect something like:
+> Expect something like (middle `lvs` columns trimmed here for width):
 >
 > ```text
 >   Logical volume "applv" created.
 >
 >   LV    VG     Attr       LSize   ... Devices
->   applv vgdata -wi-a----- 200.00m     /dev/vdb(0)
+>   applv vgdata -wi-a----- 200.00m     /dev/vdc(0)
 >
->   Filesystem              Size  Used Avail Use% Mounted on
->   /dev/mapper/vgdata-applv 190M   14K  176M   1% /mnt/applv
+>   Filesystem                Size  Used Avail Use% Mounted on
+>   /dev/mapper/vgdata-applv  172M   24K  158M   1% /mnt/applv
 > ```
 >
-> `lvs -o +devices` shows the extents for `applv` came from `/dev/vdb` (a 200 MiB request fits on one disk). After `mkfs.ext4` and `mount`, `df` shows an ordinary ext4 filesystem — the LVM layers underneath are invisible to it. Request a size larger than one disk and `Devices` would list both PVs.
+> `lvs -o +devices` shows the extents for `applv` came from `/dev/vdc` (a 200 MiB request fits on one disk). `/dev/vdc(0)` means "starting at physical extent 0 of that PV". After `mkfs.ext4` and `mount`, `df` shows an ordinary ext4 filesystem — the LVM layers underneath are invisible to it, and the reported size is a little under 200 MiB because the filesystem's own metadata takes a cut. Request a size larger than one disk and `Devices` would list both PVs.
 
 > [!WARNING]
 > **Common pitfalls**
 >
-> - **`pvcreate` on the wrong device.** Running it on a disk that holds a filesystem or the system disk overwrites the start of that device. Confirm with `lsblk` and `blkid` first — the same care as `mkfs`.
+> - **`pvcreate` on the wrong device.** Running it on a disk that holds a filesystem or the system disk (`/dev/vda` here) overwrites the start of that device. Confirm with `lsblk` and `blkid` first, and match on the disk's serial rather than its `vdX` letter — letters can shift between boots, serials do not. Same care as `mkfs`.
 > - **Trying to format the volume group.** A VG is a pool, not a device. There is no `/dev/vgdata` to `mkfs`. You format the *logical volume* (`/dev/vgdata/applv`).
 > - **Confusing the VG name with a path.** `vgcreate` and `lvcreate` take the VG *name* (`vgdata`); `mkfs`/`mount` take the LV *path* (`/dev/vgdata/applv`).
 > - **Forgetting the filesystem step.** `lvcreate` gives you a raw block device. Until you `mkfs` it, there is nothing to mount.
