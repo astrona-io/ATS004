@@ -28,4 +28,4 @@ if ! grep -q '[[:space:]]client$' /etc/hosts; then
   echo "10.10.20.5 client" | sudo tee -a /etc/hosts >/dev/null
 fi
 
-echo "[playground] srv ready: /srv/logs seeded (secret.txt is root-only, mode 600)."
+echo "[playground] srv ready: /srv/logs seeded (secret.txt mode 600, owned by $LOGIN_USER)."

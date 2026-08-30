@@ -1,7 +1,7 @@
 # Ad-Hoc Mounting with SSHFS (PLAYGROUND) — Playground environment
 # Two VMs on a private subnet:
-#   client (10.10.20.5)  — has sshfs + FUSE, a spare local user "bob",
-#                          passwordless root SSH to srv
+#   client (10.10.20.5)  — has sshfs + FUSE, a spare local user "bob";
+#                          the login user has passwordless SSH to srv (sshAccess)
 #   srv    (10.10.20.10) — plain SSH host exporting /srv/logs with sample files
 # No task, no grading, no `astrona submit`.
 # Schema: internal/config.LabConfig.
@@ -33,7 +33,7 @@ runtime:
       bootstrap:
         init:
           - name: "client-prepare"
-            description: "Install sshfs + FUSE opt-in, add local user bob, wire passwordless root SSH to srv."
+            description: "Install sshfs + FUSE opt-in, add local user bob, create ~/remote, pre-accept srv host key."
             type: "folder"
             source: "bootstrap/client/"
     - name: "srv"
