@@ -41,7 +41,7 @@ Traditionally a filesystem driver is kernel code. A bug in it can crash the whol
 
 **FUSE** — Filesystem in Userspace — changes that. It is a kernel module that forwards filesystem requests *back out* to an ordinary user-space program. When a program reads a file under a FUSE mount, the kernel does not answer directly; it hands the request to the user-space program that owns that mount and waits for its reply.
 
-SSHFS is one such program. The chain for a single directory listing on `~/app-logs` is:
+SSHFS — SSH Filesystem — is one such program. The chain for a single directory listing on `~/app-logs` is:
 
 ```text
 ls  ->  kernel (VFS)  ->  FUSE  ->  sshfs process  ->  SSH  ->  remote sshd  ->  remote directory
@@ -81,7 +81,7 @@ Streaming one large file is fine: the round trips amortise over a lot of data. B
 
 ## Who can see the mount: `allow_other`
 
-By default a FUSE mount is readable only by the user who created it. You ran `sshfs`, so only you can enter `~/remote`; every other local user, including `bob`, gets "Permission denied" from the kernel — even for a harmless directory listing. This is a deliberate safety default — it stops one user from exposing another user's remote credentials' reach.
+By default a FUSE mount is readable only by the user who created it. You ran `sshfs`, so only you can enter `~/remote`; every other local user, including `bob`, gets "Permission denied" from the kernel — even for a harmless directory listing. This is a deliberate safety default — it stops one user from handing every other account on the box a path into a remote host that only the mounting user was authenticated to reach.
 
 To let other local users and service accounts into the mount, add `-o allow_other`. On most systems this also requires a one-time root opt-in: the line `user_allow_other` in `/etc/fuse.conf` (already set in the playground).
 
@@ -112,7 +112,7 @@ To let other local users and service accounts into the mount, add `-o allow_othe
 
 ## Where permissions are enforced: `default_permissions`
 
-There is a subtlety in *how* access is checked. Without `default_permissions`, the local kernel does **not** consult each file's mode; it only gated the mount as a whole (that is what `allow_other` relaxed). The `sshfs` process then reads whatever the remote server lets *it* read — and it connects to `srv` as whoever ran `sshfs`, here your login user.
+There is a subtlety in *how* access is checked. Without `default_permissions`, the local kernel does **not** consult each file's mode; it only gates the mount as a whole (that is what `allow_other` relaxed). The `sshfs` process then reads whatever the remote server lets *it* read — and it connects to `srv` as whoever ran `sshfs`, here your login user.
 
 So with `-o allow_other` alone, local user `bob` reading `secret.txt` succeeds: the local kernel does not check the `600` mode, and the `sshfs` process is connected to `srv` as your login user, who *owns* `secret.txt` there and *can* read it.
 
@@ -143,7 +143,7 @@ Adding `-o default_permissions` tells the local kernel to enforce the file modes
 
 ## Unmounting
 
-You mounted as your normal user, so detach it with the FUSE-specific unmount, which does not need root:
+You mounted as your normal user, so detach it with `fusermount` — the FUSE **mount** helper; `-u` **u**nmounts — which does not need root:
 
 ```sh
 fusermount -u ~/remote

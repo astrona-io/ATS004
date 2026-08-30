@@ -27,7 +27,7 @@ After this module you can:
 
 You should know how to mount and unmount a filesystem and read command output; the previous SSHFS module is helpful background but not required.
 
-The linked playground gives you two VMs on a private `10.10.20.0/24` network: `server` (10.10.20.10), where `nfs-kernel-server` is already running and `/nfs/share` holds `report.txt` and `notes.txt`, and `client` (10.10.20.5), where `nfs-common` and `showmount` are installed and `/mnt/nfs` exists. `/etc/exports` on `server` starts **empty** — you write the export line in the checkpoints. Each VM resolves the other's name from `/etc/hosts`. Run each command block on the VM named above it (`astrona ssh server` / `astrona ssh client`).
+The linked playground gives you two VMs on a private `10.10.20.0/24` network: `server` (10.10.20.10), where `nfs-kernel-server` is already running and `/nfs/share` holds `report.txt` and `notes.txt`, and `client` (10.10.20.5), where `nfs-common` and `showmount` are installed and `/mnt/nfs` exists. `/etc/exports` on `server` starts **empty** — you write the export line in the checkpoints. Each VM resolves the other's name from `/etc/hosts`. Reach the environment with `astrona ssh astro-section-020-module-02-playground` and choose `server` or `client` when prompted; run each command block on the VM named in its heading.
 
 ## The client-server model
 
@@ -49,7 +49,7 @@ This offers `/nfs/share` to any host in `10.10.20.0/24`, read-only. The options:
 - **`sync` / `async`** — with `sync` (the modern default), the server acknowledges a write only after the data is on stable storage, so a server crash cannot silently lose an acknowledged write. `async` replies before the data is durable: faster, but a crash can lose data the client believes was saved.
 - **`no_subtree_check`** — when you export a subdirectory of a larger filesystem, subtree checking makes the server verify on each request that the file still sits inside the exported subtree, which breaks awkwardly when files are renamed. `no_subtree_check` disables that. It is the default in current `nfs-utils`; naming it explicitly just documents intent and silences a startup warning.
 
-The server does not re-read `/etc/exports` automatically. Apply changes with `exportfs`:
+The server does not re-read `/etc/exports` automatically. Apply changes with `exportfs` — **export f**ile**s**ystems, the tool that maintains the kernel's in-memory table of active exports:
 
 ```sh
 sudo exportfs -arv
@@ -80,7 +80,7 @@ sudo exportfs -arv
 
 ## The client side: discover, then mount
 
-Before mounting, ask the server what it exports and to whom with `showmount -e <server>`. If your client's address is covered and the path is listed, mount it with the standard `mount` command and `-t nfs`.
+Before mounting, ask the server what it exports and to whom with `showmount -e <server>` — `showmount` reports what an NFS server is sharing, and `-e` narrows that to the **e**xport list. If your client's address is covered and the path is listed, mount it with the standard `mount` command and `-t nfs`.
 
 > [!TIP]
 > **Try it — list the export and mount it**
