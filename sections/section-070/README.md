@@ -23,19 +23,19 @@ This section is divided into two modules, both paired with hands-on practice in 
 
 ### 1. Device-Level Diagnostics: Queues & Latency
 *   **Module Reader:** **[Module 1: Device-Level Diagnostics: Queues & Latency](./module-01/course.md)**
-*   **Associated Lab:** **`labs/section-070/capstone` (Part I)**
+*   **Associated Lab:** **`labs/section-070/capstone/lab-01` (Part I)**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-070/capstone
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-070/capstone/lab-01
     ```
 *   **Hands-on Objective:** Troubleshoot system lag. Run `iostat` on a live stressing VM, analyze average wait times (`await`), and identify which raw device is saturated.
 
 ### 2. Process-Level Auditing: Identifying the Culprit
 *   **Module Reader:** **[Module 2: Process-Level Auditing: Identifying the Culprit](./module-02/course.md)**
-*   **Associated Lab:** **`labs/section-070/capstone` (Part II)**
+*   **Associated Lab:** **`labs/section-070/capstone/lab-01` (Part II)**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-070/capstone
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-070/capstone/lab-01
     ```
 *   **Hands-on Objective:** Trace the disk load to a specific process PID using `iotop -o`, identify the exact files it is accessing on the disk using `lsof`, and correlate the device back to its user-facing mount point. Write your audited performance findings into `/opt/course/audit/io-report.txt`.
 

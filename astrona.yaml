@@ -1,0 +1,569 @@
+training:
+  id: ATS004
+  title: "LFCS: Storage"
+  description: >
+    Training material covering the Linux Foundation Certified System
+    Administrator (LFCS) Storage domain, with hands-on labs for each
+    competency.
+
+  certification:
+    name: Linux Foundation Certified System Administrator
+    code: LFCS
+    provider: Linux Foundation
+    domain: Storage
+    weight: 20
+
+modules:
+  - id: module-010
+    title: "Section 010: Local Storage Preparation & Forensics"
+    description: >
+      Move from treating storage as an abstract folder to managing the
+      physical and logical block layers directly on raw disk metal: disk
+      discovery, partition design, data-at-rest encryption, filesystem
+      maintenance and forensics, and making filesystems mount persistently
+      at boot with /etc/fstab and systemd mount units.
+
+    content:
+      - type: reading
+        title: Section Overview
+        path: sections/section-010/README.md
+
+      - type: reading
+        title: "Module 1: Filesystem Creation, Mounting, & Forensics"
+        path: sections/section-010/module-01/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-010/module-01/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-010/module-01/lab-01/solution.md
+
+      - type: lab
+        title: "Filesystem Creation & Mounting Sandbox Lab"
+        path: labs/section-010/module-01/lab-01
+
+      - type: reading
+        title: "Module 2: Partitioning Raw Storage"
+        path: sections/section-010/module-02/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-010/module-02/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-010/module-02/lab-01/solution.md
+
+      - type: lab
+        title: "Partitioning Raw Storage: GPT/MBR Lab"
+        path: labs/section-010/module-02/lab-01
+
+      - type: reading
+        title: "Module 3: Securing Data-at-Rest with LUKS"
+        path: sections/section-010/module-03/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-010/module-03/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-010/module-03/lab-01/solution.md
+
+      - type: lab
+        title: "LUKS Block-level Encryption Lab"
+        path: labs/section-010/module-03/lab-01
+
+      - type: reading
+        title: "Module 4: Filesystem Maintenance, Labeling, & Tuning"
+        path: sections/section-010/module-04/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-010/module-04/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-010/module-04/lab-01/solution.md
+
+      - type: lab
+        title: "Filesystem Repairs, Labeling, & UUIDs Lab"
+        path: labs/section-010/module-04/lab-01
+
+      - type: reading
+        title: "Module 5: /etc/fstab in Depth"
+        path: sections/section-010/module-05/course.md
+
+      - type: reading
+        title: "Module 6: systemd Mount and Automount Units"
+        path: sections/section-010/module-06/course.md
+
+      - type: reading
+        title: "Section 010 Knowledge Check: Local Storage & Forensics"
+        path: sections/section-010/quiz.md
+
+      - type: reading
+        title: Question
+        path: labs/section-010/capstone/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-010/capstone/lab-01/solution.md
+
+      - type: lab
+        title: "Local Storage Integration Capstone Lab"
+        path: labs/section-010/capstone/lab-01
+
+  - id: module-020
+    title: "Section 020: Remote Filesystems (SSHFS and NFS)"
+    description: >
+      Bridge filesystems over network wires using SSHFS for secure,
+      ad-hoc user-space mounts and NFS, the industry-standard kernel-space
+      protocol for high-performance, multi-client storage sharing.
+
+    content:
+      - type: reading
+        title: Section Overview
+        path: sections/section-020/README.md
+
+      - type: reading
+        title: "Module 1: Ad-Hoc Mounting with SSHFS"
+        path: sections/section-020/module-01/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-020/module-01/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-020/module-01/lab-01/solution.md
+
+      - type: lab
+        title: "SSHFS User-space Mounting Lab"
+        path: labs/section-020/module-01/lab-01
+
+      - type: reading
+        title: "Module 2: Enterprise Sharing with NFS"
+        path: sections/section-020/module-02/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-020/module-02/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-020/module-02/lab-01/solution.md
+
+      - type: lab
+        title: "NFS Enterprise Network Sharing Lab"
+        path: labs/section-020/module-02/lab-01
+
+      - type: reading
+        title: "Section 020 Knowledge Check: Remote Filesystems"
+        path: sections/section-020/quiz.md
+
+      - type: reading
+        title: Question
+        path: labs/section-020/capstone/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-020/capstone/lab-01/solution.md
+
+      - type: lab
+        title: "Remote Filesystems: SSHFS and NFS Capstone Lab"
+        path: labs/section-020/capstone/lab-01
+
+  - id: module-030
+    title: "Section 030: Dynamic & Redundant Volumes (LVM & RAID)"
+    description: >
+      Combine raw disks into a single managed block device. LVM pools
+      physical disks and slices out flexible logical volumes that can be
+      expanded, migrated, or shrunk on the fly; software RAID (mdadm)
+      builds fault-tolerant arrays that survive a disk failure and rebuild
+      onto a replacement without downtime.
+
+    content:
+      - type: reading
+        title: Section Overview
+        path: sections/section-030/README.md
+
+      - type: reading
+        title: "Module 1: LVM Fundamentals"
+        path: sections/section-030/module-01/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-030/module-01/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-030/module-01/lab-01/solution.md
+
+      - type: lab
+        title: "LVM Fundamentals: PV, VG, and LV Allocation Lab"
+        path: labs/section-030/module-01/lab-01
+
+      - type: reading
+        title: "Module 2: Advanced LVM Operations"
+        path: sections/section-030/module-02/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-030/module-02/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-030/module-02/lab-01/solution.md
+
+      - type: lab
+        title: "Advanced LVM: Live Extent Migration & VG Reduction Lab"
+        path: labs/section-030/module-02/lab-01
+
+      - type: reading
+        title: "Module 3: Software RAID Fundamentals"
+        path: sections/section-030/module-03/course.md
+
+      - type: reading
+        title: "Module 4: RAID Maintenance and Recovery"
+        path: sections/section-030/module-04/course.md
+
+      - type: reading
+        title: "Section 030 Knowledge Check: Dynamic & Redundant Volumes"
+        path: sections/section-030/quiz.md
+
+      - type: reading
+        title: Question
+        path: labs/section-030/capstone/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-030/capstone/lab-01/solution.md
+
+      - type: lab
+        title: "LVM Volume Groups and Logical Volumes Capstone Lab"
+        path: labs/section-030/capstone/lab-01
+
+  - id: module-040
+    title: "Section 040: Swap Space Management"
+    description: >
+      Configure swap space as a safety valve against memory exhaustion:
+      provision swap files for emergencies and dedicated swap partitions
+      for performance, and tune relative priorities between them.
+
+    content:
+      - type: reading
+        title: Section Overview
+        path: sections/section-040/README.md
+
+      - type: reading
+        title: "Module 1: Temporary Safety Valves: Swap Files"
+        path: sections/section-040/module-01/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-040/module-01/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-040/module-01/lab-01/solution.md
+
+      - type: lab
+        title: "Swap File Allocation & Security Lab"
+        path: labs/section-040/module-01/lab-01
+
+      - type: reading
+        title: "Module 2: Permanent Swap Partitions & Priority Scheduling"
+        path: sections/section-040/module-02/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-040/module-02/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-040/module-02/lab-01/solution.md
+
+      - type: lab
+        title: "Swap Partition Formatting & Priorities Lab"
+        path: labs/section-040/module-02/lab-01
+
+      - type: reading
+        title: "Section 040 Knowledge Check: Swap Space Management"
+        path: sections/section-040/quiz.md
+
+      - type: reading
+        title: Question
+        path: labs/section-040/capstone/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-040/capstone/lab-01/solution.md
+
+      - type: lab
+        title: "Swap Space Management Capstone Lab"
+        path: labs/section-040/capstone/lab-01
+
+  - id: module-050
+    title: "Section 050: On-Demand Mounting (autofs)"
+    description: >
+      Prevent boot hangs and stale connection freezes from fstab-mounted
+      network shares by using autofs to mount remote shares on demand and
+      unmount them after a period of inactivity.
+
+    content:
+      - type: reading
+        title: Section Overview
+        path: sections/section-050/README.md
+
+      - type: reading
+        title: "Module 1: On-Demand Mounting Fundamentals"
+        path: sections/section-050/module-01/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-050/module-01/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-050/module-01/lab-01/solution.md
+
+      - type: lab
+        title: "autofs Direct Maps & Timeouts Lab"
+        path: labs/section-050/module-01/lab-01
+
+      - type: reading
+        title: "Module 2: Network Automount Maps & Tuning"
+        path: sections/section-050/module-02/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-050/module-02/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-050/module-02/lab-01/solution.md
+
+      - type: lab
+        title: "Network autofs Wildcard Mounts Lab"
+        path: labs/section-050/module-02/lab-01
+
+      - type: reading
+        title: "Section 050 Knowledge Check: On-Demand Mounting (autofs)"
+        path: sections/section-050/quiz.md
+
+      - type: reading
+        title: Question
+        path: labs/section-050/capstone/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-050/capstone/lab-01/solution.md
+
+      - type: lab
+        title: "Filesystem Automount with autofs Capstone Lab"
+        path: labs/section-050/capstone/lab-01
+
+  - id: module-060
+    title: "Section 060: Virtual Filesystems (/proc and /sys)"
+    description: >
+      Explore the "everything is a file" philosophy of Linux: inspect
+      live kernel memory, process, and file-descriptor state through
+      /proc, and adjust active hardware/kernel tuning through /sys and
+      sysctl.
+
+    content:
+      - type: reading
+        title: Section Overview
+        path: sections/section-060/README.md
+
+      - type: reading
+        title: "Module 1: The Process Blueprint: Inside /proc"
+        path: sections/section-060/module-01/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-060/module-01/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-060/module-01/lab-01/solution.md
+
+      - type: lab
+        title: "proc System Limits & File Descriptors Auditing Lab"
+        path: labs/section-060/module-01/lab-01
+
+      - type: reading
+        title: "Module 2: The Hardware Tree & Runtime Tuning: /sys & sysctl"
+        path: sections/section-060/module-02/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-060/module-02/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-060/module-02/lab-01/solution.md
+
+      - type: lab
+        title: "sysctl IPv4 Forwarding Tuning Lab"
+        path: labs/section-060/module-02/lab-01
+
+      - type: reading
+        title: "Section 060 Knowledge Check: Virtual Filesystems"
+        path: sections/section-060/quiz.md
+
+      - type: reading
+        title: Question
+        path: labs/section-060/capstone/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-060/capstone/lab-01/solution.md
+
+      - type: lab
+        title: "Virtual Filesystems /proc and /sys Capstone Lab"
+        path: labs/section-060/capstone/lab-01
+
+  - id: module-070
+    title: "Section 070: Storage Performance Monitoring"
+    description: >
+      Shift focus from setting up storage to diagnosing it: monitor disk
+      queue latency, track live process-level I/O throughput, and trace
+      disk activity to the offending application.
+
+    content:
+      - type: reading
+        title: Section Overview
+        path: sections/section-070/README.md
+
+      - type: reading
+        title: "Module 1: Device-Level Diagnostics: Queues & Latency"
+        path: sections/section-070/module-01/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-070/module-01/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-070/module-01/lab-01/solution.md
+
+      - type: lab
+        title: "Storage Performance Monitoring: iostat Wait Latency Lab"
+        path: labs/section-070/module-01/lab-01
+
+      - type: reading
+        title: "Module 2: Process-Level Auditing: Identifying the Culprit"
+        path: sections/section-070/module-02/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-070/module-02/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-070/module-02/lab-01/solution.md
+
+      - type: lab
+        title: "Storage Performance: iotop and lsof Active Profiling Lab"
+        path: labs/section-070/module-02/lab-01
+
+      - type: reading
+        title: "Section 070 Knowledge Check: Storage Performance"
+        path: sections/section-070/quiz.md
+
+      - type: reading
+        title: Question
+        path: labs/section-070/capstone/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-070/capstone/lab-01/solution.md
+
+      - type: lab
+        title: "Storage Performance Monitoring Capstone Lab"
+        path: labs/section-070/capstone/lab-01
+
+  - id: module-080
+    title: "Section 080: Capacity, Quotas & the Filesystem Hierarchy"
+    description: >
+      Know and control where disk space goes: audit consumption with du
+      while staying on one device, cap per-user, per-group, and
+      per-directory usage with ext4 and XFS quotas (including project
+      quotas), and resolve the symbolic links the FHS relies on.
+
+    content:
+      - type: reading
+        title: Section Overview
+        path: sections/section-080/README.md
+
+      - type: reading
+        title: "Module 1: Directory Capacity Auditing"
+        path: sections/section-080/module-01/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-080/module-01/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-080/module-01/lab-01/solution.md
+
+      - type: lab
+        title: "Directory Capacity Profiling (du -xh) Lab"
+        path: labs/section-080/module-01/lab-01
+
+      - type: reading
+        title: "Module 2: User and Group Disk Quotas"
+        path: sections/section-080/module-02/course.md
+
+      - type: reading
+        title: "Module 3: XFS Quotas and Project Quotas"
+        path: sections/section-080/module-03/course.md
+
+      - type: reading
+        title: "Module 4: Navigating Shortcuts: Symbolic Links & FHS"
+        path: sections/section-080/module-04/course.md
+
+      - type: reading
+        title: Question
+        path: labs/section-080/module-04/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-080/module-04/lab-01/solution.md
+
+      - type: lab
+        title: "Navigating Shortcuts: Symbolic Links Lab"
+        path: labs/section-080/module-04/lab-01
+
+      - type: reading
+        title: "Section 080 Knowledge Check: Capacity, Quotas & Symlinks"
+        path: sections/section-080/quiz.md
+
+      - type: reading
+        title: Question
+        path: labs/section-080/capstone/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: labs/section-080/capstone/lab-01/solution.md
+
+      - type: lab
+        title: "Filesystem Hierarchy and Directory Sizing Capstone Lab"
+        path: labs/section-080/capstone/lab-01
+
+  - id: module-090
+    title: "LFCS Storage Domain Certification Quiz"
+    description: >
+      A comprehensive, scenario-based final assessment covering all 24
+      modules across the 8 storage sections, simulating actual Linux
+      Foundation exam pressure.
+
+    content:
+      - type: reading
+        title: "Final Domain Certification Quiz"
+        path: sections/final-domain-quiz.md
