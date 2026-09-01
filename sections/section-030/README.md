@@ -23,19 +23,19 @@ Modules 1–2 (LVM) are each paired with a graded sandbox lab; modules 3–4 (RA
 
 ### 1. LVM Fundamentals
 *   **Module Reader:** **[Module 1: LVM Fundamentals](./module-01/course.md)**
-*   **Associated Lab:** **`labs/lab-030` (Part I)**
+*   **Associated Lab:** **`labs/section-030/capstone` (Part I)**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-030
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-030/capstone
     ```
 *   **Hands-on Objective:** Identify raw devices, initialize Physical Volumes (PV), aggregate them into a Volume Group (VG), and carve out formatted, ready-to-mount ext4 Logical Volumes (LV).
 
 ### 2. Advanced LVM Operations
 *   **Module Reader:** **[Module 2: Advanced LVM Operations](./module-02/course.md)**
-*   **Associated Lab:** **`labs/lab-030` (Part II)**
+*   **Associated Lab:** **`labs/section-030/capstone` (Part II)**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-030
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-030/capstone
     ```
 *   **Hands-on Objective:** Shrink Volume Group `vol1` by running `pvmove` to migrate all allocated active extents off a physical disk without downtime, remove the freed disk via `vgreduce`, construct a new Volume Group `vol2` from it, and provision a new 50M logical volume named `p1` formatted with ext4.
 

@@ -1,0 +1,39 @@
+metadata:
+  name: "ats-004-lab-071"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 2
+        serial: "lab071-disk1"
+      - sizeGB: 2
+        serial: "lab071-disk2"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-071-setup"
+      description: "Generates simulated high latency write load on disk2"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-iostat-audit"
+      description: "Confirms proper identifying of the slow saturated disk device"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

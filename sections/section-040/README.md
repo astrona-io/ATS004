@@ -23,19 +23,19 @@ This section is divided into two modules, both paired with hands-on practice ins
 
 ### 1. Temporary Safety Valves: Swap Files
 *   **Module Reader:** **[Module 1: Temporary Safety Valves: Swap Files](./module-01/course.md)**
-*   **Associated Lab:** **`labs/lab-040` (Part I)**
+*   **Associated Lab:** **`labs/section-040/capstone` (Part I)**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-040
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-040/capstone
     ```
 *   **Hands-on Objective:** Identify a server running out of memory. Allocate a 2G swap file on the local root partition, secure its permissions, initialize it, and enable it.
 
 ### 2. Permanent Swap Partitions & Priority Scheduling
 *   **Module Reader:** **[Module 2: Permanent Swap Partitions & Priority Scheduling](./module-02/course.md)**
-*   **Associated Lab:** **`labs/lab-040` (Part II)**
+*   **Associated Lab:** **`labs/section-040/capstone` (Part II)**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-040
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-040/capstone
     ```
 *   **Hands-on Objective:** Identify an unformatted raw disk partition on a secondary drive. Settle and format it as a swap partition, make both swap zones persistent inside `/etc/fstab`, and configure priorities so the fast partition (`pri=10`) is preferred over the slow file (`pri=5`).
 

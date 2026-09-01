@@ -21,19 +21,19 @@ This section is divided into two modules, both paired with hands-on practice wit
 
 ### 1. Ad-Hoc Mounting with SSHFS
 *   **Module Reader:** **[Module 1: Ad-Hoc Mounting with SSHFS](./module-01/course.md)**
-*   **Associated Lab:** **`labs/lab-020` (Part I)**
+*   **Associated Lab:** **`labs/section-020/capstone` (Part I)**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-020
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-020/capstone
     ```
 *   **Hands-on Objective:** Mount directory `/data-export` from server `app-srv1` to your local path `/app-srv1/data-export` on the client `terminal` using SSHFS, with read-write permissions and user-space sharing (`allow_other`) active.
 
 ### 2. Enterprise Sharing with NFS
 *   **Module Reader:** **[Module 2: Enterprise Sharing with NFS](./module-02/course.md)**
-*   **Associated Lab:** **`labs/lab-020` (Part II)**
+*   **Associated Lab:** **`labs/section-020/capstone` (Part II)**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-020
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-020/capstone
     ```
 *   **Hands-on Objective:** Set up the NFS server on `terminal` to export `/nfs/share` as read-only to client networks. On the client `app-srv1`, mount the shared directory stably under `/nfs/terminal/share`.
 

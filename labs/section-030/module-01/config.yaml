@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-031"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 2
+        serial: "lab031-disk1"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-031-setup"
+      description: "Ensures raw disk is available"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-lvm-basics"
+      description: "Confirms PV, VG, LV structure and ext4 filesystem mount"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

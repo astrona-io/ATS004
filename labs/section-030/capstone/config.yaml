@@ -1,0 +1,59 @@
+metadata:
+  name: "ats-004-lab-030"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    # NOTE: astrona-cli's qemu arg-builder mixes "-drive if=virtio" (main
+    # disk + cloud-init seed) with explicit "-device virtio-blk-pci"
+    # (extraDisks), which does NOT guarantee extraDisks land after the
+    # main disk as the extraDisks docs claim -- in practice extraDisks
+    # have shown up BEFORE the main disk in guest enumeration (e.g. with
+    # 2 extraDisks: vda/vdb = the two extraDisks, vdc = the main/root
+    # disk). Never assume a raw /dev/vdX letter here. bootstrap/validation
+    # below resolve both disks via `serial` + the stable
+    # /dev/disk/by-id/virtio-<serial> path instead, and the scenario asks
+    # the student to identify the PV to remove via `lvs`/`pvs`, not by name.
+    extraDisks:
+      - sizeGB: 2
+        serial: "lab030-a"
+      - sizeGB: 2
+        serial: "lab030-b"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lvm-lab-setup"
+      description: "Installs lvm2 if missing, creates vol1 spanning both extraDisks (resolved via by-id serial), and forces a 500M logical volume's extents onto the 'lab030-b' disk so pvmove/vgreduce have real work to do"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-target-disk-removed-from-vol1"
+      description: "Confirms the 'lab030-b' disk (resolved via by-id serial) is no longer a PV member of vol1"
+      type: "file"
+      source: "validation/validate-target-disk-removed-from-vol1.sh"
+
+    - name: "verify-vol2-created-with-target-disk"
+      description: "Confirms vol2 exists with the 'lab030-b' disk as its physical volume"
+      type: "file"
+      source: "validation/validate-vol2-created-with-target-disk.sh"
+
+    - name: "verify-lv-p1-50m"
+      description: "Confirms vol2/p1 is a ~50M logical volume formatted ext4"
+      type: "file"
+      source: "validation/validate-lv-p1-50m.sh"
+
+teardown:
+  keepCluster: false

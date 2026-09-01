@@ -24,37 +24,37 @@ This section is divided into six sequential modules. Modules 1–4 are each pair
 
 ### 1. Filesystem Creation, Mounting, & Forensics
 *   **Module Reader:** **[Module 1: Filesystem Creation, Mounting, & Forensics](./module-01/course.md)**
-*   **Practice Lab Sandbox:** **`labs/lab-014`**
+*   **Practice Lab Sandbox:** **`labs/section-010/module-01`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-014
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-010/module-01
     ```
 *   **Hands-on Objective:** Identify a newly attached raw disk, format it with ext4, mount it cleanly to `/mnt/backup-black`, and create a completed marker file.
 
 ### 2. Partitioning Raw Storage
 *   **Module Reader:** **[Module 2: Partitioning Raw Storage](./module-02/course.md)**
-*   **Practice Lab Sandbox:** **`labs/lab-011`**
+*   **Practice Lab Sandbox:** **`labs/section-010/module-02`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-011
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-010/module-02
     ```
 *   **Hands-on Objective:** Design a modern GPT partition table on a raw block device and partition it safely with correct page alignment using `parted` or `fdisk`.
 
 ### 3. Securing Data-at-Rest
 *   **Module Reader:** **[Module 3: Securing Data-at-Rest with LUKS](./module-03/course.md)**
-*   **Practice Lab Sandbox:** **`labs/lab-012`**
+*   **Practice Lab Sandbox:** **`labs/section-010/module-03`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-012
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-010/module-03
     ```
 *   **Hands-on Objective:** Encrypt a local storage partition with `cryptsetup luksFormat`, open the encrypted block map, format the mapped volume with ext4, mount it for secure writes, and lock it back down.
 
 ### 4. Filesystem Maintenance, Labeling, & Tuning
 *   **Module Reader:** **[Module 4: Filesystem Maintenance, Labeling, & Tuning](./module-04/course.md)**
-*   **Practice Lab Sandbox:** **`labs/lab-013`**
+*   **Practice Lab Sandbox:** **`labs/section-010/module-04`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-013
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-010/module-04
     ```
 *   **Hands-on Objective:** Troubleshoot a corrupted filesystem. Run `fsck` offline to restore integrity, assign a volume label using `tune2fs -L`, and extract its UUID for a secure fstab mount.
 
@@ -75,10 +75,10 @@ This section is divided into six sequential modules. Modules 1–4 are each pair
 *   **You will:** Inspect the `.mount` units generated from `/etc/fstab`, derive a unit filename with `systemd-escape`, write a native `.mount` unit, add an `.automount` with an idle timeout, and get the same behaviour from a single `x-systemd.automount` fstab option.
 
 ### 7. Section Capstone Challenge
-*   **Comprehensive Challenge:** **`labs/lab-010` (Local Storage Integration)**
+*   **Comprehensive Challenge:** **`labs/section-010/capstone` (Local Storage Integration)**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-010
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-010/capstone
     ```
 *   **Hands-on Objective:** Connect the dots. Identify and format a new disk, mount it, audit capacity across active partitions, empty hidden trash directories, and identify and force-evict active background processes blockading disk operations.
 

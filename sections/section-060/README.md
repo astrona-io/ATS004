@@ -23,19 +23,19 @@ This section is divided into two modules, both paired with hands-on practice in 
 
 ### 1. The Process Blueprint: Inside `/proc`
 *   **Module Reader:** **[Module 1: The Process Blueprint: Inside /proc](./module-01/course.md)**
-*   **Associated Lab:** **`labs/lab-060` (Part I)**
+*   **Associated Lab:** **`labs/section-060/capstone` (Part I)**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-060
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-060/capstone
     ```
 *   **Hands-on Objective:** Extract live memory metrics (such as total and available RAM) from the kernel memory log, and count the active file descriptors of a targeted PID inside `/proc/<PID>/fd/`.
 
 ### 2. The Hardware Tree & Runtime Tuning: `/sys` & `sysctl`
 *   **Module Reader:** **[Module 2: The Hardware Tree & Runtime Tuning: /sys & sysctl](./module-02/course.md)**
-*   **Associated Lab:** **`labs/lab-060` (Part II)**
+*   **Associated Lab:** **`labs/section-060/capstone` (Part II)**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/lab-060
+    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-060/capstone
     ```
 *   **Hands-on Objective:** Temporarily enable IPv4 packet routing directly inside the virtual kernel write-intercepts under `/proc/sys/`, query the parameter using `sysctl`, and audit active mount structures directly from the live kernel mount ledger `/proc/mounts`.
 

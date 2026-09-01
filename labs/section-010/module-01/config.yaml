@@ -1,0 +1,34 @@
+metadata:
+  name: "ats-004-lab-014"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab014-scratch"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-014-setup"
+      description: "Prepares raw unformatted disk state"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-scratch-disk-formatted-mounted"
+      description: "Confirms an ext4 filesystem is mounted at /mnt/backup-black and contains the completed file"
+      type: "file"
+      source: "validation/validate-completed.sh"
