@@ -5,14 +5,6 @@
 
 set -eu
 
-if ! command -v sshfs >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y sshfs
-fi
-
-if ! command -v exportfs >/dev/null 2>&1; then
-  sudo apt-get install -y nfs-kernel-server
-fi
 sudo systemctl enable --now nfs-kernel-server
 
 sudo mkdir -p /app-srv1/data-export

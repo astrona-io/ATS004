@@ -24,11 +24,6 @@
 
 set -eu
 
-if ! command -v python3 >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y python3
-fi
-
 PYTHON3_BIN="$(command -v python3)"
 
 sudo mkdir -p /opt/lab-scripts

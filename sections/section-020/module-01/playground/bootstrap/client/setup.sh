@@ -7,11 +7,6 @@ set -eu
 
 export DEBIAN_FRONTEND=noninteractive
 
-if ! command -v sshfs >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y sshfs
-fi
-
 # FUSE opt-in so a non-root `sshfs -o allow_other` mount is permitted.
 if ! grep -q '^user_allow_other' /etc/fuse.conf 2>/dev/null; then
   echo 'user_allow_other' | sudo tee -a /etc/fuse.conf >/dev/null
@@ -43,4 +38,4 @@ for _ in $(seq 1 60); do
 done
 sort -u "$HOME/.ssh/known_hosts" -o "$HOME/.ssh/known_hosts" 2>/dev/null || true
 
-echo "[playground] client ready: sshfs installed, user 'bob' added, ~/remote created."
+echo "[playground] client ready: user 'bob' added, ~/remote created."

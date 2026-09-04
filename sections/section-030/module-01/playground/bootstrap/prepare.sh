@@ -7,11 +7,6 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-if ! command -v pvcreate >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y lvm2
-fi
-
 DISKS=(
   /dev/disk/by-id/virtio-s30m01-a
   /dev/disk/by-id/virtio-s30m01-b

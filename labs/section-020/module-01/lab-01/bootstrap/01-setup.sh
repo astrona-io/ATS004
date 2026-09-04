@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -eu
 
-if ! command -v sshfs >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y sshfs
-fi
-
 sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
 
 if ! id "sshuser" >/dev/null 2>&1; then

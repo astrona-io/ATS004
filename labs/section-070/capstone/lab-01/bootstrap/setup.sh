@@ -15,15 +15,6 @@
 
 set -eu
 
-if ! command -v iostat >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y sysstat
-fi
-
-if ! command -v iotop >/dev/null 2>&1; then
-  sudo apt-get install -y iotop
-fi
-
 DISK=/dev/disk/by-id/virtio-lab070-ingest
 for i in $(seq 1 30); do
   [ -e "$DISK" ] && break

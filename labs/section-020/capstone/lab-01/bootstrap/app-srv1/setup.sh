@@ -6,15 +6,6 @@
 
 set -eu
 
-if ! command -v sshd >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y openssh-server
-fi
-
-if ! command -v mount.nfs >/dev/null 2>&1; then
-  sudo apt-get install -y nfs-common
-fi
-
 sudo mkdir -p /data-export
 echo "sample file from app-srv1" | sudo tee /data-export/hello.txt >/dev/null
 sudo chmod 777 /data-export

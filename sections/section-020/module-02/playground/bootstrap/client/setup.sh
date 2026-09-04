@@ -8,11 +8,6 @@ export DEBIAN_FRONTEND=noninteractive
 
 LAB_CIDR="10.10.20.0/24"
 
-if ! command -v mount.nfs >/dev/null 2>&1 || ! command -v showmount >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y nfs-common
-fi
-
 sudo mkdir -p /mnt/nfs
 
 # The base image ships firewalld, active, and REJECTs non-SSH traffic. Trust
@@ -32,4 +27,4 @@ if ! grep -q '[[:space:]]server$' /etc/hosts; then
   echo "10.10.20.10 server" | sudo tee -a /etc/hosts >/dev/null
 fi
 
-echo "[playground] client ready: nfs-common + showmount installed, lab subnet ${LAB_CIDR} trusted, /mnt/nfs created."
+echo "[playground] client ready: lab subnet ${LAB_CIDR} trusted, /mnt/nfs created."

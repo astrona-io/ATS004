@@ -7,11 +7,6 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-if ! command -v automount >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y autofs
-fi
-
 # A local directory with content, used as the bind-mount source in the map.
 sudo mkdir -p /srv/localdata
 echo "hello from the on-demand bind mount" | sudo tee /srv/localdata/hello.txt >/dev/null
@@ -24,5 +19,5 @@ echo "second file" | sudo tee /srv/localdata/notes.txt >/dev/null
 # autofs only fires on a path that is not already present.
 sudo rmdir /mnt/auto 2>/dev/null || true
 
-echo "[playground] autofs installed. /srv/localdata seeded. /etc/auto.master backed up to /etc/auto.master.orig."
+echo "[playground] /srv/localdata seeded. /etc/auto.master backed up to /etc/auto.master.orig."
 systemctl is-active autofs || echo "(autofs not started yet — the chapter enables it)"

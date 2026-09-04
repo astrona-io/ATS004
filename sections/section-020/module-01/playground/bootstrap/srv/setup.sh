@@ -3,10 +3,6 @@
 # Environment prep only — no task, no grading. Does NOT create any mount.
 set -eu
 
-if ! command -v sshd >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y openssh-server
-fi
 sudo systemctl enable --now ssh || sudo systemctl enable --now sshd || true
 
 sudo mkdir -p /srv/logs

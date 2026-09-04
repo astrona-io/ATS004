@@ -8,12 +8,6 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-if ! command -v iotop >/dev/null 2>&1 || ! command -v pidstat >/dev/null 2>&1 \
-   || ! command -v lsof >/dev/null 2>&1 || ! command -v fio >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y iotop sysstat lsof fio
-fi
-
 # iotop needs task delay accounting; it is off by default on kernels >= 5.14.
 echo 'kernel.task_delayacct = 1' | sudo tee /etc/sysctl.d/99-delayacct.conf >/dev/null
 sudo sysctl --system >/dev/null 2>&1 || true

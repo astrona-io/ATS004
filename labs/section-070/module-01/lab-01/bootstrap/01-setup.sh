@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -eu
 
-if ! command -v iostat >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y sysstat
-fi
-
 DISK2=/dev/disk/by-id/virtio-lab071-disk2
 
 for i in $(seq 1 30); do

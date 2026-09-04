@@ -13,11 +13,6 @@
 
 set -eu
 
-if ! command -v pvcreate >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y lvm2
-fi
-
 A=/dev/disk/by-id/virtio-lab030-a
 B=/dev/disk/by-id/virtio-lab030-b
 

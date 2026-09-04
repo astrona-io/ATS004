@@ -12,11 +12,6 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-if ! command -v pvcreate >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y lvm2
-fi
-
 A=/dev/disk/by-id/virtio-s30m02-a   # becomes /dev/vdb — the "failing" disk
 B=/dev/disk/by-id/virtio-s30m02-b   # becomes /dev/vdc
 C=/dev/disk/by-id/virtio-s30m02-c   # becomes /dev/vdd — raw spare

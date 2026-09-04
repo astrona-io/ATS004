@@ -6,10 +6,6 @@ set -eu
 
 export DEBIAN_FRONTEND=noninteractive
 
-if ! command -v automount >/dev/null 2>&1 || ! command -v showmount >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y autofs nfs-common
-fi
 sudo systemctl enable --now autofs
 
 if ! grep -q '[[:space:]]nfs$' /etc/hosts; then
@@ -18,4 +14,4 @@ fi
 
 [ -e /etc/auto.master.orig ] || sudo cp /etc/auto.master /etc/auto.master.orig
 
-echo "[playground] client ready: autofs running, nfs-common installed, 'nfs' in /etc/hosts."
+echo "[playground] client ready: autofs running, 'nfs' in /etc/hosts."

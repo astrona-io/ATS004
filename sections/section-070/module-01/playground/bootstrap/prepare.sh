@@ -7,11 +7,6 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-if ! command -v iostat >/dev/null 2>&1 || ! command -v fio >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y sysstat fio
-fi
-
 DEV=/dev/disk/by-id/virtio-s70m01-perf
 for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done
 sudo udevadm settle --timeout=30 || true

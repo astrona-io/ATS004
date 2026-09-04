@@ -9,11 +9,6 @@ export DEBIAN_FRONTEND=noninteractive
 
 LAB_CIDR="10.10.20.0/24"
 
-if ! command -v exportfs >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y nfs-kernel-server
-fi
-
 sudo mkdir -p /nfs/share
 echo "shared report from server"  | sudo tee /nfs/share/report.txt >/dev/null
 echo "shared notes from server"   | sudo tee /nfs/share/notes.txt  >/dev/null
@@ -72,4 +67,4 @@ if ! grep -q '[[:space:]]client$' /etc/hosts; then
   echo "10.10.20.5 client" | sudo tee -a /etc/hosts >/dev/null
 fi
 
-echo "[playground] server ready: nfs-kernel-server + mountd registered, lab subnet ${LAB_CIDR} trusted, /nfs/share seeded, /etc/exports empty."
+echo "[playground] server ready: mountd registered, lab subnet ${LAB_CIDR} trusted, /nfs/share seeded, /etc/exports empty."

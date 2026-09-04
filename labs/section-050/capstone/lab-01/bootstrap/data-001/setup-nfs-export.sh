@@ -3,11 +3,6 @@
 # part of the graded task -- the graded task is app-srv1's autofs config.
 set -eu
 
-if ! command -v exportfs >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y nfs-kernel-server
-fi
-
 sudo mkdir -p /exports/shared
 sudo chmod 0755 /exports/shared
 echo "hello from data-001" | sudo tee /exports/shared/welcome.txt > /dev/null

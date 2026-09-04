@@ -4,11 +4,6 @@
 # configuring /etc/auto.master(.d) and the indirect map is the graded task.
 set -eu
 
-if ! command -v automount >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y autofs nfs-common
-fi
-
 sudo mkdir -p /mnt/auto
 
 # /etc/hosts entry so "data-001" resolves without relying on DNS.

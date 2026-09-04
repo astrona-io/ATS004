@@ -6,10 +6,6 @@
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
-if ! command -v mdadm >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y mdadm
-fi
 
 DISKS=(
   /dev/disk/by-id/virtio-s090m01-a

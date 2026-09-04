@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -eu
 
-if ! command -v exportfs >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y autofs nfs-kernel-server nfs-common
-fi
-
 sudo mkdir -p /var/nfs/exports/project-alpha
 sudo mkdir -p /var/nfs/exports/project-beta
 

@@ -6,10 +6,6 @@
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
-if ! command -v xfs_quota >/dev/null 2>&1 || ! command -v mkfs.xfs >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y xfsprogs quota
-fi
 
 DEV=/dev/disk/by-id/virtio-s100m02-x
 for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done

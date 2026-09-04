@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -eu
 
-if ! command -v iotop >/dev/null 2>&1; then
-  sudo apt-get update -y
-  sudo apt-get install -y iotop lsof python3
-fi
-
 sudo mkdir -p /opt/lab-scripts
 sudo mkdir -p /opt/course/audit
 sudo chmod -R 777 /opt/course/audit
