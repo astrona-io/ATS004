@@ -23,19 +23,23 @@ This section is divided into two modules, both paired with hands-on practice in 
 
 ### 1. Device-Level Diagnostics: Queues & Latency
 *   **Module Reader:** **[Module 1: Device-Level Diagnostics: Queues & Latency](./module-01/course.md)**
-*   **Associated Lab:** **`labs/section-070/capstone/lab-01` (Part I)**
+    1. [I/O Wait, IOPS & Throughput](./module-01/course-01-io-wait-iops-throughput.md)
+    2. [Reading iostat & Watching Saturation](./module-01/course-02-iostat-and-saturation.md)
+*   **Practice Lab Sandbox:** **`sections/section-070/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-070/capstone/lab-01
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-070/module-01/labs/lab-01
     ```
 *   **Hands-on Objective:** Troubleshoot system lag. Run `iostat` on a live stressing VM, analyze average wait times (`await`), and identify which raw device is saturated.
 
 ### 2. Process-Level Auditing: Identifying the Culprit
 *   **Module Reader:** **[Module 2: Process-Level Auditing: Identifying the Culprit](./module-02/course.md)**
-*   **Associated Lab:** **`labs/section-070/capstone/lab-01` (Part II)**
+    1. [From Device to Process: iotop & pidstat](./module-02/course-01-iotop-and-pidstat.md)
+    2. [lsof & Closing the Loop](./module-02/course-02-lsof-and-closing-the-loop.md)
+*   **Practice Lab Sandbox:** **`sections/section-070/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-070/capstone/lab-01
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-070/module-02/labs/lab-01
     ```
 *   **Hands-on Objective:** Trace the disk load to a specific process PID using `iotop -o`, identify the exact files it is accessing on the disk using `lsof`, and correlate the device back to its user-facing mount point. Write your audited performance findings into `/opt/course/audit/io-report.txt`.
 

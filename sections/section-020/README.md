@@ -21,19 +21,23 @@ This section is divided into two modules, both paired with hands-on practice wit
 
 ### 1. Ad-Hoc Mounting with SSHFS
 *   **Module Reader:** **[Module 1: Ad-Hoc Mounting with SSHFS](./module-01/course.md)**
-*   **Associated Lab:** **`labs/section-020/capstone/lab-01` (Part I)**
+    1. [SSHFS and the FUSE Mechanism](./module-01/course-01-sshfs-and-fuse.md)
+    2. [Performance, Sharing & Unmounting](./module-01/course-02-performance-sharing-and-unmounting.md)
+*   **Practice Lab Sandbox:** **`sections/section-020/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-020/capstone/lab-01
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-020/module-01/labs/lab-01
     ```
 *   **Hands-on Objective:** Mount directory `/data-export` from server `app-srv1` to your local path `/app-srv1/data-export` on the client `terminal` using SSHFS, with read-write permissions and user-space sharing (`allow_other`) active.
 
 ### 2. Enterprise Sharing with NFS
 *   **Module Reader:** **[Module 2: Enterprise Sharing with NFS](./module-02/course.md)**
-*   **Associated Lab:** **`labs/section-020/capstone/lab-01` (Part II)**
+    1. [Client-Server Model & Exports](./module-02/course-01-client-server-and-exports.md)
+    2. [Mounting, Read-Only & a Down Server](./module-02/course-02-mounting-readonly-and-server-down.md)
+*   **Practice Lab Sandbox:** **`sections/section-020/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-020/capstone/lab-01
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-020/module-02/labs/lab-01
     ```
 *   **Hands-on Objective:** Set up the NFS server on `terminal` to export `/nfs/share` as read-only to client networks. On the client `app-srv1`, mount the shared directory stably under `/nfs/terminal/share`.
 

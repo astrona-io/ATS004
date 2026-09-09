@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-016"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab016-data1"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-016-setup"
+      description: "Ensures raw disk is available"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-systemd-automount"
+      description: "Confirms native .mount/.automount units and on-demand trigger"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

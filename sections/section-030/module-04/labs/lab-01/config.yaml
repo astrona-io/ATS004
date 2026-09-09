@@ -1,0 +1,43 @@
+metadata:
+  name: "ats-004-lab-034"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab034-a"
+      - sizeGB: 1
+        serial: "lab034-b"
+      - sizeGB: 1
+        serial: "lab034-c"
+      - sizeGB: 1
+        serial: "lab034-d"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-034-setup"
+      description: "Builds a healthy RAID5 array across three disks with a fourth raw spare"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-raid-recovery"
+      description: "Confirms the failed member was replaced and the array rebuilt to a clean state"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

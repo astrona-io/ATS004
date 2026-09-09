@@ -23,19 +23,23 @@ This section is divided into two modules, both paired with hands-on practice in 
 
 ### 1. On-Demand Mounting Fundamentals
 *   **Module Reader:** **[Module 1: On-Demand Mounting Fundamentals](./module-01/course.md)**
-*   **Associated Lab:** **`labs/section-050/capstone/lab-01` (Part I)**
+    1. [How On-Demand Mounting Works, and Enabling autofs](./module-01/course-01-mechanism-and-enabling.md)
+    2. [The Master Map, Triggering & Idle Unmount](./module-01/course-02-master-map-and-triggering.md)
+*   **Practice Lab Sandbox:** **`sections/section-050/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-050/capstone/lab-01
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-050/module-01/labs/lab-01
     ```
 *   **Hands-on Objective:** Install `autofs`, configure the master map `/etc/auto.master` to monitor `/mnt/auto`, and map direct/indirect on-demand triggers with automated idle timeouts.
 
 ### 2. Network Automount Maps & Tuning
 *   **Module Reader:** **[Module 2: Network Automount Maps & Tuning](./module-02/course.md)**
-*   **Associated Lab:** **`labs/section-050/capstone/lab-01` (Part II)**
+    1. [Discovering Exports & Writing a Sub-map](./module-02/course-01-discovering-and-submap.md)
+    2. [Idle Unmount & Wildcards](./module-02/course-02-wildcards-and-idle-unmount.md)
+*   **Practice Lab Sandbox:** **`sections/section-050/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-050/capstone/lab-01
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-050/module-02/labs/lab-01
     ```
 *   **Hands-on Objective:** Map an NFS export (`data-001:/exports/shared`) dynamically to `/mnt/auto/shared` using `autofs` custom sub-maps. Configure the mount to be automatically released and unmounted after exactly 5 minutes (300 seconds) of inactivity, with zero permanent fstab records.
 

@@ -19,41 +19,61 @@ By completing this section, you will acquire five core volume-management capabil
 
 ## The Learning & Lab Path
 
-Modules 1–2 (LVM) are each paired with a graded sandbox lab; modules 3–4 (RAID) come with an ungraded hands-on playground you run while you read:
+All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also come with an ungraded hands-on playground you can run while you read:
 
 ### 1. LVM Fundamentals
 *   **Module Reader:** **[Module 1: LVM Fundamentals](./module-01/course.md)**
-*   **Associated Lab:** **`labs/section-030/capstone/lab-01` (Part I)**
+    1. [Why LVM & the Three-Layer Model](./module-01/course-01-why-lvm-and-the-stack.md)
+    2. [Physical Volumes & Volume Groups](./module-01/course-02-pv-and-vg.md)
+    3. [Logical Volumes](./module-01/course-03-logical-volumes.md)
+*   **Practice Lab Sandbox:** **`sections/section-030/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-030/capstone/lab-01
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-01/labs/lab-01
     ```
 *   **Hands-on Objective:** Identify raw devices, initialize Physical Volumes (PV), aggregate them into a Volume Group (VG), and carve out formatted, ready-to-mount ext4 Logical Volumes (LV).
 
 ### 2. Advanced LVM Operations
 *   **Module Reader:** **[Module 2: Advanced LVM Operations](./module-02/course.md)**
-*   **Associated Lab:** **`labs/section-030/capstone/lab-01` (Part II)**
+    1. [The LVM Stack, Recapped & Reading State](./module-02/course-01-stack-and-state.md)
+    2. [Live Migration: pvmove](./module-02/course-02-pvmove-migration.md)
+    3. [vgreduce, and Growing/Shrinking a Volume](./module-02/course-03-vgreduce-lvextend.md)
+*   **Practice Lab Sandbox:** **`sections/section-030/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-030/capstone/lab-01
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-01
     ```
 *   **Hands-on Objective:** Shrink Volume Group `vol1` by running `pvmove` to migrate all allocated active extents off a physical disk without downtime, remove the freed disk via `vgreduce`, construct a new Volume Group `vol2` from it, and provision a new 50M logical volume named `p1` formatted with ext4.
 
 ### 3. Software RAID Fundamentals
 *   **Module Reader:** **[Module 3: Software RAID Fundamentals](./module-03/course.md)**
+    1. [RAID Levels](./module-03/course-01-raid-levels.md)
+    2. [Creating & Persisting an Array](./module-03/course-02-creating-and-persisting.md)
 *   **Hands-on Playground:** `sections/section-030/module-03/playground/` — a VM with four raw spare disks.
     ```bash
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-03/playground
     ```
-*   **You will:** Compare RAID levels, build a mirror with `mdadm --create`, watch the resync in `/proc/mdstat`, put an ext4 filesystem on `/dev/md0`, and record the array in `/etc/mdadm/mdadm.conf`.
+*   **Practice Lab Sandbox:** **`sections/section-030/module-03/labs/lab-01`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-03/labs/lab-01
+    ```
+*   **Hands-on Objective:** Build a RAID 5 array from three raw disks with `mdadm --create`, put an ext4 filesystem on `/dev/md0`, mount it, and make it survive a reboot via `/etc/mdadm/mdadm.conf`, an initramfs refresh, and a UUID-keyed `/etc/fstab` entry.
 
 ### 4. RAID Maintenance and Recovery
 *   **Module Reader:** **[Module 4: RAID Maintenance and Recovery](./module-04/course.md)**
+    1. [Reading Health and Handling a Failure](./module-04/course-01-health-and-failure.md)
+    2. [Growing an Array and Getting Notified](./module-04/course-02-growth-and-monitoring.md)
 *   **Hands-on Playground:** `sections/section-030/module-04/playground/` — a VM with a pre-built RAID 5 and a raw spare disk.
     ```bash
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-04/playground
     ```
-*   **You will:** Degrade the array with `--fail`, remove and `--add` a replacement, watch the rebuild, grow the array with `mdadm --grow` and `resize2fs`, and send a test alert with `mdadm --monitor`.
+*   **Practice Lab Sandbox:** **`sections/section-030/module-04/labs/lab-01`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-04/labs/lab-01
+    ```
+*   **Hands-on Objective:** Given a healthy RAID 5 array, fail and remove a member disk, add the spare as its replacement, wait for the rebuild to finish, and confirm the array is back to a clean state with the data intact.
 
 ---
 

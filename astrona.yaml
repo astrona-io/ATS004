@@ -33,72 +33,152 @@ modules:
         path: sections/section-010/module-01/course.md
 
       - type: reading
+        title: "Module 1.1: Discovery, Formatting & Mounting"
+        path: sections/section-010/module-01/course-01-discovery-formatting-mounting.md
+
+      - type: reading
+        title: "Module 1.2: Diagnosing a Stuck Disk"
+        path: sections/section-010/module-01/course-02-diagnosing-a-stuck-disk.md
+
+      - type: reading
         title: Question
-        path: labs/section-010/module-01/lab-01/question.md
+        path: sections/section-010/module-01/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-010/module-01/lab-01/solution.md
+        path: sections/section-010/module-01/labs/lab-01/solution.md
 
       - type: lab
         title: "Filesystem Creation & Mounting Sandbox Lab"
-        path: labs/section-010/module-01/lab-01
+        path: sections/section-010/module-01/labs/lab-01
 
       - type: reading
         title: "Module 2: Partitioning Raw Storage"
         path: sections/section-010/module-02/course.md
 
       - type: reading
+        title: "Module 2.1: Partition Tables: MBR vs GPT"
+        path: sections/section-010/module-02/course-01-partition-tables-mbr-vs-gpt.md
+
+      - type: reading
+        title: "Module 2.2: Tools, Alignment & the Kernel Re-read Problem"
+        path: sections/section-010/module-02/course-02-tools-alignment-and-kernel-rescan.md
+
+      - type: reading
         title: Question
-        path: labs/section-010/module-02/lab-01/question.md
+        path: sections/section-010/module-02/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-010/module-02/lab-01/solution.md
+        path: sections/section-010/module-02/labs/lab-01/solution.md
 
       - type: lab
         title: "Partitioning Raw Storage: GPT/MBR Lab"
-        path: labs/section-010/module-02/lab-01
+        path: sections/section-010/module-02/labs/lab-01
 
       - type: reading
         title: "Module 3: Securing Data-at-Rest with LUKS"
         path: sections/section-010/module-03/course.md
 
       - type: reading
+        title: "Module 3.1: The LUKS Model: Locking a Disk"
+        path: sections/section-010/module-03/course-01-the-luks-model.md
+
+      - type: reading
+        title: "Module 3.2: Creating a Container & Its Keyslots"
+        path: sections/section-010/module-03/course-02-creating-a-container-and-keyslots.md
+
+      - type: reading
+        title: "Module 3.3: Opening, Using, Closing & What's Visible Outside"
+        path: sections/section-010/module-03/course-03-opening-using-closing.md
+
+      - type: reading
         title: Question
-        path: labs/section-010/module-03/lab-01/question.md
+        path: sections/section-010/module-03/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-010/module-03/lab-01/solution.md
+        path: sections/section-010/module-03/labs/lab-01/solution.md
 
       - type: lab
         title: "LUKS Block-level Encryption Lab"
-        path: labs/section-010/module-03/lab-01
+        path: sections/section-010/module-03/labs/lab-01
 
       - type: reading
         title: "Module 4: Filesystem Maintenance, Labeling, & Tuning"
         path: sections/section-010/module-04/course.md
 
       - type: reading
+        title: "Module 4.1: Filesystem Corruption & the fsck Repair Model"
+        path: sections/section-010/module-04/course-01-fsck-repair-model.md
+
+      - type: reading
+        title: "Module 4.2: Labels, UUIDs & Tuning Check Intervals"
+        path: sections/section-010/module-04/course-02-labels-uuids-and-tuning.md
+
+      - type: reading
         title: Question
-        path: labs/section-010/module-04/lab-01/question.md
+        path: sections/section-010/module-04/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-010/module-04/lab-01/solution.md
+        path: sections/section-010/module-04/labs/lab-01/solution.md
 
       - type: lab
         title: "Filesystem Repairs, Labeling, & UUIDs Lab"
-        path: labs/section-010/module-04/lab-01
+        path: sections/section-010/module-04/labs/lab-01
 
       - type: reading
         title: "Module 5: /etc/fstab in Depth"
         path: sections/section-010/module-05/course.md
 
       - type: reading
+        title: "Module 5.1: fstab Fields & Stable Identifiers"
+        path: sections/section-010/module-05/course-01-fields-and-stable-identifiers.md
+
+      - type: reading
+        title: "Module 5.2: Options & Verifying Before You Trust It"
+        path: sections/section-010/module-05/course-02-options-and-verifying.md
+
+      - type: reading
+        title: Question
+        path: sections/section-010/module-05/labs/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-010/module-05/labs/lab-01/solution.md
+
+      - type: lab
+        title: "Persistent fstab Mounting Lab"
+        path: sections/section-010/module-05/labs/lab-01
+
+      - type: reading
         title: "Module 6: systemd Mount and Automount Units"
         path: sections/section-010/module-06/course.md
+
+      - type: reading
+        title: "Module 6.1: How /etc/fstab Becomes systemd Units"
+        path: sections/section-010/module-06/course-01-fstab-generated-units-and-naming.md
+
+      - type: reading
+        title: "Module 6.2: Writing Native .mount and .automount Units"
+        path: sections/section-010/module-06/course-02-native-mount-and-automount-units.md
+
+      - type: reading
+        title: "Module 6.3: The fstab Shortcut and Common Pitfalls"
+        path: sections/section-010/module-06/course-03-fstab-shortcut-and-pitfalls.md
+
+      - type: reading
+        title: Question
+        path: sections/section-010/module-06/labs/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-010/module-06/labs/lab-01/solution.md
+
+      - type: lab
+        title: "systemd .mount and .automount Units Lab"
+        path: sections/section-010/module-06/labs/lab-01
 
       - type: reading
         title: "Section 010 Knowledge Check: Local Storage & Forensics"
@@ -106,15 +186,15 @@ modules:
 
       - type: reading
         title: Question
-        path: labs/section-010/capstone/lab-01/question.md
+        path: sections/section-010/capstone/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-010/capstone/lab-01/solution.md
+        path: sections/section-010/capstone/labs/lab-01/solution.md
 
       - type: lab
         title: "Local Storage Integration Capstone Lab"
-        path: labs/section-010/capstone/lab-01
+        path: sections/section-010/capstone/labs/lab-01
 
   - id: module-020
     title: "Section 020: Remote Filesystems (SSHFS and NFS)"
@@ -133,32 +213,48 @@ modules:
         path: sections/section-020/module-01/course.md
 
       - type: reading
+        title: "Module 1.1: SSHFS and the FUSE Mechanism"
+        path: sections/section-020/module-01/course-01-sshfs-and-fuse.md
+
+      - type: reading
+        title: "Module 1.2: Performance, Sharing & Unmounting"
+        path: sections/section-020/module-01/course-02-performance-sharing-and-unmounting.md
+
+      - type: reading
         title: Question
-        path: labs/section-020/module-01/lab-01/question.md
+        path: sections/section-020/module-01/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-020/module-01/lab-01/solution.md
+        path: sections/section-020/module-01/labs/lab-01/solution.md
 
       - type: lab
         title: "SSHFS User-space Mounting Lab"
-        path: labs/section-020/module-01/lab-01
+        path: sections/section-020/module-01/labs/lab-01
 
       - type: reading
         title: "Module 2: Enterprise Sharing with NFS"
         path: sections/section-020/module-02/course.md
 
       - type: reading
+        title: "Module 2.1: Client-Server Model & Exports"
+        path: sections/section-020/module-02/course-01-client-server-and-exports.md
+
+      - type: reading
+        title: "Module 2.2: Mounting, Read-Only & a Down Server"
+        path: sections/section-020/module-02/course-02-mounting-readonly-and-server-down.md
+
+      - type: reading
         title: Question
-        path: labs/section-020/module-02/lab-01/question.md
+        path: sections/section-020/module-02/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-020/module-02/lab-01/solution.md
+        path: sections/section-020/module-02/labs/lab-01/solution.md
 
       - type: lab
         title: "NFS Enterprise Network Sharing Lab"
-        path: labs/section-020/module-02/lab-01
+        path: sections/section-020/module-02/labs/lab-01
 
       - type: reading
         title: "Section 020 Knowledge Check: Remote Filesystems"
@@ -166,15 +262,15 @@ modules:
 
       - type: reading
         title: Question
-        path: labs/section-020/capstone/lab-01/question.md
+        path: sections/section-020/capstone/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-020/capstone/lab-01/solution.md
+        path: sections/section-020/capstone/labs/lab-01/solution.md
 
       - type: lab
         title: "Remote Filesystems: SSHFS and NFS Capstone Lab"
-        path: labs/section-020/capstone/lab-01
+        path: sections/section-020/capstone/labs/lab-01
 
   - id: module-030
     title: "Section 030: Dynamic & Redundant Volumes (LVM & RAID)"
@@ -195,40 +291,104 @@ modules:
         path: sections/section-030/module-01/course.md
 
       - type: reading
+        title: "Module 1.1: Why LVM & the Three-Layer Model"
+        path: sections/section-030/module-01/course-01-why-lvm-and-the-stack.md
+
+      - type: reading
+        title: "Module 1.2: Physical Volumes & Volume Groups"
+        path: sections/section-030/module-01/course-02-pv-and-vg.md
+
+      - type: reading
+        title: "Module 1.3: Logical Volumes"
+        path: sections/section-030/module-01/course-03-logical-volumes.md
+
+      - type: reading
         title: Question
-        path: labs/section-030/module-01/lab-01/question.md
+        path: sections/section-030/module-01/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-030/module-01/lab-01/solution.md
+        path: sections/section-030/module-01/labs/lab-01/solution.md
 
       - type: lab
         title: "LVM Fundamentals: PV, VG, and LV Allocation Lab"
-        path: labs/section-030/module-01/lab-01
+        path: sections/section-030/module-01/labs/lab-01
 
       - type: reading
         title: "Module 2: Advanced LVM Operations"
         path: sections/section-030/module-02/course.md
 
       - type: reading
+        title: "Module 2.1: The LVM Stack, Recapped & Reading State"
+        path: sections/section-030/module-02/course-01-stack-and-state.md
+
+      - type: reading
+        title: "Module 2.2: Live Migration: pvmove"
+        path: sections/section-030/module-02/course-02-pvmove-migration.md
+
+      - type: reading
+        title: "Module 2.3: vgreduce, and Growing/Shrinking a Volume"
+        path: sections/section-030/module-02/course-03-vgreduce-lvextend.md
+
+      - type: reading
         title: Question
-        path: labs/section-030/module-02/lab-01/question.md
+        path: sections/section-030/module-02/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-030/module-02/lab-01/solution.md
+        path: sections/section-030/module-02/labs/lab-01/solution.md
 
       - type: lab
         title: "Advanced LVM: Live Extent Migration & VG Reduction Lab"
-        path: labs/section-030/module-02/lab-01
+        path: sections/section-030/module-02/labs/lab-01
 
       - type: reading
         title: "Module 3: Software RAID Fundamentals"
         path: sections/section-030/module-03/course.md
 
       - type: reading
+        title: "Module 3.1: RAID Levels"
+        path: sections/section-030/module-03/course-01-raid-levels.md
+
+      - type: reading
+        title: "Module 3.2: Creating & Persisting an Array"
+        path: sections/section-030/module-03/course-02-creating-and-persisting.md
+
+      - type: reading
+        title: Question
+        path: sections/section-030/module-03/labs/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-030/module-03/labs/lab-01/solution.md
+
+      - type: lab
+        title: "RAID 5 Array Creation & Persistence Lab"
+        path: sections/section-030/module-03/labs/lab-01
+
+      - type: reading
         title: "Module 4: RAID Maintenance and Recovery"
         path: sections/section-030/module-04/course.md
+
+      - type: reading
+        title: "Module 4.1: Reading Health and Handling a Failure"
+        path: sections/section-030/module-04/course-01-health-and-failure.md
+
+      - type: reading
+        title: "Module 4.2: Growing an Array and Getting Notified"
+        path: sections/section-030/module-04/course-02-growth-and-monitoring.md
+
+      - type: reading
+        title: Question
+        path: sections/section-030/module-04/labs/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-030/module-04/labs/lab-01/solution.md
+
+      - type: lab
+        title: "RAID Failure, Replacement & Rebuild Lab"
+        path: sections/section-030/module-04/labs/lab-01
 
       - type: reading
         title: "Section 030 Knowledge Check: Dynamic & Redundant Volumes"
@@ -236,15 +396,15 @@ modules:
 
       - type: reading
         title: Question
-        path: labs/section-030/capstone/lab-01/question.md
+        path: sections/section-030/capstone/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-030/capstone/lab-01/solution.md
+        path: sections/section-030/capstone/labs/lab-01/solution.md
 
       - type: lab
         title: "LVM Volume Groups and Logical Volumes Capstone Lab"
-        path: labs/section-030/capstone/lab-01
+        path: sections/section-030/capstone/labs/lab-01
 
   - id: module-040
     title: "Section 040: Swap Space Management"
@@ -263,32 +423,48 @@ modules:
         path: sections/section-040/module-01/course.md
 
       - type: reading
+        title: "Module 1.1: What Swap Is & Checking What You Have"
+        path: sections/section-040/module-01/course-01-what-swap-is-and-checking-it.md
+
+      - type: reading
+        title: "Module 1.2: Allocating, Activating & Deactivating a Swap File"
+        path: sections/section-040/module-01/course-02-allocating-activating-deactivating.md
+
+      - type: reading
         title: Question
-        path: labs/section-040/module-01/lab-01/question.md
+        path: sections/section-040/module-01/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-040/module-01/lab-01/solution.md
+        path: sections/section-040/module-01/labs/lab-01/solution.md
 
       - type: lab
         title: "Swap File Allocation & Security Lab"
-        path: labs/section-040/module-01/lab-01
+        path: sections/section-040/module-01/labs/lab-01
 
       - type: reading
         title: "Module 2: Permanent Swap Partitions & Priority Scheduling"
         path: sections/section-040/module-02/course.md
 
       - type: reading
+        title: "Module 2.1: Partition vs File & Creating the Partition"
+        path: sections/section-040/module-02/course-01-partition-vs-file-and-creating-it.md
+
+      - type: reading
+        title: "Module 2.2: Formatting, Priorities & Persistence"
+        path: sections/section-040/module-02/course-02-formatting-priorities-persistence.md
+
+      - type: reading
         title: Question
-        path: labs/section-040/module-02/lab-01/question.md
+        path: sections/section-040/module-02/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-040/module-02/lab-01/solution.md
+        path: sections/section-040/module-02/labs/lab-01/solution.md
 
       - type: lab
         title: "Swap Partition Formatting & Priorities Lab"
-        path: labs/section-040/module-02/lab-01
+        path: sections/section-040/module-02/labs/lab-01
 
       - type: reading
         title: "Section 040 Knowledge Check: Swap Space Management"
@@ -296,15 +472,15 @@ modules:
 
       - type: reading
         title: Question
-        path: labs/section-040/capstone/lab-01/question.md
+        path: sections/section-040/capstone/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-040/capstone/lab-01/solution.md
+        path: sections/section-040/capstone/labs/lab-01/solution.md
 
       - type: lab
         title: "Swap Space Management Capstone Lab"
-        path: labs/section-040/capstone/lab-01
+        path: sections/section-040/capstone/labs/lab-01
 
   - id: module-050
     title: "Section 050: On-Demand Mounting (autofs)"
@@ -323,32 +499,48 @@ modules:
         path: sections/section-050/module-01/course.md
 
       - type: reading
+        title: "Module 1.1: How On-Demand Mounting Works, and Enabling autofs"
+        path: sections/section-050/module-01/course-01-mechanism-and-enabling.md
+
+      - type: reading
+        title: "Module 1.2: The Master Map, Triggering & Idle Unmount"
+        path: sections/section-050/module-01/course-02-master-map-and-triggering.md
+
+      - type: reading
         title: Question
-        path: labs/section-050/module-01/lab-01/question.md
+        path: sections/section-050/module-01/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-050/module-01/lab-01/solution.md
+        path: sections/section-050/module-01/labs/lab-01/solution.md
 
       - type: lab
         title: "autofs Direct Maps & Timeouts Lab"
-        path: labs/section-050/module-01/lab-01
+        path: sections/section-050/module-01/labs/lab-01
 
       - type: reading
         title: "Module 2: Network Automount Maps & Tuning"
         path: sections/section-050/module-02/course.md
 
       - type: reading
+        title: "Module 2.1: Discovering Exports & Writing a Sub-map"
+        path: sections/section-050/module-02/course-01-discovering-and-submap.md
+
+      - type: reading
+        title: "Module 2.2: Idle Unmount & Wildcards"
+        path: sections/section-050/module-02/course-02-wildcards-and-idle-unmount.md
+
+      - type: reading
         title: Question
-        path: labs/section-050/module-02/lab-01/question.md
+        path: sections/section-050/module-02/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-050/module-02/lab-01/solution.md
+        path: sections/section-050/module-02/labs/lab-01/solution.md
 
       - type: lab
         title: "Network autofs Wildcard Mounts Lab"
-        path: labs/section-050/module-02/lab-01
+        path: sections/section-050/module-02/labs/lab-01
 
       - type: reading
         title: "Section 050 Knowledge Check: On-Demand Mounting (autofs)"
@@ -356,15 +548,15 @@ modules:
 
       - type: reading
         title: Question
-        path: labs/section-050/capstone/lab-01/question.md
+        path: sections/section-050/capstone/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-050/capstone/lab-01/solution.md
+        path: sections/section-050/capstone/labs/lab-01/solution.md
 
       - type: lab
         title: "Filesystem Automount with autofs Capstone Lab"
-        path: labs/section-050/capstone/lab-01
+        path: sections/section-050/capstone/labs/lab-01
 
   - id: module-060
     title: "Section 060: Virtual Filesystems (/proc and /sys)"
@@ -384,32 +576,48 @@ modules:
         path: sections/section-060/module-01/course.md
 
       - type: reading
+        title: "Module 1.1: /proc as a Live View & System-wide Files"
+        path: sections/section-060/module-01/course-01-live-view-and-system-wide-files.md
+
+      - type: reading
+        title: "Module 1.2: Per-Process Directories & Open File Descriptors"
+        path: sections/section-060/module-01/course-02-per-process-and-file-descriptors.md
+
+      - type: reading
         title: Question
-        path: labs/section-060/module-01/lab-01/question.md
+        path: sections/section-060/module-01/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-060/module-01/lab-01/solution.md
+        path: sections/section-060/module-01/labs/lab-01/solution.md
 
       - type: lab
         title: "proc System Limits & File Descriptors Auditing Lab"
-        path: labs/section-060/module-01/lab-01
+        path: sections/section-060/module-01/labs/lab-01
 
       - type: reading
         title: "Module 2: The Hardware Tree & Runtime Tuning: /sys & sysctl"
         path: sections/section-060/module-02/course.md
 
       - type: reading
+        title: "Module 2.1: The Hardware Tree & the Mount List"
+        path: sections/section-060/module-02/course-01-hardware-tree-and-mount-list.md
+
+      - type: reading
+        title: "Module 2.2: sysctl: Viewing, Changing & Persisting"
+        path: sections/section-060/module-02/course-02-sysctl-viewing-changing-persisting.md
+
+      - type: reading
         title: Question
-        path: labs/section-060/module-02/lab-01/question.md
+        path: sections/section-060/module-02/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-060/module-02/lab-01/solution.md
+        path: sections/section-060/module-02/labs/lab-01/solution.md
 
       - type: lab
         title: "sysctl IPv4 Forwarding Tuning Lab"
-        path: labs/section-060/module-02/lab-01
+        path: sections/section-060/module-02/labs/lab-01
 
       - type: reading
         title: "Section 060 Knowledge Check: Virtual Filesystems"
@@ -417,15 +625,15 @@ modules:
 
       - type: reading
         title: Question
-        path: labs/section-060/capstone/lab-01/question.md
+        path: sections/section-060/capstone/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-060/capstone/lab-01/solution.md
+        path: sections/section-060/capstone/labs/lab-01/solution.md
 
       - type: lab
         title: "Virtual Filesystems /proc and /sys Capstone Lab"
-        path: labs/section-060/capstone/lab-01
+        path: sections/section-060/capstone/labs/lab-01
 
   - id: module-070
     title: "Section 070: Storage Performance Monitoring"
@@ -444,32 +652,48 @@ modules:
         path: sections/section-070/module-01/course.md
 
       - type: reading
+        title: "Module 1.1: I/O Wait, IOPS & Throughput"
+        path: sections/section-070/module-01/course-01-io-wait-iops-throughput.md
+
+      - type: reading
+        title: "Module 1.2: Reading iostat & Watching Saturation"
+        path: sections/section-070/module-01/course-02-iostat-and-saturation.md
+
+      - type: reading
         title: Question
-        path: labs/section-070/module-01/lab-01/question.md
+        path: sections/section-070/module-01/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-070/module-01/lab-01/solution.md
+        path: sections/section-070/module-01/labs/lab-01/solution.md
 
       - type: lab
         title: "Storage Performance Monitoring: iostat Wait Latency Lab"
-        path: labs/section-070/module-01/lab-01
+        path: sections/section-070/module-01/labs/lab-01
 
       - type: reading
         title: "Module 2: Process-Level Auditing: Identifying the Culprit"
         path: sections/section-070/module-02/course.md
 
       - type: reading
+        title: "Module 2.1: From Device to Process: iotop & pidstat"
+        path: sections/section-070/module-02/course-01-iotop-and-pidstat.md
+
+      - type: reading
+        title: "Module 2.2: lsof & Closing the Loop"
+        path: sections/section-070/module-02/course-02-lsof-and-closing-the-loop.md
+
+      - type: reading
         title: Question
-        path: labs/section-070/module-02/lab-01/question.md
+        path: sections/section-070/module-02/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-070/module-02/lab-01/solution.md
+        path: sections/section-070/module-02/labs/lab-01/solution.md
 
       - type: lab
         title: "Storage Performance: iotop and lsof Active Profiling Lab"
-        path: labs/section-070/module-02/lab-01
+        path: sections/section-070/module-02/labs/lab-01
 
       - type: reading
         title: "Section 070 Knowledge Check: Storage Performance"
@@ -477,15 +701,15 @@ modules:
 
       - type: reading
         title: Question
-        path: labs/section-070/capstone/lab-01/question.md
+        path: sections/section-070/capstone/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-070/capstone/lab-01/solution.md
+        path: sections/section-070/capstone/labs/lab-01/solution.md
 
       - type: lab
         title: "Storage Performance Monitoring Capstone Lab"
-        path: labs/section-070/capstone/lab-01
+        path: sections/section-070/capstone/labs/lab-01
 
   - id: module-080
     title: "Section 080: Capacity, Quotas & the Filesystem Hierarchy"
@@ -505,40 +729,96 @@ modules:
         path: sections/section-080/module-01/course.md
 
       - type: reading
+        title: "Module 1.1: df vs du, and Reading du at a Sensible Depth"
+        path: sections/section-080/module-01/course-01-df-vs-du-depth-and-units.md
+
+      - type: reading
+        title: "Module 1.2: Staying on One Filesystem & Allocated vs Apparent Size"
+        path: sections/section-080/module-01/course-02-one-filesystem-and-apparent-size.md
+
+      - type: reading
         title: Question
-        path: labs/section-080/module-01/lab-01/question.md
+        path: sections/section-080/module-01/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-080/module-01/lab-01/solution.md
+        path: sections/section-080/module-01/labs/lab-01/solution.md
 
       - type: lab
         title: "Directory Capacity Profiling (du -xh) Lab"
-        path: labs/section-080/module-01/lab-01
+        path: sections/section-080/module-01/labs/lab-01
 
       - type: reading
         title: "Module 2: User and Group Disk Quotas"
         path: sections/section-080/module-02/course.md
 
       - type: reading
+        title: "Module 2.1: Turning Quotas On & Setting Limits"
+        path: sections/section-080/module-02/course-01-turning-on-and-setting-limits.md
+
+      - type: reading
+        title: "Module 2.2: Hitting the Limit & the Grace Period"
+        path: sections/section-080/module-02/course-02-hitting-the-limit-and-grace-period.md
+
+      - type: reading
+        title: Question
+        path: sections/section-080/module-02/labs/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-080/module-02/labs/lab-01/solution.md
+
+      - type: lab
+        title: "ext4 User & Group Quotas Lab"
+        path: sections/section-080/module-02/labs/lab-01
+
+      - type: reading
         title: "Module 3: XFS Quotas and Project Quotas"
         path: sections/section-080/module-03/course.md
+
+      - type: reading
+        title: "Module 3.1: XFS Quotas & User Limits"
+        path: sections/section-080/module-03/course-01-xfs-quotas-and-user-limits.md
+
+      - type: reading
+        title: "Module 3.2: Defining & Enforcing a Project Quota"
+        path: sections/section-080/module-03/course-02-project-quotas.md
+
+      - type: reading
+        title: Question
+        path: sections/section-080/module-03/labs/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-080/module-03/labs/lab-01/solution.md
+
+      - type: lab
+        title: "XFS Project Quota Lab"
+        path: sections/section-080/module-03/labs/lab-01
 
       - type: reading
         title: "Module 4: Navigating Shortcuts: Symbolic Links & FHS"
         path: sections/section-080/module-04/course.md
 
       - type: reading
+        title: "Module 4.1: What a Symlink Is & Finding Them"
+        path: sections/section-080/module-04/course-01-what-a-symlink-is-and-finding-them.md
+
+      - type: reading
+        title: "Module 4.2: Resolving, du's Blind Spot & Removing Safely"
+        path: sections/section-080/module-04/course-02-resolving-du-and-removing-safely.md
+
+      - type: reading
         title: Question
-        path: labs/section-080/module-04/lab-01/question.md
+        path: sections/section-080/module-04/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-080/module-04/lab-01/solution.md
+        path: sections/section-080/module-04/labs/lab-01/solution.md
 
       - type: lab
         title: "Navigating Shortcuts: Symbolic Links Lab"
-        path: labs/section-080/module-04/lab-01
+        path: sections/section-080/module-04/labs/lab-01
 
       - type: reading
         title: "Section 080 Knowledge Check: Capacity, Quotas & Symlinks"
@@ -546,15 +826,15 @@ modules:
 
       - type: reading
         title: Question
-        path: labs/section-080/capstone/lab-01/question.md
+        path: sections/section-080/capstone/labs/lab-01/question.md
 
       - type: reading
         title: Solution Walkthrough
-        path: labs/section-080/capstone/lab-01/solution.md
+        path: sections/section-080/capstone/labs/lab-01/solution.md
 
       - type: lab
         title: "Filesystem Hierarchy and Directory Sizing Capstone Lab"
-        path: labs/section-080/capstone/lab-01
+        path: sections/section-080/capstone/labs/lab-01
 
   - id: module-090
     title: "LFCS Storage Domain Certification Quiz"

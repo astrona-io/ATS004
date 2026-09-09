@@ -1,0 +1,98 @@
+# Part 1 — The LVM Stack, Recapped & Reading State
+
+> Prerequisite: [Module landing page](./course.md). Next: [Part 2 — Live Migration: pvmove](./course-02-pvmove-migration.md).
+
+Every operation later in this module — moving data off a dying disk, retiring it, growing a volume live — is a rearrangement of one underlying structure: a list of extents. This part pins down exactly what that structure is and how to read it with `pvs`/`vgs`/`lvs`, because every command after this one only makes sense in terms of it.
+
+## The extent is the unit of everything
+
+The previous module built the three-layer stack:
+
+```text
+  Logical volume    applv             <- what you format and mount
+  -----------------------------------
+  Volume group      vgdata            <- one pool of 4 MiB extents
+  -----------------------------------
+  Physical volumes  /dev/vdc /dev/vdd <- disks with an LVM label on them
+```
+
+- A **physical volume (PV)** is a disk or partition with a small LVM label written at its start (`pvcreate` writes only that label — nothing else on the disk is touched).
+- A **volume group (VG)** pools one or more PVs and divides the pooled space into **physical extents (PEs)**, fixed-size chunks (4 MiB by default). Every allocation LVM makes is a whole number of extents — never a byte range.
+- A **logical volume (LV)** is not a region of disk. It is a **list of extent assignments** stored in the VG's metadata area: `(this PV, extent N) → (this LV, extent M)`, repeated for every extent the LV owns. `/dev/<vg>/<lv>` is a device-mapper target built by replaying that list at activation time.
+
+That list-of-pointers model is the single fact that explains everything downstream:
+
+- An LV's extents do not need to be contiguous, or even on the same PV. `applv`'s 100 extents could be 60 on one disk and 40 on another, and the filesystem on top would never know — device-mapper stitches the list into one linear address space.
+- **Relocating** an extent means changing one entry in that list and copying the data it points to — not moving a filesystem, not touching mount state. That is the entire mechanism behind `pvmove`, covered in Part 2.
+- **Adding capacity to an LV** means appending more entries to its list, drawn from whichever PVs currently have free extents. That is `lvextend`, covered in Part 3.
+- **Removing a PV from a VG** is only safe once zero of its extents appear in *any* LV's list — otherwise removing it would leave dangling pointers. That is the rule `vgreduce` enforces, also in Part 3.
+
+## Reading the command names
+
+Every LVM command is a **layer prefix** (`pv`, `vg`, or `lv`) followed by an **action**. The prefix says which layer's extent-bookkeeping you are touching; the suffix says what you are doing to it.
+
+| Action              | On a PV (`pv…`) | On a VG (`vg…`) | On an LV (`lv…`) |
+|---------------------|-----------------|-----------------|-----------------|
+| create it           | `pvcreate`      | `vgcreate`      | `lvcreate`      |
+| list, one line each  | `pvs`           | `vgs`           | `lvs`           |
+| list, full detail   | `pvdisplay`     | `vgdisplay`     | `lvdisplay`     |
+| add capacity        | —               | `vgextend`      | `lvextend`      |
+| take a member out   | —               | `vgreduce`      | —               |
+| wipe / destroy it   | `pvremove`      | `vgremove`      | `lvremove`      |
+| relocate extents    | `pvmove`        | —               | —               |
+
+Two patterns cover almost everything in this module:
+
+- **Build upward, tear down from the top.** Growing the stack runs `pvcreate` → `vgextend` → `lvextend`. Retiring a disk runs the other way: `pvmove` the data off it, `vgreduce` the disk out of the pool, `pvremove` the label. Each teardown verb is the exact inverse of a build verb.
+- **`…s` for a glance, `…display` for the full record.** `pvs`, `vgs`, `lvs` print one line per object with the columns you check most often; the `…display` forms print everything, including the raw extent list.
+
+`pvmove` has no `vgmove` / `lvmove` counterpart, because extents are a property of the **PV** they currently sit on — you name the PV to drain, and LVM figures out from the extent list which LVs happen to have entries pointing at it.
+
+## The three inspection commands
+
+- **`pvs`** — one line per PV: which disk, which VG it belongs to (blank if none), size, free space.
+- **`vgs`** — one line per VG: PV count, LV count, total size, free size.
+- **`lvs`** — one line per LV: name, VG, size. `-o +devices` appends *where its extents currently are* — reading the extent-assignment list directly. This is the single most important column to check before a `pvmove`, and the one that proves a migration finished.
+
+> [!TIP]
+> **Try it — survey the stack**
+>
+> On `astro-section-030-module-02-playground` (`astrona ssh` in):
+>
+> ```sh
+> cat /etc/playground-disks
+> sudo pvs
+> sudo vgs
+> sudo lvs -o +devices
+> df -h /mnt/applv
+> ```
+>
+> Expect something like (disk letters and exact free-space figures vary):
+>
+> ```text
+> source_disk=/dev/vdc   # holds all of applv's extents (the 'failing' disk)
+> second_disk=/dev/vdd   # also in vgdata
+> spare_disk=/dev/vde    # raw, not yet a PV
+>
+>   PV         VG     Fmt  Attr PSize    PFree
+>   /dev/vdc   vgdata lvm2 a--  1020.00m  620.00m
+>   /dev/vdd   vgdata lvm2 a--  1020.00m 1020.00m
+>
+>   VG     #PV #LV #SN Attr   VSize VFree
+>   vgdata   2   1   0 wz--n- 1.99g 1.60g
+>
+>   LV    VG     Attr       LSize   Devices
+>   applv vgdata -wi-ao---- 400.00m /dev/vdc(0)
+>
+>   Filesystem                Size  Used Avail Use% Mounted on
+>   /dev/mapper/vgdata-applv  359M   36K  331M   1% /mnt/applv
+> ```
+>
+> `lvs -o +devices` confirms every extent of `applv` is on `source_disk` — `/dev/vdc(0)` means "starting from physical extent 0 of that PV". That single field is literally the extent-assignment list for this LV, printed in shorthand. `pvs` shows only two PVs: `spare_disk` is raw, not yet a PV, so it does not appear at all. `vgs` reports the pool holding one LV (`#LV 1`) and no snapshots (`#SN 0`).
+
+> *The LV is not where its data lives — it's a list of where each of its extents lives, and every command in this module edits that list.*
+
+## Reference
+
+- `man lvs` — the full column reference for `-o`; `devices` is the one worth memorizing.
+- `man lvm` — the top-level man page describing the PV/VG/LV/PE terminology this whole module builds on.

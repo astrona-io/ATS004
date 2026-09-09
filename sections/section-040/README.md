@@ -23,19 +23,23 @@ This section is divided into two modules, both paired with hands-on practice ins
 
 ### 1. Temporary Safety Valves: Swap Files
 *   **Module Reader:** **[Module 1: Temporary Safety Valves: Swap Files](./module-01/course.md)**
-*   **Associated Lab:** **`labs/section-040/capstone/lab-01` (Part I)**
+    1. [What Swap Is & Checking What You Have](./module-01/course-01-what-swap-is-and-checking-it.md)
+    2. [Allocating, Activating & Deactivating a Swap File](./module-01/course-02-allocating-activating-deactivating.md)
+*   **Practice Lab Sandbox:** **`sections/section-040/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-040/capstone/lab-01
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-040/module-01/labs/lab-01
     ```
 *   **Hands-on Objective:** Identify a server running out of memory. Allocate a 2G swap file on the local root partition, secure its permissions, initialize it, and enable it.
 
 ### 2. Permanent Swap Partitions & Priority Scheduling
 *   **Module Reader:** **[Module 2: Permanent Swap Partitions & Priority Scheduling](./module-02/course.md)**
-*   **Associated Lab:** **`labs/section-040/capstone/lab-01` (Part II)**
+    1. [Partition vs File & Creating the Partition](./module-02/course-01-partition-vs-file-and-creating-it.md)
+    2. [Formatting, Priorities & Persistence](./module-02/course-02-formatting-priorities-persistence.md)
+*   **Practice Lab Sandbox:** **`sections/section-040/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
-    astrona run --git git@github.com:astrona-io/ATS004.git -c labs/section-040/capstone/lab-01
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-040/module-02/labs/lab-01
     ```
 *   **Hands-on Objective:** Identify an unformatted raw disk partition on a secondary drive. Settle and format it as a swap partition, make both swap zones persistent inside `/etc/fstab`, and configure priorities so the fast partition (`pri=10`) is preferred over the slow file (`pri=5`).
 

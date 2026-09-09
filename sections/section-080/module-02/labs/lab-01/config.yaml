@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-083"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 2
+        serial: "lab083-quota"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-083-setup"
+      description: "Prepares an ext4 filesystem with quota mount options, quotas not yet enabled"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-ext4-quotas"
+      description: "Confirms user and group quotas are enabled and limits are set correctly"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false
