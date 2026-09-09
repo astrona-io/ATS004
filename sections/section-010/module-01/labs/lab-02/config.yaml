@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-019"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab019-vault"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-019-setup"
+      description: "Formats and mounts /mnt/locked-vault, then starts a background process holding it open"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-busy-mount-eviction"
+      description: "Confirms the busy process was found and stopped, and the disk cleanly unmounted"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

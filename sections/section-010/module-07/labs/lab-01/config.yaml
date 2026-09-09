@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-017"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab017-media"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-017-setup"
+      description: "Ensures raw removable-media disk is available"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-fat32-mount"
+      description: "Confirms FAT32 formatting, labeling, and a uid/gid-mounted writable mount"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

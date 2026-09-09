@@ -44,6 +44,12 @@ All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-01
     ```
 *   **Hands-on Objective:** Shrink Volume Group `vol1` by running `pvmove` to migrate all allocated active extents off a physical disk without downtime, remove the freed disk via `vgreduce`, construct a new Volume Group `vol2` from it, and provision a new 50M logical volume named `p1` formatted with ext4.
+*   **Practice Lab Sandbox (2):** **`sections/section-030/module-02/labs/lab-02`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-02
+    ```
+*   **Hands-on Objective:** Grow a mounted logical volume live with `lvextend` + `resize2fs`, then safely shrink it back down in the one order that doesn't destroy data — unmount, `e2fsck -f`, `resize2fs`, `lvreduce`.
 
 ### 3. Software RAID Fundamentals
 *   **Module Reader:** **[Module 3: Software RAID Fundamentals](./module-03/course.md)**
@@ -74,6 +80,12 @@ All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-04/labs/lab-01
     ```
 *   **Hands-on Objective:** Given a healthy RAID 5 array, fail and remove a member disk, add the spare as its replacement, wait for the rebuild to finish, and confirm the array is back to a clean state with the data intact.
+*   **Practice Lab Sandbox (2):** **`sections/section-030/module-04/labs/lab-02`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-04/labs/lab-02
+    ```
+*   **Hands-on Objective:** Grow a healthy RAID 5 array onto a fourth disk with `mdadm --grow`, extend the filesystem into the new space, and configure + test `mdadm --monitor` failure notification.
 
 ---
 

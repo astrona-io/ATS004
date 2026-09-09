@@ -53,6 +53,18 @@ modules:
         path: sections/section-010/module-01/labs/lab-01
 
       - type: reading
+        title: Question
+        path: sections/section-010/module-01/labs/lab-02/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-010/module-01/labs/lab-02/solution.md
+
+      - type: lab
+        title: "Diagnosing & Evicting a Busy Mount Lab"
+        path: sections/section-010/module-01/labs/lab-02
+
+      - type: reading
         title: "Module 2: Partitioning Raw Storage"
         path: sections/section-010/module-02/course.md
 
@@ -179,6 +191,54 @@ modules:
       - type: lab
         title: "systemd .mount and .automount Units Lab"
         path: sections/section-010/module-06/labs/lab-01
+
+      - type: reading
+        title: "Module 7: Removable Media & the FAT32 Filesystem"
+        path: sections/section-010/module-07/course.md
+
+      - type: reading
+        title: "Module 7.1: What FAT32 Is & Creating One"
+        path: sections/section-010/module-07/course-01-what-fat32-is-and-creating-one.md
+
+      - type: reading
+        title: "Module 7.2: Mounting FAT32 & Its Unix-less Quirks"
+        path: sections/section-010/module-07/course-02-mounting-fat32-quirks.md
+
+      - type: reading
+        title: Question
+        path: sections/section-010/module-07/labs/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-010/module-07/labs/lab-01/solution.md
+
+      - type: lab
+        title: "FAT32 Removable Media Lab"
+        path: sections/section-010/module-07/labs/lab-01
+
+      - type: reading
+        title: "Module 8: Backing Up & Cloning Storage Devices"
+        path: sections/section-010/module-08/course.md
+
+      - type: reading
+        title: "Module 8.1: Cloning a Disk with dd"
+        path: sections/section-010/module-08/course-01-cloning-a-disk-with-dd.md
+
+      - type: reading
+        title: "Module 8.2: File-Level Backups with tar, and Verifying Them"
+        path: sections/section-010/module-08/course-02-tar-backups-and-verifying.md
+
+      - type: reading
+        title: Question
+        path: sections/section-010/module-08/labs/lab-01/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-010/module-08/labs/lab-01/solution.md
+
+      - type: lab
+        title: "Disk Cloning & Backup Lab"
+        path: sections/section-010/module-08/labs/lab-01
 
       - type: reading
         title: "Section 010 Knowledge Check: Local Storage & Forensics"
@@ -343,6 +403,18 @@ modules:
         path: sections/section-030/module-02/labs/lab-01
 
       - type: reading
+        title: Question
+        path: sections/section-030/module-02/labs/lab-02/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-030/module-02/labs/lab-02/solution.md
+
+      - type: lab
+        title: "LVM Live Grow & Safe Shrink Lab"
+        path: sections/section-030/module-02/labs/lab-02
+
+      - type: reading
         title: "Module 3: Software RAID Fundamentals"
         path: sections/section-030/module-03/course.md
 
@@ -389,6 +461,18 @@ modules:
       - type: lab
         title: "RAID Failure, Replacement & Rebuild Lab"
         path: sections/section-030/module-04/labs/lab-01
+
+      - type: reading
+        title: Question
+        path: sections/section-030/module-04/labs/lab-02/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-030/module-04/labs/lab-02/solution.md
+
+      - type: lab
+        title: "RAID Grow & Failure Monitoring Lab"
+        path: sections/section-030/module-04/labs/lab-02
 
       - type: reading
         title: "Section 030 Knowledge Check: Dynamic & Redundant Volumes"
@@ -771,6 +855,18 @@ modules:
       - type: lab
         title: "ext4 User & Group Quotas Lab"
         path: sections/section-080/module-02/labs/lab-01
+
+      - type: reading
+        title: Question
+        path: sections/section-080/module-02/labs/lab-02/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-080/module-02/labs/lab-02/solution.md
+
+      - type: lab
+        title: "ext4 Quota Hard Limit & Grace Period Lab"
+        path: sections/section-080/module-02/labs/lab-02
 
       - type: reading
         title: "Module 3: XFS Quotas and Project Quotas"

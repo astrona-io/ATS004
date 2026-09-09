@@ -8,19 +8,21 @@ As an administrator, you are responsible for the entire lifecycle of a local dis
 
 ## What You Will Master
 
-By completing this section, you will acquire six core administrative capabilities:
+By completing this section, you will acquire eight core administrative capabilities:
 *   **Disk Discovery & Analysis:** How to query the kernel to identify newly attached, unformatted physical drives and trace filesystem signatures without risking data loss.
 *   **Partition Design:** How to structure disks using standard MBR and modern GPT partition tables to balance compatibility, redundancy, and performance.
 *   **Data-at-Rest Security:** How to encrypt storage sectors using enterprise LUKS encryption to protect sensitive data from offline cloning or hardware theft.
 *   **Filesystem Maintenance & Forensics:** How to check filesystem integrity, repair metadata corruptions, and locate and safely evict rogue processes blockading standard disk operations.
 *   **Persistent Mounting:** How to write correct `/etc/fstab` entries — stable identifiers, safe options (`nofail`, `_netdev`, `noatime`), correct `dump`/`pass` — and verify them with `mount -a` and `findmnt --verify` before a reboot can act on them.
 *   **systemd Mount Management:** How every mount is a systemd unit, how to write a native `.mount` unit and pair it with an `.automount`, and how `x-systemd.*` fstab options achieve the same with no unit files.
+*   **Removable Media:** How to format and mount cross-platform FAT32 media correctly, including the ownership options it needs that other filesystems don't.
+*   **Backup & Cloning:** How to clone a whole disk byte-for-byte with `dd`, back up and restore individual files with `tar`, and verify either actually worked with a checksum.
 
 ---
 
 ## The Learning & Lab Path
 
-This section is divided into six sequential modules. Modules 1–4 are each paired with a dedicated graded sandbox lab; modules 5–6 come with an ungraded hands-on playground you run while you read. The section concludes with a comprehensive Capstone Integration Challenge:
+This section is divided into sequential modules. Modules 1–4 and 7–8 are each paired with a dedicated graded sandbox lab; modules 5–6 come with an ungraded hands-on playground you run while you read. The section concludes with a comprehensive Capstone Integration Challenge:
 
 ### 1. Filesystem Creation, Mounting, & Forensics
 *   **Module Reader:** **[Module 1: Filesystem Creation, Mounting, & Forensics](./module-01/course.md)**
@@ -32,6 +34,11 @@ This section is divided into six sequential modules. Modules 1–4 are each pair
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-01/labs/lab-01
     ```
 *   **Hands-on Objective:** Identify a newly attached raw disk, format it with ext4, mount it cleanly to `/mnt/backup-black`, and create a completed marker file.
+*   **Second Lab — Diagnosing & Evicting a Busy Mount:** **`sections/section-010/module-01/labs/lab-02`**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-01/labs/lab-02
+    ```
+    Find the process holding a mounted disk open with `lsof`/`fuser`, stop it cleanly without touching anything else running, and unmount successfully.
 
 ### 2. Partitioning Raw Storage
 *   **Module Reader:** **[Module 2: Partitioning Raw Storage](./module-02/course.md)**
@@ -98,7 +105,29 @@ This section is divided into six sequential modules. Modules 1–4 are each pair
     ```
 *   **Hands-on Objective:** Write a native `.mount` unit and pair it with an `.automount` unit with an idle timeout, enable the automount (not the mount), and confirm first-access triggers it.
 
-### 7. Section Capstone Challenge
+### 7. Removable Media & the FAT32 Filesystem
+*   **Module Reader:** **[Module 7: Removable Media & the FAT32 Filesystem](./module-07/course.md)**
+    1. [What FAT32 Is & Creating One](./module-07/course-01-what-fat32-is-and-creating-one.md)
+    2. [Mounting FAT32 & Its Unix-less Quirks](./module-07/course-02-mounting-fat32-quirks.md)
+*   **Practice Lab Sandbox:** **`sections/section-010/module-07/labs/lab-01`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-07/labs/lab-01
+    ```
+*   **Hands-on Objective:** Format a raw disk as FAT32, label it, and mount it with `uid=`/`gid=` so it's writable by a normal user without `sudo` — the way cross-platform removable media has to be handled.
+
+### 8. Backing Up & Cloning Storage Devices
+*   **Module Reader:** **[Module 8: Backing Up & Cloning Storage Devices](./module-08/course.md)**
+    1. [Cloning a Disk with dd](./module-08/course-01-cloning-a-disk-with-dd.md)
+    2. [File-Level Backups with tar, and Verifying Them](./module-08/course-02-tar-backups-and-verifying.md)
+*   **Practice Lab Sandbox:** **`sections/section-010/module-08/labs/lab-01`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-08/labs/lab-01
+    ```
+*   **Hands-on Objective:** Clone a raw disk byte-for-byte with `dd`, then verify the clone is an exact match of its source with a checksum comparison.
+
+### 9. Section Capstone Challenge
 *   **Comprehensive Challenge:** **`sections/section-010/capstone/labs/lab-01` (Local Storage Integration)**
 *   **Lab Run Command:**
     ```bash

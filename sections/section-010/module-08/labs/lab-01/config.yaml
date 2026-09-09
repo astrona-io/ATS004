@@ -1,0 +1,39 @@
+metadata:
+  name: "ats-004-lab-018"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab018-source"
+      - sizeGB: 1
+        serial: "lab018-clone"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-018-setup"
+      description: "Formats the source disk with sample data, leaves the clone disk raw"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-clone"
+      description: "Confirms the clone disk is a byte-for-byte match of the source disk"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

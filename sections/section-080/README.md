@@ -49,6 +49,12 @@ This section has four modules, each with an ungraded hands-on playground you run
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-080/module-02/labs/lab-01
     ```
 *   **Hands-on Objective:** Turn quotas on with `quotacheck` and `quotaon`, set per-user and per-group block limits with `setquota`, and confirm them with `repquota`.
+*   **Practice Lab Sandbox 2:** **`sections/section-080/module-02/labs/lab-02`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-080/module-02/labs/lab-02
+    ```
+*   **Hands-on Objective:** Actually hit a hard limit and watch the write get stopped, then cross a soft limit and confirm a real grace-period countdown starts.
 
 ### 3. XFS Quotas and Project Quotas
 *   **Module Reader:** **[Module 3: XFS Quotas and Project Quotas](./module-03/course.md)**

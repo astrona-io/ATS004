@@ -1,0 +1,43 @@
+metadata:
+  name: "ats-004-lab-036"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab036-a"
+      - sizeGB: 1
+        serial: "lab036-b"
+      - sizeGB: 1
+        serial: "lab036-c"
+      - sizeGB: 1
+        serial: "lab036-d"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-036-setup"
+      description: "Builds a healthy RAID5 array across three disks with a fourth raw spare for growth"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-raid-grow-and-monitor"
+      description: "Confirms the array was grown to four disks, the filesystem extended, and monitoring configured"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

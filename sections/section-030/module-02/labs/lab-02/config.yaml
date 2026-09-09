@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-035"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 2
+        serial: "lab035-a"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-035-setup"
+      description: "Sets up a 300M logical volume mounted with sample data"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-lvm-resize"
+      description: "Confirms the volume was grown then correctly shrunk, filesystem healthy, data intact"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-085"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 2
+        serial: "lab085-quota"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-085-setup"
+      description: "Prepares an ext4 filesystem with quotas already enabled and a tight limit set for carol"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-quota-enforcement-and-grace"
+      description: "Confirms the hard limit was actually enforced and the grace-period state was captured"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false
