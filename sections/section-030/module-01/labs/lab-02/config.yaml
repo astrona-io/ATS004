@@ -30,10 +30,30 @@ bootstrap:
 
 validation:
   scripts:
-    - name: "verify-lvm-pooling"
-      description: "Confirms two PVs pooled into one VG and the LV's extents span both disks"
+    - name: "verify-pvs-created"
+      description: "Confirms both disks were initialised as LVM Physical Volumes (step 1)"
       type: "file"
-      source: "validation/validate-completed.sh"
+      source: "validation/validate-pvs.sh"
+
+    - name: "verify-vg-pooled"
+      description: "Confirms vg_pool exists and pools exactly 2 PVs (step 2)"
+      type: "file"
+      source: "validation/validate-vg.sh"
+
+    - name: "verify-lv-created"
+      description: "Confirms lv_wide exists at roughly 1500M inside vg_pool (step 3)"
+      type: "file"
+      source: "validation/validate-lv.sh"
+
+    - name: "verify-filesystem-and-mount"
+      description: "Confirms lv_wide is formatted ext4 and mounted at /mnt/lvm-wide (steps 4-5)"
+      type: "file"
+      source: "validation/validate-mount.sh"
+
+    - name: "verify-extents-span-both-disks"
+      description: "Confirms lv_wide's extents actually landed on both physical disks (step 6)"
+      type: "file"
+      source: "validation/validate-span.sh"
 
 teardown:
   keepCluster: false
