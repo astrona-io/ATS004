@@ -1,4 +1,4 @@
-# section-010 / module-01: Filesystem Creation & Mounting Sandbox
+# Filesystem Creation & Mounting Sandbox
 
 Welcome to the Module 1 targeted practice sandbox. In this lab, you will practice identifying raw devices, formatting them with a journaling filesystem, and mounting them for use.
 

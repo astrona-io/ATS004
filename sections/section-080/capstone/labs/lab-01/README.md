@@ -1,4 +1,4 @@
-# section-080 / capstone: Filesystem Hierarchy and Directory Sizing
+# Filesystem Hierarchy and Directory Sizing
 
 QEMU VM for the LFCS course — producing a mount-boundary-aware, pseudo-filesystem-excluding top-level directory size report, plus a symlink audit.
 

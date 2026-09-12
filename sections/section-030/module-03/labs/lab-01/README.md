@@ -1,4 +1,4 @@
-# section-030 / module-03: Software RAID Fundamentals
+# Software RAID Fundamentals
 
 QEMU VM for the LFCS course — building a RAID 5 array from raw disks with `mdadm`, formatting it, and making it survive a reboot.
 

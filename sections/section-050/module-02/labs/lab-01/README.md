@@ -1,4 +1,4 @@
-# section-050 / module-02: Network autofs Wildcard Mounts
+# Network autofs Wildcard Mounts
 
 QEMU VM for the LFCS course — Configuring dynamic, indirect wildcard mounts in autofs to automatically connect remote NFS subdirectories on-demand.
 

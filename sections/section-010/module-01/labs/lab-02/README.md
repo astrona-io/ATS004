@@ -1,4 +1,4 @@
-# section-010 / module-01: Diagnosing & Evicting a Busy Mount
+# Diagnosing & Evicting a Busy Mount
 
 QEMU VM for the LFCS course — a disk is already mounted and held open by a
 background process. Find the process holding it and stop it cleanly, then

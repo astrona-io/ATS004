@@ -1,4 +1,4 @@
-# section-010 / module-05: /etc/fstab in Depth
+# /etc/fstab in Depth
 
 QEMU VM for the LFCS course — Formatting a data disk and adding a persistent, UUID-keyed `/etc/fstab` entry with the correct options.
 

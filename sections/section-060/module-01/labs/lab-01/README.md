@@ -1,4 +1,4 @@
-# section-060 / module-01: proc System Limits & File Descriptors Auditing
+# proc System Limits & File Descriptors Auditing
 
 QEMU VM for the LFCS course — Investigating active open file descriptors inside /proc and monitoring system-wide kernel limits.
 

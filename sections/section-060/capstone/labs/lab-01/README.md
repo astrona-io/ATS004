@@ -1,4 +1,4 @@
-# section-060 / capstone: Virtual Filesystems: /proc and /sys
+# Virtual Filesystems: /proc and /sys
 
 QEMU VM for the LFCS course — reading kernel memory/mount/fd state directly from procfs and making one temporary sysctl-equivalent change via `/proc/sys`.
 

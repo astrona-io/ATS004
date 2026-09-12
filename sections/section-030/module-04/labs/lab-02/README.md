@@ -1,4 +1,4 @@
-# section-030 / module-04: Growing a RAID Array & Failure Monitoring
+# Growing a RAID Array & Failure Monitoring
 
 QEMU VM for the LFCS course — grow a live RAID5 array onto a fourth disk,
 extend its filesystem, and configure failure notification.

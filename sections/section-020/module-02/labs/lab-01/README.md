@@ -1,4 +1,4 @@
-# section-020 / module-02: NFS Enterprise Network Sharing
+# NFS Enterprise Network Sharing
 
 QEMU VM for the LFCS course — Configuring the NFS daemon, exporting directories read-only to specific networks, and mounting NFS shares.
 

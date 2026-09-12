@@ -1,4 +1,4 @@
-# section-040 / capstone: Swap Space Management
+# Swap Space Management
 
 QEMU VM for the LFCS course — provisioning a swap file and a swap partition and setting relative priorities between them.
 

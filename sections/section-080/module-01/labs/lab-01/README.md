@@ -1,4 +1,4 @@
-# section-080 / module-01: Directory Capacity Profiling (du -xh)
+# Directory Capacity Profiling (du -xh)
 
 QEMU VM for the LFCS course — Profiling directory sizes on local filesystems while ensuring queries do not cross partition boundaries.
 

@@ -1,4 +1,4 @@
-# section-070 / module-02: Storage Performance: iotop and lsof Active Profiling
+# Storage Performance: iotop and lsof Active Profiling
 
 QEMU VM for the LFCS course — Tracing intensive disk write operations directly to running processes and mapping their active file locks.
 

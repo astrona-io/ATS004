@@ -1,4 +1,4 @@
-# section-060 / module-02: sysctl IPv4 Forwarding Tuning
+# sysctl IPv4 Forwarding Tuning
 
 QEMU VM for the LFCS course — Configuring runtime kernel parameters dynamically and ensuring persistence across reboots.
 

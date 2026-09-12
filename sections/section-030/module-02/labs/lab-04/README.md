@@ -1,4 +1,4 @@
-# section-030 / module-02: Removing One PV Out of Three, With Mixed Extents
+# Removing One PV Out of Three, With Mixed Extents
 
 QEMU VM for the LFCS course — a Volume Group spans three disks and one Logical Volume's extents are already spread across all of them; migrate one specific disk's share off with `pvmove` and retire it with `vgreduce` + `pvremove`, without disturbing the other two.
 

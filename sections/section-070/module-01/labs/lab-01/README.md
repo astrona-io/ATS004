@@ -1,4 +1,4 @@
-# section-070 / module-01: Storage Performance Monitoring: iostat Wait Latency
+# Storage Performance Monitoring: iostat Wait Latency
 
 QEMU VM for the LFCS course — Analyzing device-level wait times and queue saturation on active storage drives using iostat.
 

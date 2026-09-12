@@ -1,4 +1,4 @@
-# section-020 / module-01: SSHFS User-space Mounting
+# SSHFS User-space Mounting
 
 QEMU VM for the LFCS course — Securing ad-hoc file sharing by mounting a remote directory over SSH in user space.
 

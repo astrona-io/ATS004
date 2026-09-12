@@ -1,4 +1,4 @@
-# section-020 / capstone: Remote Filesystems: SSHFS and NFS
+# Remote Filesystems: SSHFS and NFS
 
 Two QEMU VMs for the LFCS course — `terminal` (SSHFS client + NFS server) and `app-srv1` (SSHFS/NFS-export source + NFS client), joined on a private `10.10.40.0/24` network.
 

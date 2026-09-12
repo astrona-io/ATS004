@@ -1,4 +1,4 @@
-# section-010 / module-04: Filesystem Repairs, Labeling, & UUIDs
+# Filesystem Repairs, Labeling, & UUIDs
 
 QEMU VM for the LFCS course — Repairing a corrupted filesystem using fsck, setting a filesystem label, and configuring persistent mounting via UUID.
 

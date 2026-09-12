@@ -1,4 +1,4 @@
-# section-030 / module-01: Pooling PVs Across Disks
+# Pooling PVs Across Disks
 
 QEMU VM for the LFCS course — pooling two Physical Volumes into a single Volume Group and carving out a Logical Volume that can only be satisfied by drawing extents from both.
 

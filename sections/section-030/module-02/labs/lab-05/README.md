@@ -1,4 +1,4 @@
-# section-030 / module-02: Growing an XFS Volume Live
+# Growing an XFS Volume Live
 
 QEMU VM for the LFCS course — grow an XFS-formatted Logical Volume with `lvextend`, then grow the filesystem with `xfs_growfs` instead of `resize2fs`.
 

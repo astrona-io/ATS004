@@ -1,4 +1,4 @@
-# section-010 / module-07: Removable Media & the FAT32 Filesystem
+# Removable Media & the FAT32 Filesystem
 
 QEMU VM for the LFCS course — Formatting a raw disk as FAT32, labeling it, and mounting it with proper user ownership.
 
