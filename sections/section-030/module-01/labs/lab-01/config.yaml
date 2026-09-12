@@ -28,10 +28,25 @@ bootstrap:
 
 validation:
   scripts:
-    - name: "verify-lvm-basics"
-      description: "Confirms PV, VG, LV structure and ext4 filesystem mount"
+    - name: "verify-pv-created"
+      description: "Confirms lab031-disk1 was initialised as an LVM Physical Volume (step 2)"
       type: "file"
-      source: "validation/validate-completed.sh"
+      source: "validation/validate-pv.sh"
+
+    - name: "verify-vg-created"
+      description: "Confirms vg_data exists and pools the lab031-disk1 PV (step 3)"
+      type: "file"
+      source: "validation/validate-vg.sh"
+
+    - name: "verify-lv-created"
+      description: "Confirms lv_storage exists at roughly 500M inside vg_data (step 4)"
+      type: "file"
+      source: "validation/validate-lv.sh"
+
+    - name: "verify-filesystem-and-mount"
+      description: "Confirms lv_storage is formatted ext4 and mounted at /mnt/lvm-storage (steps 5-6)"
+      type: "file"
+      source: "validation/validate-mount.sh"
 
 teardown:
   keepCluster: false
