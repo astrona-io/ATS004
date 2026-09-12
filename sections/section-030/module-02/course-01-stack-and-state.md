@@ -57,38 +57,59 @@ Two patterns cover almost everything in this module:
 > [!TIP]
 > **Try it — survey the stack**
 >
-> On `astro-section-030-module-02-playground` (`astrona ssh` in):
+> On `astro-section-030-module-02-playground` (`astrona ssh` in). Disk letters and exact free-space figures will vary on your VM — that's expected, LVM assigns them at boot.
 >
+> **1. Read the kernel disk names the bootstrap script recorded, so you don't have to guess `vdX` order:**
 > ```sh
 > cat /etc/playground-disks
-> sudo pvs
-> sudo vgs
-> sudo lvs -o +devices
-> df -h /mnt/shared_documents
 > ```
->
-> Expect something like (disk letters and exact free-space figures vary):
->
 > ```text
 > source_disk=/dev/vdc   # holds all of shared_documents's extents (the 'failing' disk)
 > second_disk=/dev/vdd   # also in company_storage
 > spare_disk=/dev/vde    # raw, not yet a PV
+> ```
+> These three lines are just plain shell variable assignments, written by the playground's setup script — not LVM output. `source_disk` and `second_disk` are the two PVs already pooled into the VG; `spare_disk` is a third disk left untouched for Part 2.
 >
+> **2. List the physical volumes:**
+> ```sh
+> sudo pvs
+> ```
+> ```text
 >   PV        VG              Fmt  Attr PSize    PFree
 >   /dev/vdc  company_storage lvm2 a--  1020.00m  620.00m
 >   /dev/vdd  company_storage lvm2 a--  1020.00m 1020.00m
+> ```
+> Only two rows, both showing `VG = company_storage`. `spare_disk` (`/dev/vde`) is raw, not yet a PV, so it doesn't appear here at all — `pvs` only ever lists disks that have been through `pvcreate`.
 >
+> **3. List the volume group:**
+> ```sh
+> sudo vgs
+> ```
+> ```text
 >   VG               #PV #LV #SN Attr   VSize VFree
 >   company_storage   2   1   0 wz--n- 1.99g 1.60g
+> ```
+> `#PV 2` matches the two rows from step 2. `#LV 1` — one logical volume has been carved out already (this playground starts pre-built, unlike Module 1's from-scratch walkthrough). `#SN 0` means no snapshots exist.
 >
+> **4. List logical volumes with their extent locations:**
+> ```sh
+> sudo lvs -o +devices
+> ```
+> ```text
 >   LV                VG              Attr       LSize   Devices
 >   shared_documents  company_storage -wi-ao---- 400.00m /dev/vdc(0)
+> ```
+> `Devices` is the field this whole module revolves around: it confirms every extent of `shared_documents` currently lives on `source_disk` (`/dev/vdc`). `/dev/vdc(0)` means "starting from physical extent 0 of that PV" — that single field is literally the extent-assignment list for this LV, printed in shorthand.
 >
+> **5. Confirm the filesystem is mounted and see its usage:**
+> ```sh
+> df -h /mnt/shared_documents
+> ```
+> ```text
 >   Filesystem                                    Size  Used Avail Use% Mounted on
 >   /dev/mapper/company_storage-shared_documents  359M   36K  331M   1% /mnt/shared_documents
 > ```
->
-> `lvs -o +devices` confirms every extent of `shared_documents` is on `source_disk` — `/dev/vdc(0)` means "starting from physical extent 0 of that PV". That single field is literally the extent-assignment list for this LV, printed in shorthand. `pvs` shows only two PVs: `spare_disk` is raw, not yet a PV, so it does not appear at all. `vgs` reports the pool holding one LV (`#LV 1`) and no snapshots (`#SN 0`).
+> An ordinary mounted ext4 filesystem, exactly like Module 1 ended with — this confirms the pre-built stack is live and usable before Part 2 starts moving its extents around.
 
 > *The LV is not where its data lives — it's a list of where each of its extents lives, and every command in this module edits that list.*
 

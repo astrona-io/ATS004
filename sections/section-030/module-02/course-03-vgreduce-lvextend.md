@@ -16,29 +16,54 @@ Order matters for the same reason: `pvremove` refuses to run on a disk that is s
 > [!TIP]
 > **Try it — retire the source disk**
 >
+> (If your shell session from Part 2 is still open, `$source_disk` is already set — skip straight to step 2.)
+>
+> **1. Reload the disk-name variables if needed:**
 > ```sh
 > . /etc/playground-disks
-> sudo vgreduce company_storage "$source_disk"
-> sudo pvremove "$source_disk"
-> sudo pvs
-> sudo vgs
+> ```
+> ```text
+> (no output)
 > ```
 >
-> Expect something like:
->
+> **2. Detach the now-empty disk from the volume group:**
+> ```sh
+> sudo vgreduce company_storage "$source_disk"
+> ```
 > ```text
 >   Removed "/dev/vdc" from volume group "company_storage"
->   Labels on physical volume "/dev/vdc" successfully wiped.
+> ```
+> This is the check described above passing: `vgreduce` looked for any LV extent still pointing at `source_disk`, found none (Part 2's `pvmove` moved them all), and let it go.
 >
+> **3. Wipe the LVM label, returning the disk to a plain, unclaimed state:**
+> ```sh
+> sudo pvremove "$source_disk"
+> ```
+> ```text
+>   Labels on physical volume "/dev/vdc" successfully wiped.
+> ```
+> `/dev/vdc` is now safe to physically unplug or repurpose — nothing on the system still considers it part of LVM.
+>
+> **4. Confirm it's gone from the PV list:**
+> ```sh
+> sudo pvs
+> ```
+> ```text
 >   PV        VG              Fmt  Attr PSize    PFree
 >   /dev/vdd  company_storage lvm2 a--  1020.00m  620.00m
 >   /dev/vde  company_storage lvm2 a--  1020.00m 1020.00m
+> ```
+> Only two rows now — `source_disk` (`/dev/vdc`) no longer appears at all. The PV that received the migrated extents (`second_disk`, `/dev/vdd`) shows `620.00m` free — it gave up the space `shared_documents` now occupies. The untouched spare (`/dev/vde`) still shows its full `1020.00m`.
 >
+> **5. Confirm the VG is back to two members:**
+> ```sh
+> sudo vgs
+> ```
+> ```text
 >   VG               #PV #LV #SN Attr   VSize VFree
 >   company_storage   2   1   0 wz--n- 1.99g 1.60g
 > ```
->
-> `source_disk` no longer appears in `pvs`, and `company_storage` is back to two PVs — the sick disk is fully removed with no downtime taken. The PV that received the migrated extents now shows `620.00m` free (it gave up the space `shared_documents` now occupies); the untouched spare still shows its full `1020.00m`.
+> `#PV 2`, down from Part 2's `3` — the sick disk is fully removed, and the whole operation ran with `shared_documents` mounted and serving reads and writes the entire time.
 
 ## Growing a volume live: lvextend then the filesystem
 
@@ -56,31 +81,57 @@ Once the LV is bigger, rewrite the filesystem's own size fields to match: `resiz
 > [!TIP]
 > **Try it — add space and extend the ext4 filesystem**
 >
+> Block counts in your own output will depend on the filesystem's block size — don't worry if the exact numbers differ.
+>
+> **1. Check the size before touching anything, as a baseline:**
 > ```sh
 > df -h /mnt/shared_documents
-> sudo lvextend -L +200M /dev/company_storage/shared_documents
-> df -h /mnt/shared_documents
-> sudo resize2fs /dev/company_storage/shared_documents
-> df -h /mnt/shared_documents
 > ```
->
-> Expect something like (block counts depend on the filesystem's block size):
->
 > ```text
-> /dev/mapper/company_storage-shared_documents  359M ... 331M   1% /mnt/shared_documents
+> Filesystem                                    Size Used Avail Use% Mounted on
+> /dev/mapper/company_storage-shared_documents  359M ...  331M   1% /mnt/shared_documents
+> ```
+> Remember this `359M` — you'll compare the next two `df` calls against it.
 >
+> **2. Grow the block device by 200 MiB:**
+> ```sh
+> sudo lvextend -L +200M /dev/company_storage/shared_documents
+> ```
+> ```text
 >   Size of logical volume company_storage/shared_documents changed from 400.00 MiB (100 extents) to 600.00 MiB (150 extents).
 >   Logical volume company_storage/shared_documents successfully resized.
+> ```
+> Reported in both MiB and extents — 50 more 4 MiB extents is 200 MiB, appended to Part 1's extent list.
 >
-> /dev/mapper/company_storage-shared_documents  359M ... 331M   1% /mnt/shared_documents     <-- LV bigger, FS not yet
+> **3. Check `df` again — this is the step that surprises people:**
+> ```sh
+> df -h /mnt/shared_documents
+> ```
+> ```text
+> Filesystem                                    Size Used Avail Use% Mounted on
+> /dev/mapper/company_storage-shared_documents  359M ...  331M   1% /mnt/shared_documents
+> ```
+> Identical to step 1. The block device is now 600 MiB underneath, but the filesystem's own superblock still says 400 MiB, so `df` — which reads the superblock, not the block device — reports no change at all. `lvextend` alone never touches the filesystem.
 >
+> **4. Rewrite the filesystem's superblock to use the new space:**
+> ```sh
+> sudo resize2fs /dev/company_storage/shared_documents
+> ```
+> ```text
 > Filesystem at /dev/company_storage/shared_documents is mounted on /mnt/shared_documents; on-line resizing required
 > The filesystem on /dev/company_storage/shared_documents is now 153600 (4k) blocks long.
->
-> /dev/mapper/company_storage-shared_documents  553M ... 522M   1% /mnt/shared_documents     <-- FS now uses the space
 > ```
+> `153600` blocks of 4 KiB each ≈ 600 MiB — the superblock now matches the block device's real size.
 >
-> `lvextend` reports the change in both MiB and extents (50 more 4 MiB extents = 200 MiB — Part 1's extent list, appended to). After it, the block device is 600 MiB but `df` is unchanged, exactly as the superblock argument predicts. `resize2fs` rewrites that superblock online (`153600` blocks of 4 KiB ≈ 600 MiB) and only then does `df` jump. On XFS you would run `sudo xfs_growfs /mnt/shared_documents` instead and see the same result.
+> **5. Check `df` one more time:**
+> ```sh
+> df -h /mnt/shared_documents
+> ```
+> ```text
+> Filesystem                                    Size Used Avail Use% Mounted on
+> /dev/mapper/company_storage-shared_documents  553M ...  522M   1% /mnt/shared_documents
+> ```
+> Now it jumps, from `359M` to `553M` — only after `resize2fs`, never after `lvextend` alone. On XFS you would run `sudo xfs_growfs /mnt/shared_documents` instead of `resize2fs` in step 4 and see the same jump here.
 
 ## Shrinking a volume: lvreduce (ext4 only)
 
@@ -99,31 +150,61 @@ XFS still cannot shrink at all, by either tool — this is not a gap in `xfs_gro
 > [!TIP]
 > **Try it — shrink `shared_documents` back down**
 >
+> **1. Unmount it — ext4 cannot shrink while mounted:**
 > ```sh
 > sudo umount /mnt/shared_documents
-> sudo e2fsck -f /dev/company_storage/shared_documents
-> sudo resize2fs /dev/company_storage/shared_documents 350M
-> sudo lvreduce -L 350M /dev/company_storage/shared_documents
-> sudo mount /dev/company_storage/shared_documents /mnt/shared_documents
-> df -h /mnt/shared_documents
+> ```
+> ```text
+> (no output)
 > ```
 >
-> Expect something like:
->
+> **2. Force a filesystem check — `resize2fs` requires one before it will shrink:**
+> ```sh
+> sudo e2fsck -f /dev/company_storage/shared_documents
+> ```
 > ```text
 > e2fsck 1.47.0 ...
 > /dev/company_storage/shared_documents: 12/... files, .../... blocks
+> ```
+> A clean pass, confirming there's nothing already wrong for `resize2fs` to gamble on.
 >
+> **3. Shrink the filesystem's own superblock first, to 350 MiB:**
+> ```sh
+> sudo resize2fs /dev/company_storage/shared_documents 350M
+> ```
+> ```text
 > resize2fs 1.47.0 ...
 > The filesystem on /dev/company_storage/shared_documents is now 89600 (4k) blocks long.
+> ```
+> This is the step order that matters: the filesystem now believes it is 350 MiB *before* the block device underneath has shrunk at all — every used block is confirmed to fit inside that smaller boundary.
 >
+> **4. Only now shrink the LV to match:**
+> ```sh
+> sudo lvreduce -L 350M /dev/company_storage/shared_documents
+> ```
+> ```text
 >   Size of logical volume company_storage/shared_documents changed from 600.00 MiB to 350.00 MiB.
 >   Logical volume company_storage/shared_documents successfully resized.
+> ```
+> By the time the LV loses 250 MiB of extents, nothing was still recorded as living on them — step 3 already moved everything the filesystem cared about out of that range. Reversing steps 3 and 4 would have handed back extents the filesystem still believed were its own, corrupting it.
 >
-> /dev/mapper/company_storage-shared_documents  339M ... 311M   1% /mnt/shared_documents
+> **5. Remount it:**
+> ```sh
+> sudo mount /dev/company_storage/shared_documents /mnt/shared_documents
+> ```
+> ```text
+> (no output)
 > ```
 >
-> `resize2fs` shrank the filesystem's superblock to 350 MiB *before* `lvreduce` touched a single extent — by the time the LV lost 250 MiB of extents, nothing was still recorded as living on them. Reversing these two commands would have handed back extents the filesystem still believed were its own.
+> **6. Confirm the new, smaller size:**
+> ```sh
+> df -h /mnt/shared_documents
+> ```
+> ```text
+> Filesystem                                    Size Used Avail Use% Mounted on
+> /dev/mapper/company_storage-shared_documents  339M ...  311M   1% /mnt/shared_documents
+> ```
+> Down from the `553M` you saw at the end of the growing walkthrough, matching the 350 MiB you asked for (minus the filesystem's own metadata overhead, same as every size in this module).
 
 > [!WARNING]
 > **Common pitfalls**

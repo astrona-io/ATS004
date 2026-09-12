@@ -17,28 +17,53 @@ By default `lvcreate` uses the **normal** allocation policy: it prefers extents 
 > [!TIP]
 > **Try it — carve, format, and mount an LV**
 >
+> **1. Carve 200 MiB out of the VG and name the new LV:**
 > ```sh
 > sudo lvcreate -n shared_documents -L 200M company_storage
-> sudo lvs -o +devices
-> sudo mkfs.ext4 /dev/company_storage/shared_documents
-> sudo mkdir -p /mnt/shared_documents
-> sudo mount /dev/company_storage/shared_documents /mnt/shared_documents
-> df -h /mnt/shared_documents
 > ```
->
-> Expect something like (middle `lvs` columns trimmed here for width):
->
 > ```text
 >   Logical volume "shared_documents" created.
+> ```
+> `shared_documents` is the LV name being invented here; `company_storage` (the last argument) is the VG it's drawn from.
 >
->   LV                VG              Attr       LSize   ... Devices
->   shared_documents  company_storage -wi-a----- 200.00m     /dev/vdc(0)
+> **2. Check where the allocator actually put it:**
+> ```sh
+> sudo lvs -o +devices
+> ```
+> ```text
+>   LV                VG              Attr       LSize   Devices
+>   shared_documents  company_storage -wi-a----- 200.00m /dev/vdc(0)
+> ```
+> `Devices` reads `/dev/vdc(0)` — "starting at physical extent 0 of that PV." A 200 MiB request fits inside one disk's free space, so the normal allocator kept all of it on `/dev/vdc` rather than spreading it across `/dev/vdc` and `/dev/vdd`. Ask for more than one disk's remaining free space and this column would list both.
 >
+> **3. Put an ext4 filesystem on the new block device:**
+> ```sh
+> sudo mkfs.ext4 /dev/company_storage/shared_documents
+> ```
+> ```text
+> (mkfs prints a short creation summary — block count, inode count, UUID; the exact text isn't important here)
+> ```
+> The path is `/dev/<vg-name>/<lv-name>` — LVM builds this automatically from the two names you chose in step 1, you never type it separately.
+>
+> **4. Create a mount point and mount the new filesystem:**
+> ```sh
+> sudo mkdir -p /mnt/shared_documents
+> sudo mount /dev/company_storage/shared_documents /mnt/shared_documents
+> ```
+> ```text
+> (no output — both commands are silent on success)
+> ```
+> No news is good news: `mkdir` and `mount` only print something when they fail.
+>
+> **5. Confirm it's mounted and see the usable size:**
+> ```sh
+> df -h /mnt/shared_documents
+> ```
+> ```text
 >   Filesystem                                    Size  Used Avail Use% Mounted on
 >   /dev/mapper/company_storage-shared_documents  172M   24K  158M   1% /mnt/shared_documents
 > ```
->
-> `lvs -o +devices` shows the extents for `shared_documents` came from `/dev/vdc` (a 200 MiB request fits on one disk, so the normal allocator kept it there). `/dev/vdc(0)` means "starting at physical extent 0 of that PV". After `mkfs.ext4` and `mount`, `df` shows an ordinary ext4 filesystem — the LVM layers underneath are invisible to it, and the reported size is a little under 200 MiB because the filesystem's own metadata takes a cut. Request a size larger than one disk's free space and `Devices` would list both PVs, with no different command and no warning.
+> `df` shows an ordinary ext4 filesystem — the LVM layers underneath are invisible to it. Note the device is reported as `/dev/mapper/company_storage-shared_documents`, not the `/dev/company_storage/shared_documents` path you typed — both names point at the same device-mapper device, `mapper` is just its other spelling. The size (172M) is a little under the 200 MiB you asked for, because the filesystem's own metadata takes a cut of the block device.
 
 > [!WARNING]
 > **Common pitfalls**
