@@ -1,0 +1,39 @@
+metadata:
+  name: "ats-004-lab-038"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 2
+        serial: "lab038-disk1"
+      - sizeGB: 2
+        serial: "lab038-disk2"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-038-setup"
+      description: "Sets up a near-full LVM volume on disk1 only; disk2 is left raw"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-vgextend-and-migration"
+      description: "Confirms disk2 was added to the VG with vgextend, disk1 was fully evacuated and removed, and data survived"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

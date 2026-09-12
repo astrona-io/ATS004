@@ -375,6 +375,18 @@ modules:
         path: sections/section-030/module-01/labs/lab-01
 
       - type: reading
+        title: Question
+        path: sections/section-030/module-01/labs/lab-02/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-030/module-01/labs/lab-02/solution.md
+
+      - type: lab
+        title: "LVM Fundamentals: Pooling PVs Across Disks Lab"
+        path: sections/section-030/module-01/labs/lab-02
+
+      - type: reading
         title: "Module 2: Advanced LVM Operations"
         path: sections/section-030/module-02/course.md
 
@@ -417,6 +429,42 @@ modules:
       - type: lab
         title: "LVM Live Grow & Safe Shrink Lab"
         path: sections/section-030/module-02/labs/lab-02
+
+      - type: reading
+        title: Question
+        path: sections/section-030/module-02/labs/lab-03/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-030/module-02/labs/lab-03/solution.md
+
+      - type: lab
+        title: "LVM: vgextend a Live Pool, Then Evacuate a Disk Lab"
+        path: sections/section-030/module-02/labs/lab-03
+
+      - type: reading
+        title: Question
+        path: sections/section-030/module-02/labs/lab-04/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-030/module-02/labs/lab-04/solution.md
+
+      - type: lab
+        title: "LVM: Removing One PV Out of Three, Mixed Extents Lab"
+        path: sections/section-030/module-02/labs/lab-04
+
+      - type: reading
+        title: Question
+        path: sections/section-030/module-02/labs/lab-05/question.md
+
+      - type: reading
+        title: Solution Walkthrough
+        path: sections/section-030/module-02/labs/lab-05/solution.md
+
+      - type: lab
+        title: "LVM: Growing an XFS Volume Lab"
+        path: sections/section-030/module-02/labs/lab-05
 
       - type: reading
         title: "Module 3: Software RAID Fundamentals"

@@ -32,6 +32,12 @@ All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-01/labs/lab-01
     ```
 *   **Hands-on Objective:** Identify raw devices, initialize Physical Volumes (PV), aggregate them into a Volume Group (VG), and carve out formatted, ready-to-mount ext4 Logical Volumes (LV).
+*   **Practice Lab Sandbox (2):** **`sections/section-030/module-01/labs/lab-02`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-01/labs/lab-02
+    ```
+*   **Hands-on Objective:** Pool two disks — neither large enough alone — into a single Volume Group, then carve out a Logical Volume sized so it can only be satisfied by drawing extents from both, and confirm the spread with `lvs -o +devices`.
 
 ### 2. Advanced LVM Operations
 *   **Module Reader:** **[Module 2: Advanced LVM Operations](./module-02/course.md)**
@@ -51,6 +57,24 @@ All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-02
     ```
 *   **Hands-on Objective:** Grow a mounted logical volume live with `lvextend` + `resize2fs`, then safely shrink it back down in the one order that doesn't destroy data — unmount, `e2fsck -f`, `resize2fs`, `lvreduce`.
+*   **Practice Lab Sandbox (3):** **`sections/section-030/module-02/labs/lab-03`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-03
+    ```
+*   **Hands-on Objective:** Add a second disk to an already-live, nearly-full Volume Group with `vgextend`, then use that new capacity to migrate every extent off the original disk with `pvmove` and retire it with `vgreduce` + `pvremove`.
+*   **Practice Lab Sandbox (4):** **`sections/section-030/module-02/labs/lab-04`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-04
+    ```
+*   **Hands-on Objective:** Remove one PV out of three from a Volume Group whose Logical Volume already has extents spread across all of them — migrate just that one disk's share off with `pvmove` and retire it, without disturbing the other two.
+*   **Practice Lab Sandbox (5):** **`sections/section-030/module-02/labs/lab-05`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-05
+    ```
+*   **Hands-on Objective:** Grow an XFS-formatted Logical Volume live with `lvextend`, then grow the filesystem with `xfs_growfs` — the XFS-specific tool that takes a mount point, not a device path, unlike `resize2fs`.
 
 ### 3. Software RAID Fundamentals
 *   **Module Reader:** **[Module 3: Software RAID Fundamentals](./module-03/course.md)**

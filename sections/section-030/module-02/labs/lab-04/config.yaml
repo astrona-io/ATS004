@@ -1,0 +1,41 @@
+metadata:
+  name: "ats-004-lab-039"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab039-disk1"
+      - sizeGB: 1
+        serial: "lab039-disk2"
+      - sizeGB: 1
+        serial: "lab039-disk3"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-039-setup"
+      description: "Builds a VG spanning three disks with one LV's extents already split across all three"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-mixed-pv-removal"
+      description: "Confirms disk2 was evacuated and removed while disk1/disk3 kept the LV intact"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false
