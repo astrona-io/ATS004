@@ -20,9 +20,9 @@ LVM fixes both problems the same way most abstraction layers do: by adding a lev
 LVM stacks three layers, each built from the one below:
 
 ```text
-  Logical Volumes    app_data (50G)   logs (10G)      <- format & mount these
+  Logical Volumes    shared_documents (50G)   activity_logs (10G)   <- format & mount these
   ------------------------------------------------
-  Volume Group       data_pool  (one pool of extents)
+  Volume Group       company_storage  (one pool of extents)
   ------------------------------------------------
   Physical Volumes   /dev/vdc   /dev/vdd             <- initialised disks/partitions
 ```
@@ -31,6 +31,20 @@ LVM stacks three layers, each built from the one below:
 - A **volume group (VG)** is one or more PVs pooled into a single space.
 - A **logical volume (LV)** is a slice carved out of a VG. It appears as a block device you format and mount; it does not have to fit on any single physical disk.
 
+> [!NOTE]
+> **A note on names, before any commands run**
+>
+> The diagram above has four different kinds of label in it, and if you haven't spent time in a Linux terminal before, they can look interchangeable when they are not:
+>
+> - `/dev/vdc` and `/dev/vdd` are **real device files that already exist on the machine**, created by the kernel before LVM is even installed. You never invent these — you only ever point commands *at* them, the same way you'd point at a USB stick that's already plugged in.
+> - `company_storage` is **a name someone typed**, as the argument to a command called `vgcreate`, the first time they ran it. It means nothing to Linux by itself — it is a label, exactly like the name you'd give a new folder. In Part 2, you will type this name yourself, and you can call it anything you like.
+> - `shared_documents` and `activity_logs` are the same idea, one level down: names typed as arguments to a command called `lvcreate`. Again, invented on the spot, not built in.
+> - `pvcreate`, `vgcreate`, `lvcreate` themselves are different from all of the above: these are **fixed program names** that ship with LVM. Every Linux machine with LVM installed has a command called exactly `vgcreate` — that part never changes and you never rename it.
+>
+> So when Part 2 has you run `vgcreate company_storage /dev/vdc /dev/vdd`, only `/dev/vdc` and `/dev/vdd` are fixed by the system. `vgcreate` is a fixed program name. `company_storage` is a label being invented right there in that command — LVM will simply remember it and expect you to type it back later, the same way it would remember any other name you chose. Notice it also doesn't start with `vg` or `lv` — that's deliberate: a name that happens to start the same way a command does (like `vgdata`) is easy to mistake for part of the command syntax instead of a label you chose.
+>
+> Keep that distinction in mind through the rest of this module: **fixed** (device paths, command names) versus **invented** (VG names, LV names). No sequence of letters here is special or reserved — every invented name is just whatever the person running the command decided to type.
+
 ```mermaid
 flowchart BT
     subgraph PVs["Physical Volumes -- pvcreate"]
@@ -38,9 +52,9 @@ flowchart BT
         PV1["/dev/vdc"]
         PV2["/dev/vdd"]
     end
-    PVs --> VG["Volume Group -- vgcreate<br/>data_pool: one pool of 4 MiB extents"]
-    VG --> LV1["Logical Volume -- lvcreate<br/>app_data (50G)"]
-    VG --> LV2["Logical Volume -- lvcreate<br/>logs (10G)"]
+    PVs --> VG["Volume Group -- vgcreate<br/>company_storage: one pool of 4 MiB extents"]
+    VG --> LV1["Logical Volume -- lvcreate<br/>shared_documents (50G)"]
+    VG --> LV2["Logical Volume -- lvcreate<br/>activity_logs (10G)"]
     LV1 --> FS1["mkfs + mount"]
     LV2 --> FS2["mkfs + mount"]
 ```

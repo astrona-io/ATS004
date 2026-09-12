@@ -20,12 +20,12 @@ and no pass/fail. Explore, break things, `astrona destroy`, start over.
 ## Things to try
 
 - `sudo pvcreate /dev/vdb /dev/vdc`, then `sudo pvs` and `sudo pvdisplay`.
-- `sudo vgcreate vgdata /dev/vdb /dev/vdc`, then `sudo vgs` /
-  `sudo vgdisplay vgdata` — note the total size and the 4 MiB extent size.
-- `sudo lvcreate -n applv -L 200M vgdata`, then `sudo lvs -o +devices` to see
+- `sudo vgcreate company_storage /dev/vdb /dev/vdc`, then `sudo vgs` /
+  `sudo vgdisplay company_storage` — note the total size and the 4 MiB extent size.
+- `sudo lvcreate -n shared_documents -L 200M company_storage`, then `sudo lvs -o +devices` to see
   which physical disks the volume's extents came from.
-- `sudo mkfs.ext4 /dev/vgdata/applv`, mount it, write a file, `df -h`.
-- Tear it all down: `sudo lvremove vgdata/applv`, `sudo vgremove vgdata`,
+- `sudo mkfs.ext4 /dev/company_storage/shared_documents`, mount it, write a file, `df -h`.
+- Tear it all down: `sudo lvremove company_storage/shared_documents`, `sudo vgremove company_storage`,
   `sudo pvremove /dev/vdb /dev/vdc`, and start over.
 
 ## When you're done

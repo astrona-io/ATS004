@@ -19,7 +19,7 @@ Both commands only add free extents to the pool's bookkeeping. No LV's extent li
 > ```sh
 > . /etc/playground-disks
 > sudo pvcreate "$spare_disk"
-> sudo vgextend vgdata "$spare_disk"
+> sudo vgextend company_storage "$spare_disk"
 > sudo vgs
 > sudo pvs
 > ```
@@ -28,18 +28,18 @@ Both commands only add free extents to the pool's bookkeeping. No LV's extent li
 >
 > ```text
 >   Physical volume "/dev/vde" successfully created.
->   Volume group "vgdata" successfully extended
+>   Volume group "company_storage" successfully extended
 >
->   VG     #PV #LV #SN Attr   VSize  VFree
->   vgdata   3   1   0 wz--n- <2.99g <2.60g
+>   VG               #PV #LV #SN Attr   VSize  VFree
+>   company_storage   3   1   0 wz--n- <2.99g <2.60g
 >
->   PV         VG     Fmt  Attr PSize    PFree
->   /dev/vdc   vgdata lvm2 a--  1020.00m  620.00m
->   /dev/vdd   vgdata lvm2 a--  1020.00m 1020.00m
->   /dev/vde   vgdata lvm2 a--  1020.00m 1020.00m
+>   PV        VG              Fmt  Attr PSize    PFree
+>   /dev/vdc  company_storage lvm2 a--  1020.00m  620.00m
+>   /dev/vdd  company_storage lvm2 a--  1020.00m 1020.00m
+>   /dev/vde  company_storage lvm2 a--  1020.00m 1020.00m
 > ```
 >
-> `vgdata` now spans three PVs (`#PV 3`); the spare shows a `VG` of `vgdata` with all its space free. `#LV` is still `1` — nothing about `applv`'s extent list changed. You only gave the pool somewhere to send data to.
+> `company_storage` now spans three PVs (`#PV 3`); the spare shows a `VG` of `company_storage` with all its space free. `#LV` is still `1` — nothing about `shared_documents`'s extent list changed. You only gave the pool somewhere to send data to.
 
 ## What `pvmove` actually does
 
@@ -56,14 +56,14 @@ Because each extent is mirrored — not simply copied-then-cut-over — a write 
 It needs somewhere to put the data: enough free extents on the *other* PVs in the VG, which is why `vgextend` with the spare has to happen first.
 
 > [!TIP]
-> **Try it — evacuate the source disk while applv stays mounted**
+> **Try it — evacuate the source disk while shared_documents stays mounted**
 >
 > ```sh
 > . /etc/playground-disks
 > sudo pvmove "$source_disk"
 > sudo lvs -o +devices
-> cat /mnt/applv/data.txt
-> df -h /mnt/applv
+> cat /mnt/shared_documents/data.txt
+> df -h /mnt/shared_documents
 > ```
 >
 > Expect something like (the percentage lines and where the extents land both vary):
@@ -72,13 +72,13 @@ It needs somewhere to put the data: enough free extents on the *other* PVs in th
 >   /dev/vdc: Moved: 29.00%
 >   /dev/vdc: Moved: 100.00%
 >
->   LV    VG     Attr       LSize   Devices
->   applv vgdata -wi-ao---- 400.00m /dev/vdd(0)
+>   LV                VG              Attr       LSize   Devices
+>   shared_documents  company_storage -wi-ao---- 400.00m /dev/vdd(0)
 >
 > important production data
 > ```
 >
-> `lvs -o +devices` is Part 1's extent-list column again — now it reads `/dev/vdd(0)` instead of `/dev/vdc(0)`: every entry in `applv`'s list has been rewritten to point at the new PV. Here they all landed on `second_disk` because it had one contiguous free run big enough; if no single PV had room, `Devices` would list two or more, e.g. `/dev/vdd(0),/dev/vde(0)` — a perfectly normal, if messier, extent list. The file is intact and `df` is unchanged: from the filesystem's point of view, nothing happened.
+> `lvs -o +devices` is Part 1's extent-list column again — now it reads `/dev/vdd(0)` instead of `/dev/vdc(0)`: every entry in `shared_documents`'s list has been rewritten to point at the new PV. Here they all landed on `second_disk` because it had one contiguous free run big enough; if no single PV had room, `Devices` would list two or more, e.g. `/dev/vdd(0),/dev/vde(0)` — a perfectly normal, if messier, extent list. The file is intact and `df` is unchanged: from the filesystem's point of view, nothing happened.
 
 > *`pvmove` never "copies a disk" — it mirrors and re-points one extent at a time, which is what makes it both live-safe and resumable.*
 

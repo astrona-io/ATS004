@@ -9,11 +9,11 @@ Every operation later in this module — moving data off a dying disk, retiring 
 The previous module built the three-layer stack:
 
 ```text
-  Logical volume    applv             <- what you format and mount
+  Logical volume    shared_documents  <- what you format and mount
   -----------------------------------
-  Volume group      vgdata            <- one pool of 4 MiB extents
+  Volume group      company_storage   <- one pool of 4 MiB extents
   -----------------------------------
-  Physical volumes  /dev/vdc /dev/vdd <- disks with an LVM label on them
+  Physical volumes  /dev/vdc /dev/vdd  <- disks with an LVM label on them
 ```
 
 - A **physical volume (PV)** is a disk or partition with a small LVM label written at its start (`pvcreate` writes only that label — nothing else on the disk is touched).
@@ -22,7 +22,7 @@ The previous module built the three-layer stack:
 
 That list-of-pointers model is the single fact that explains everything downstream:
 
-- An LV's extents do not need to be contiguous, or even on the same PV. `applv`'s 100 extents could be 60 on one disk and 40 on another, and the filesystem on top would never know — device-mapper stitches the list into one linear address space.
+- An LV's extents do not need to be contiguous, or even on the same PV. `shared_documents`'s 100 extents could be 60 on one disk and 40 on another, and the filesystem on top would never know — device-mapper stitches the list into one linear address space.
 - **Relocating** an extent means changing one entry in that list and copying the data it points to — not moving a filesystem, not touching mount state. That is the entire mechanism behind `pvmove`, covered in Part 2.
 - **Adding capacity to an LV** means appending more entries to its list, drawn from whichever PVs currently have free extents. That is `lvextend`, covered in Part 3.
 - **Removing a PV from a VG** is only safe once zero of its extents appear in *any* LV's list — otherwise removing it would leave dangling pointers. That is the rule `vgreduce` enforces, also in Part 3.
@@ -64,31 +64,31 @@ Two patterns cover almost everything in this module:
 > sudo pvs
 > sudo vgs
 > sudo lvs -o +devices
-> df -h /mnt/applv
+> df -h /mnt/shared_documents
 > ```
 >
 > Expect something like (disk letters and exact free-space figures vary):
 >
 > ```text
-> source_disk=/dev/vdc   # holds all of applv's extents (the 'failing' disk)
-> second_disk=/dev/vdd   # also in vgdata
+> source_disk=/dev/vdc   # holds all of shared_documents's extents (the 'failing' disk)
+> second_disk=/dev/vdd   # also in company_storage
 > spare_disk=/dev/vde    # raw, not yet a PV
 >
->   PV         VG     Fmt  Attr PSize    PFree
->   /dev/vdc   vgdata lvm2 a--  1020.00m  620.00m
->   /dev/vdd   vgdata lvm2 a--  1020.00m 1020.00m
+>   PV        VG              Fmt  Attr PSize    PFree
+>   /dev/vdc  company_storage lvm2 a--  1020.00m  620.00m
+>   /dev/vdd  company_storage lvm2 a--  1020.00m 1020.00m
 >
->   VG     #PV #LV #SN Attr   VSize VFree
->   vgdata   2   1   0 wz--n- 1.99g 1.60g
+>   VG               #PV #LV #SN Attr   VSize VFree
+>   company_storage   2   1   0 wz--n- 1.99g 1.60g
 >
->   LV    VG     Attr       LSize   Devices
->   applv vgdata -wi-ao---- 400.00m /dev/vdc(0)
+>   LV                VG              Attr       LSize   Devices
+>   shared_documents  company_storage -wi-ao---- 400.00m /dev/vdc(0)
 >
->   Filesystem                Size  Used Avail Use% Mounted on
->   /dev/mapper/vgdata-applv  359M   36K  331M   1% /mnt/applv
+>   Filesystem                                    Size  Used Avail Use% Mounted on
+>   /dev/mapper/company_storage-shared_documents  359M   36K  331M   1% /mnt/shared_documents
 > ```
 >
-> `lvs -o +devices` confirms every extent of `applv` is on `source_disk` — `/dev/vdc(0)` means "starting from physical extent 0 of that PV". That single field is literally the extent-assignment list for this LV, printed in shorthand. `pvs` shows only two PVs: `spare_disk` is raw, not yet a PV, so it does not appear at all. `vgs` reports the pool holding one LV (`#LV 1`) and no snapshots (`#SN 0`).
+> `lvs -o +devices` confirms every extent of `shared_documents` is on `source_disk` — `/dev/vdc(0)` means "starting from physical extent 0 of that PV". That single field is literally the extent-assignment list for this LV, printed in shorthand. `pvs` shows only two PVs: `spare_disk` is raw, not yet a PV, so it does not appear at all. `vgs` reports the pool holding one LV (`#LV 1`) and no snapshots (`#SN 0`).
 
 > *The LV is not where its data lives — it's a list of where each of its extents lives, and every command in this module edits that list.*
 

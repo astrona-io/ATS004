@@ -18,7 +18,7 @@ Order matters for the same reason: `pvremove` refuses to run on a disk that is s
 >
 > ```sh
 > . /etc/playground-disks
-> sudo vgreduce vgdata "$source_disk"
+> sudo vgreduce company_storage "$source_disk"
 > sudo pvremove "$source_disk"
 > sudo pvs
 > sudo vgs
@@ -27,18 +27,18 @@ Order matters for the same reason: `pvremove` refuses to run on a disk that is s
 > Expect something like:
 >
 > ```text
->   Removed "/dev/vdc" from volume group "vgdata"
+>   Removed "/dev/vdc" from volume group "company_storage"
 >   Labels on physical volume "/dev/vdc" successfully wiped.
 >
->   PV         VG     Fmt  Attr PSize    PFree
->   /dev/vdd   vgdata lvm2 a--  1020.00m  620.00m
->   /dev/vde   vgdata lvm2 a--  1020.00m 1020.00m
+>   PV        VG              Fmt  Attr PSize    PFree
+>   /dev/vdd  company_storage lvm2 a--  1020.00m  620.00m
+>   /dev/vde  company_storage lvm2 a--  1020.00m 1020.00m
 >
->   VG     #PV #LV #SN Attr   VSize VFree
->   vgdata   2   1   0 wz--n- 1.99g 1.60g
+>   VG               #PV #LV #SN Attr   VSize VFree
+>   company_storage   2   1   0 wz--n- 1.99g 1.60g
 > ```
 >
-> `source_disk` no longer appears in `pvs`, and `vgdata` is back to two PVs — the sick disk is fully removed with no downtime taken. The PV that received the migrated extents now shows `620.00m` free (it gave up the space `applv` now occupies); the untouched spare still shows its full `1020.00m`.
+> `source_disk` no longer appears in `pvs`, and `company_storage` is back to two PVs — the sick disk is fully removed with no downtime taken. The PV that received the migrated extents now shows `620.00m` free (it gave up the space `shared_documents` now occupies); the untouched spare still shows its full `1020.00m`.
 
 ## Growing a volume live: lvextend then the filesystem
 
@@ -48,8 +48,8 @@ Enlarging a mounted volume is two independent steps, and the order is not option
 
 `lvextend -L +<size> <lv-path>` adds space. Unlike `vgextend`, it takes a size, and the `+` is critical:
 
-- `lvextend -L +200M /dev/vgdata/applv` — **add** 200 MiB to the current size.
-- `lvextend -L 200M /dev/vgdata/applv` — set the absolute size **to** 200 MiB. If `applv` is already 400 MiB, this *shrinks* it and truncates the filesystem, destroying data — with no confirmation prompt.
+- `lvextend -L +200M /dev/company_storage/shared_documents` — **add** 200 MiB to the current size.
+- `lvextend -L 200M /dev/company_storage/shared_documents` — set the absolute size **to** 200 MiB. If `shared_documents` is already 400 MiB, this *shrinks* it and truncates the filesystem, destroying data — with no confirmation prompt.
 
 Once the LV is bigger, rewrite the filesystem's own size fields to match: `resize2fs <lv-path>` for ext4, or `xfs_growfs <mountpoint>` for XFS (XFS's tool takes the *mount point*, not the device — and can only grow, never shrink; there is no supported XFS shrink path). `lvextend -r` runs both steps for you in one command, calling whichever resize tool matches the filesystem it detects.
 
@@ -57,30 +57,30 @@ Once the LV is bigger, rewrite the filesystem's own size fields to match: `resiz
 > **Try it — add space and extend the ext4 filesystem**
 >
 > ```sh
-> df -h /mnt/applv
-> sudo lvextend -L +200M /dev/vgdata/applv
-> df -h /mnt/applv
-> sudo resize2fs /dev/vgdata/applv
-> df -h /mnt/applv
+> df -h /mnt/shared_documents
+> sudo lvextend -L +200M /dev/company_storage/shared_documents
+> df -h /mnt/shared_documents
+> sudo resize2fs /dev/company_storage/shared_documents
+> df -h /mnt/shared_documents
 > ```
 >
 > Expect something like (block counts depend on the filesystem's block size):
 >
 > ```text
-> /dev/mapper/vgdata-applv  359M ... 331M   1% /mnt/applv
+> /dev/mapper/company_storage-shared_documents  359M ... 331M   1% /mnt/shared_documents
 >
->   Size of logical volume vgdata/applv changed from 400.00 MiB (100 extents) to 600.00 MiB (150 extents).
->   Logical volume vgdata/applv successfully resized.
+>   Size of logical volume company_storage/shared_documents changed from 400.00 MiB (100 extents) to 600.00 MiB (150 extents).
+>   Logical volume company_storage/shared_documents successfully resized.
 >
-> /dev/mapper/vgdata-applv  359M ... 331M   1% /mnt/applv     <-- LV bigger, FS not yet
+> /dev/mapper/company_storage-shared_documents  359M ... 331M   1% /mnt/shared_documents     <-- LV bigger, FS not yet
 >
-> Filesystem at /dev/vgdata/applv is mounted on /mnt/applv; on-line resizing required
-> The filesystem on /dev/vgdata/applv is now 153600 (4k) blocks long.
+> Filesystem at /dev/company_storage/shared_documents is mounted on /mnt/shared_documents; on-line resizing required
+> The filesystem on /dev/company_storage/shared_documents is now 153600 (4k) blocks long.
 >
-> /dev/mapper/vgdata-applv  553M ... 522M   1% /mnt/applv     <-- FS now uses the space
+> /dev/mapper/company_storage-shared_documents  553M ... 522M   1% /mnt/shared_documents     <-- FS now uses the space
 > ```
 >
-> `lvextend` reports the change in both MiB and extents (50 more 4 MiB extents = 200 MiB — Part 1's extent list, appended to). After it, the block device is 600 MiB but `df` is unchanged, exactly as the superblock argument predicts. `resize2fs` rewrites that superblock online (`153600` blocks of 4 KiB ≈ 600 MiB) and only then does `df` jump. On XFS you would run `sudo xfs_growfs /mnt/applv` instead and see the same result.
+> `lvextend` reports the change in both MiB and extents (50 more 4 MiB extents = 200 MiB — Part 1's extent list, appended to). After it, the block device is 600 MiB but `df` is unchanged, exactly as the superblock argument predicts. `resize2fs` rewrites that superblock online (`153600` blocks of 4 KiB ≈ 600 MiB) and only then does `df` jump. On XFS you would run `sudo xfs_growfs /mnt/shared_documents` instead and see the same result.
 
 ## Shrinking a volume: lvreduce (ext4 only)
 
@@ -97,30 +97,30 @@ So the rule inverts: **shrink the filesystem first, then shrink the LV.** Three 
 XFS still cannot shrink at all, by either tool — this is not a gap in `xfs_growfs`, it is a design choice in the XFS on-disk format (free space and allocation-group boundaries are not built to move inward). Reducing an XFS volume's *usable* space means creating a smaller LV and copying data across; there is no in-place path.
 
 > [!TIP]
-> **Try it — shrink `applv` back down**
+> **Try it — shrink `shared_documents` back down**
 >
 > ```sh
-> sudo umount /mnt/applv
-> sudo e2fsck -f /dev/vgdata/applv
-> sudo resize2fs /dev/vgdata/applv 350M
-> sudo lvreduce -L 350M /dev/vgdata/applv
-> sudo mount /dev/vgdata/applv /mnt/applv
-> df -h /mnt/applv
+> sudo umount /mnt/shared_documents
+> sudo e2fsck -f /dev/company_storage/shared_documents
+> sudo resize2fs /dev/company_storage/shared_documents 350M
+> sudo lvreduce -L 350M /dev/company_storage/shared_documents
+> sudo mount /dev/company_storage/shared_documents /mnt/shared_documents
+> df -h /mnt/shared_documents
 > ```
 >
 > Expect something like:
 >
 > ```text
 > e2fsck 1.47.0 ...
-> /dev/vgdata/applv: 12/... files, .../... blocks
+> /dev/company_storage/shared_documents: 12/... files, .../... blocks
 >
 > resize2fs 1.47.0 ...
-> The filesystem on /dev/vgdata/applv is now 89600 (4k) blocks long.
+> The filesystem on /dev/company_storage/shared_documents is now 89600 (4k) blocks long.
 >
->   Size of logical volume vgdata/applv changed from 600.00 MiB to 350.00 MiB.
->   Logical volume vgdata/applv successfully resized.
+>   Size of logical volume company_storage/shared_documents changed from 600.00 MiB to 350.00 MiB.
+>   Logical volume company_storage/shared_documents successfully resized.
 >
-> /dev/mapper/vgdata-applv  339M ... 311M   1% /mnt/applv
+> /dev/mapper/company_storage-shared_documents  339M ... 311M   1% /mnt/shared_documents
 > ```
 >
 > `resize2fs` shrank the filesystem's superblock to 350 MiB *before* `lvreduce` touched a single extent — by the time the LV lost 250 MiB of extents, nothing was still recorded as living on them. Reversing these two commands would have handed back extents the filesystem still believed were its own.

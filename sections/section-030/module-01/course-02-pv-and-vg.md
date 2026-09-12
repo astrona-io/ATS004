@@ -47,7 +47,7 @@ Part 1 named the three layers and the extent-list model that ties them together.
 
 ## Volume groups and physical extents
 
-`vgcreate <name> <pv>...` welds PVs into one named pool. `vgs` shows each VG's total and free size; `vgdisplay <name>` adds detail.
+`vgcreate <name> <pv>...` welds PVs into one named pool. `<name>` is not a keyword — it's whatever you type there, invented on the spot (Part 1's note on names). Below, `company_storage` is that invented name; `/dev/vdc`/`/dev/vdd` are the real PVs from the previous section. `vgs` shows each VG's total and free size; `vgdisplay <name>` adds detail.
 
 This is the step where the extent model from Part 1 becomes real: joining a VG is what divides a PV into **physical extents (PEs)**, 4 MiB blocks by default. Every allocation LVM makes from this point on — every `lvcreate`, every `lvextend` — is a whole number of these PEs, drawn from whichever PVs in the VG currently have free ones. A PV outside any VG has no extents yet; it's just a labeled disk waiting to be pooled.
 
@@ -57,18 +57,18 @@ This is the step where the extent model from Part 1 becomes real: joining a VG i
 > **Try it — pool the PVs and read the extent size**
 >
 > ```sh
-> sudo vgcreate vgdata /dev/vdc /dev/vdd
+> sudo vgcreate company_storage /dev/vdc /dev/vdd
 > sudo vgs
-> sudo vgdisplay vgdata | grep -E 'VG Size|PE Size|Total PE|Free  PE'
+> sudo vgdisplay company_storage | grep -E 'VG Size|PE Size|Total PE|Free  PE'
 > ```
 >
 > Expect something like:
 >
 > ```text
->   Volume group "vgdata" successfully created
+>   Volume group "company_storage" successfully created
 >
->   VG     #PV #LV #SN Attr   VSize    VFree
->   vgdata   2   0   0 wz--n-    1.99g    1.99g
+>   VG               #PV #LV #SN Attr   VSize    VFree
+>   company_storage   2   0   0 wz--n-    1.99g    1.99g
 >
 >   VG Size               1.99 GiB
 >   PE Size               4.00 MiB
@@ -76,7 +76,7 @@ This is the step where the extent model from Part 1 becomes real: joining a VG i
 >   Free  PE / Size       510 / 1.99 GiB
 > ```
 >
-> `vgdata` reports the two 1 GB disks as one ~2 GiB pool. `PE Size` is the default 4 MiB, and `Total PE` (510 here) is how many 4 MiB blocks that pool contains — the currency every later allocation is measured in. `#LV 0` confirms nothing has claimed any of those extents yet.
+> `company_storage` reports the two 1 GB disks as one ~2 GiB pool. `PE Size` is the default 4 MiB, and `Total PE` (510 here) is how many 4 MiB blocks that pool contains — the currency every later allocation is measured in. `#LV 0` confirms nothing has claimed any of those extents yet.
 
 > *`pvcreate` only ever touches the start of a device — a label and a metadata area. The extent pool doesn't exist until `vgcreate` divides the joined PVs into fixed-size PEs; that division is what Part 3's `lvcreate` draws from.*
 

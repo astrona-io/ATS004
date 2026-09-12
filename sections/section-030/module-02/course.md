@@ -15,9 +15,9 @@ These operations rewrite where real data lives. A wrong device name or a missing
 
 ```mermaid
 flowchart LR
-    A["source_disk failing<br/>all of applv's extents here"] -->|vgextend| B["spare_disk added to vgdata"]
-    B -->|pvmove source_disk| C["extents copied to another PV<br/>applv stays mounted, no gap"]
-    C -->|vgreduce vgdata source_disk| D["source_disk detached from the VG"]
+    A["source_disk failing<br/>all of shared_documents's extents here"] -->|vgextend| B["spare_disk added to company_storage"]
+    B -->|pvmove source_disk| C["extents copied to another PV<br/>shared_documents stays mounted, no gap"]
+    C -->|vgreduce company_storage source_disk| D["source_disk detached from the VG"]
     D -->|pvremove source_disk| E["source_disk safe to unplug"]
 ```
 
@@ -46,4 +46,4 @@ After this module you can:
 
 This module builds directly on the previous one. Part 1 recaps the pieces you need — the three LVM layers, the physical extent, and the `pvs` / `vgs` / `lvs` inspection commands — but if none of those terms are familiar, read *LVM Fundamentals* first.
 
-The linked playground gives you an Ubuntu server VM with a **pre-built stack**: volume group `vgdata` on two 1 GB disks, logical volume `applv` (400 MiB ext4) with all its extents on the first disk, mounted at `/mnt/applv` with sample files, and a third disk left raw as the replacement. The three disks' kernel names are written to `/etc/playground-disks` as `source_disk`, `second_disk`, `spare_disk` — read that file rather than assuming a `vdX` order, because the letters can shift between boots. Connect with `astrona ssh astro-section-030-module-02-playground` and run the command blocks in each part inside that VM.
+The linked playground gives you an Ubuntu server VM with a **pre-built stack**: volume group `company_storage` on two 1 GB disks, logical volume `shared_documents` (400 MiB ext4) with all its extents on the first disk, mounted at `/mnt/shared_documents` with sample files, and a third disk left raw as the replacement. The three disks' kernel names are written to `/etc/playground-disks` as `source_disk`, `second_disk`, `spare_disk` — read that file rather than assuming a `vdX` order, because the letters can shift between boots. Connect with `astrona ssh astro-section-030-module-02-playground` and run the command blocks in each part inside that VM.

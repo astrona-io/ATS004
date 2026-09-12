@@ -6,7 +6,7 @@ Parts 1–2 built a pool of physical extents. This part carves the first named a
 
 ## Carving out a logical volume
 
-`lvcreate -n <name> -L <size> <vg>` grabs enough extents from the VG's free pool to satisfy `<size>`, rounding up to a whole number of PEs, and records that assignment as the LV's extent list (Part 1's model — this is the exact list `lvs -o +devices` reads back). The result is a block device at `/dev/<vg>/<name>` (also reachable as `/dev/mapper/<vg>-<name>`), built by device-mapper replaying that list. `-n` sets the name; `-L` sets an absolute size (`-l` instead takes a count of extents or a percentage of the VG).
+`lvcreate -n <name> -L <size> <vg>` grabs enough extents from the VG's free pool to satisfy `<size>`, rounding up to a whole number of PEs, and records that assignment as the LV's extent list (Part 1's model — this is the exact list `lvs -o +devices` reads back). `<name>` is again an invented label, this time for the LV — below it's `shared_documents`; `<vg>` is the VG name from Part 2, `company_storage`. The result is a block device at `/dev/<vg>/<name>` (also reachable as `/dev/mapper/<vg>-<name>`), built by device-mapper replaying that list. `-n` sets the name; `-L` sets an absolute size (`-l` instead takes a count of extents or a percentage of the VG).
 
 The resulting device is formatted and mounted exactly like a partition — nothing above the LV layer can tell its extents came from a pool rather than one contiguous region.
 
@@ -18,34 +18,34 @@ By default `lvcreate` uses the **normal** allocation policy: it prefers extents 
 > **Try it — carve, format, and mount an LV**
 >
 > ```sh
-> sudo lvcreate -n applv -L 200M vgdata
+> sudo lvcreate -n shared_documents -L 200M company_storage
 > sudo lvs -o +devices
-> sudo mkfs.ext4 /dev/vgdata/applv
-> sudo mkdir -p /mnt/applv
-> sudo mount /dev/vgdata/applv /mnt/applv
-> df -h /mnt/applv
+> sudo mkfs.ext4 /dev/company_storage/shared_documents
+> sudo mkdir -p /mnt/shared_documents
+> sudo mount /dev/company_storage/shared_documents /mnt/shared_documents
+> df -h /mnt/shared_documents
 > ```
 >
 > Expect something like (middle `lvs` columns trimmed here for width):
 >
 > ```text
->   Logical volume "applv" created.
+>   Logical volume "shared_documents" created.
 >
->   LV    VG     Attr       LSize   ... Devices
->   applv vgdata -wi-a----- 200.00m     /dev/vdc(0)
+>   LV                VG              Attr       LSize   ... Devices
+>   shared_documents  company_storage -wi-a----- 200.00m     /dev/vdc(0)
 >
->   Filesystem                Size  Used Avail Use% Mounted on
->   /dev/mapper/vgdata-applv  172M   24K  158M   1% /mnt/applv
+>   Filesystem                                    Size  Used Avail Use% Mounted on
+>   /dev/mapper/company_storage-shared_documents  172M   24K  158M   1% /mnt/shared_documents
 > ```
 >
-> `lvs -o +devices` shows the extents for `applv` came from `/dev/vdc` (a 200 MiB request fits on one disk, so the normal allocator kept it there). `/dev/vdc(0)` means "starting at physical extent 0 of that PV". After `mkfs.ext4` and `mount`, `df` shows an ordinary ext4 filesystem — the LVM layers underneath are invisible to it, and the reported size is a little under 200 MiB because the filesystem's own metadata takes a cut. Request a size larger than one disk's free space and `Devices` would list both PVs, with no different command and no warning.
+> `lvs -o +devices` shows the extents for `shared_documents` came from `/dev/vdc` (a 200 MiB request fits on one disk, so the normal allocator kept it there). `/dev/vdc(0)` means "starting at physical extent 0 of that PV". After `mkfs.ext4` and `mount`, `df` shows an ordinary ext4 filesystem — the LVM layers underneath are invisible to it, and the reported size is a little under 200 MiB because the filesystem's own metadata takes a cut. Request a size larger than one disk's free space and `Devices` would list both PVs, with no different command and no warning.
 
 > [!WARNING]
 > **Common pitfalls**
 >
 > - **`pvcreate` on the wrong device.** Running it on a disk that holds a filesystem or the system disk (`/dev/vda` here) overwrites the start of that device. Confirm with `lsblk` and `blkid` first, and match on the disk's serial rather than its `vdX` letter — letters can shift between boots, serials do not. Same care as `mkfs`.
-> - **Trying to format the volume group.** A VG is a pool, not a device. There is no `/dev/vgdata` to `mkfs`. You format the *logical volume* (`/dev/vgdata/applv`).
-> - **Confusing the VG name with a path.** `vgcreate` and `lvcreate` take the VG *name* (`vgdata`); `mkfs`/`mount` take the LV *path* (`/dev/vgdata/applv`).
+> - **Trying to format the volume group.** A VG is a pool, not a device. There is no `/dev/company_storage` to `mkfs`. You format the *logical volume* (`/dev/company_storage/shared_documents`).
+> - **Confusing the VG name with a path.** `vgcreate` and `lvcreate` take the VG *name* (`company_storage`); `mkfs`/`mount` take the LV *path* (`/dev/company_storage/shared_documents`).
 > - **Forgetting the filesystem step.** `lvcreate` gives you a raw block device — an extent list, replayed by device-mapper. Until you `mkfs` it, there is nothing for a filesystem driver to mount.
 > - **Assuming an LV sits on one disk.** The `normal` allocator prefers fewer PVs, but a large enough request spans PVs silently. Use `lvs -o +devices` to see where it actually landed, every time, not just when troubleshooting.
 
