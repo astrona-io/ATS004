@@ -38,6 +38,7 @@ All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also
     1. [The LVM Stack, Recapped & Reading State](./module-02/course-01-stack-and-state.md)
     2. [Live Migration: pvmove](./module-02/course-02-pvmove-migration.md)
     3. [vgreduce, and Growing/Shrinking a Volume](./module-02/course-03-vgreduce-lvextend.md)
+    4. [Removing Any PV, and Physical Disk Safety](./module-02/course-04-removing-any-pv-and-safety.md)
 *   **Practice Lab Sandbox:** **`sections/section-030/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash

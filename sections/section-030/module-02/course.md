@@ -28,6 +28,7 @@ That is the whole module in one migration: extend, move, reduce, remove — and 
 1. **[Part 1 — The LVM Stack, Recapped & Reading State](./course-01-stack-and-state.md)** — the extent-list model that explains every command below; the `pv`/`vg`/`lv` command-naming pattern; reading `pvs`/`vgs`/`lvs -o +devices` before touching anything.
 2. **[Part 2 — Live Migration: pvmove](./course-02-pvmove-migration.md)** — adding a spare disk with `vgextend`, and what `pvmove` actually does underneath (extent-by-extent mirror-and-repoint) to move data off a live, mounted volume with zero downtime.
 3. **[Part 3 — vgreduce, and Growing/Shrinking a Volume](./course-03-vgreduce-lvextend.md)** — retiring an emptied disk with `vgreduce` + `pvremove`; growing a volume live with `lvextend`; shrinking one offline with `resize2fs` + `lvreduce`, in the order that doesn't destroy data; and why XFS cannot shrink at all.
+4. **[Part 4 — Removing Any PV, and Physical Disk Safety](./course-04-removing-any-pv-and-safety.md)** — generalizing `pvmove`/`vgreduce`/`pvremove` beyond a single failing disk to a VG with any number of PVs and extents spread across several of them; and what's still missing after `pvremove` before a real physical disk is actually safe to pull.
 
 ## Learning objectives
 
@@ -41,6 +42,8 @@ After this module you can:
 - Explain why `lvextend -L 20G` and `lvextend -L +20G` are dangerously different.
 - Shrink an ext4 logical volume with `e2fsck -f`, `resize2fs`, then `lvreduce` — in that order — and explain why reversing it destroys data.
 - State why XFS supports no shrink path, on either the filesystem or the volume, unlike ext4.
+- Remove any one PV from a VG regardless of how many PVs it has or how an LV's extents are currently spread across them, and check beforehand whether the remaining PVs have enough free space to absorb the migration.
+- List what `pvremove` does *not* do, and state the additional kernel/hardware-level steps a real (non-virtual) disk needs before it is actually safe to physically remove.
 
 ## Before you start
 

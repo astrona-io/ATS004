@@ -391,6 +391,10 @@ modules:
         path: sections/section-030/module-02/course-03-vgreduce-lvextend.md
 
       - type: reading
+        title: "Module 2.4: Removing Any PV, and Physical Disk Safety"
+        path: sections/section-030/module-02/course-04-removing-any-pv-and-safety.md
+
+      - type: reading
         title: Question
         path: sections/section-030/module-02/labs/lab-01/question.md
 

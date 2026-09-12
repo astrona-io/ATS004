@@ -1,6 +1,6 @@
 # Part 3 — vgreduce, and Growing/Shrinking a Volume
 
-> Prerequisite: [Part 2 — Live Migration: pvmove](./course-02-pvmove-migration.md). Next: [Module landing page](./course.md).
+> Prerequisite: [Part 2 — Live Migration: pvmove](./course-02-pvmove-migration.md). Next: [Part 4 — Removing Any PV, and Physical Disk Safety](./course-04-removing-any-pv-and-safety.md).
 
 Part 2 emptied a PV's extent list. This part covers the two directions you take the stack from here: retiring that now-empty disk (`vgreduce`, `pvremove`), and the opposite move — growing a volume and its filesystem while both stay live.
 
