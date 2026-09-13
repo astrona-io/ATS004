@@ -30,4 +30,49 @@ for d in "${DISKS[@]}"; do
   fi
 done
 
+# Install an on-demand 'catchup' command so a reader who already knows an
+# earlier part's material (or is picking this back up after a break) can
+# jump straight to a later part's starting state instead of retyping
+# commands they've already practiced. Written here (not as a sibling
+# bootstrap file) because only this single script is guaranteed to be
+# copied onto the VM by the playground's bootstrap step.
+sudo tee /usr/local/bin/catchup > /dev/null <<'CATCHUP_EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+catchup — jump to a later part's starting state in this playground.
+
+Usage: catchup <target>
+
+Targets:
+  part3   Run Part 2's exercise (pvcreate + vgcreate) so you land exactly
+          where Part 3 ("Carving out a logical volume") begins: a Volume
+          Group named company_storage pooling /dev/vdc and /dev/vdd,
+          nothing carved out of it yet.
+
+Only use this if you already understand the part being skipped — it runs
+the real commands for you, it doesn't explain them. Read that part's
+course page first if anything here is unfamiliar.
+EOF
+}
+
+case "${1:-}" in
+  part3)
+    echo "[catchup] Running Part 2's exercise: initialise two disks as PVs and pool them into a VG..."
+    sudo pvcreate /dev/vdc /dev/vdd
+    sudo vgcreate company_storage /dev/vdc /dev/vdd
+    echo "[catchup] Done. company_storage now pools /dev/vdc and /dev/vdd, empty."
+    echo "[catchup] Continue from 'Carving out a logical volume' in Part 3."
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac
+CATCHUP_EOF
+sudo chmod +x /usr/local/bin/catchup
+
 echo "[playground] ready. Spare disks are commonly /dev/vdb /dev/vdc /dev/vdd — confirm with 'lsblk'."
+echo "[playground] already done Part 2's exercise elsewhere and want to skip to Part 3? Run: catchup part3"

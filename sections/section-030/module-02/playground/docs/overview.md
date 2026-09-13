@@ -18,6 +18,24 @@ and no pass/fail. Explore, break things, `astrona destroy`, start over.
 - The kernel names of the three disks are written to `/etc/playground-disks`
   (`source_disk`, `second_disk`, `spare_disk`) so you never have to guess the
   `vdb`/`vdc`/`vdd` order. `cat /etc/playground-disks` to see them.
+- A `catchup` command (see below) for skipping ahead to a later part, or resetting.
+
+## Already know an earlier part? Skip ahead — or reset
+
+This module's parts build on each other in the same running VM. If you already know Part 2 or Part 2+3's material and just want to read a later part, skip the setup:
+
+```sh
+catchup part3   # runs Part 2's exercise for you: extend the VG, evacuate source_disk
+catchup part4   # runs Part 2 AND Part 3's exercises: the above, plus retire/grow/shrink
+```
+
+Broke something mid-exploration and want the original 2-PV, 400M starting state back, without a full `astrona destroy` + `astrona run`?
+
+```sh
+catchup reset
+```
+
+Run `catchup` with no arguments for a full description of each target before using one — they run the real commands, they don't explain them, so only skip a part you've already read.
 
 ## Things to try
 
