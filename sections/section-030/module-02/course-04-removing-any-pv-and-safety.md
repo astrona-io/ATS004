@@ -20,99 +20,98 @@ sudo pvs -o pv_name,pv_used,pv_free
 
 Compare the `pv_used` figure for the PV you're about to drain against the sum of `pv_free` across every *other* PV in the VG. If the other PVs don't have enough combined free space, `pvmove` will simply refuse to start (or stall partway) rather than doing anything destructive — the fix is the same `vgextend` with another disk that Part 2 used, not a data-loss risk.
 
-> [!TIP]
-> **Try it — build a three-way spread, then remove one PV out of three**
->
-> `source_disk` has been sitting raw and unclaimed since Part 3 removed it — that's the disk this exercise reuses to reach three PVs, no new hardware needed.
->
-> **0. Make sure the disk-name variables are loaded in this shell** (if your session from earlier parts closed, or you're picking this up fresh, `$source_disk` and `$spare_disk` won't be set otherwise):
-> ```sh
-> . /etc/playground-disks
-> ```
-> This file is a shortcut specific to this playground, written by its setup script — it will not exist on a real server or a different lab. Elsewhere, find the same disks with `lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,SERIAL` and reference them by their `/dev/disk/by-id/…` path instead.
->
-> **1. Rejoin `source_disk` to the volume group as an ordinary third PV:**
-> ```sh
-> sudo pvcreate "$source_disk"
-> sudo vgextend company_storage "$source_disk"
-> ```
-> ```text
->   Physical volume "/dev/vdc" successfully created.
->   Volume group "company_storage" successfully extended
-> ```
-> Same two commands as Part 2 — nothing about rejoining a previously-removed disk is different from adding a brand-new one.
->
-> **2. Grow `shared_documents` by 600 MiB, restricted to `spare_disk`:**
-> ```sh
-> sudo lvextend -L +600M /dev/company_storage/shared_documents "$spare_disk"
-> ```
-> ```text
->   Size of logical volume company_storage/shared_documents changed from 350.00 MiB to 950.00 MiB.
-> ```
-> Naming a PV after the size argument restricts the *new* extents to that PV specifically — the same technique this playground's own setup script used back in Part 1 to force every extent onto one disk. Here it guarantees the growth lands on `spare_disk`, not wherever the default allocator would otherwise choose.
->
-> **3. Grow it again by 300 MiB, this time restricted to `source_disk`:**
-> ```sh
-> sudo lvextend -L +300M /dev/company_storage/shared_documents "$source_disk"
-> ```
-> ```text
->   Size of logical volume company_storage/shared_documents changed from 950.00 MiB to 1250.00 MiB.
-> ```
->
-> **4. Confirm the extent list now spans all three PVs:**
-> ```sh
-> sudo lvs -o +devices
-> ```
-> ```text
->   LV                VG              Attr       LSize     Devices
->   shared_documents  company_storage -wi-ao---- 1250.00m  /dev/vdd(0),/dev/vde(0),/dev/vdc(0)
-> ```
-> Three comma-separated entries in one `Devices` cell — one LV, three PVs. This is the layout the earlier "one dying disk" scenario never showed you: `second_disk` (`/dev/vdd`) holds the original 350 MiB, `spare_disk` (`/dev/vde`) holds the 600 MiB from step 2, `source_disk` (`/dev/vdc`) holds the 300 MiB from step 3.
->
-> **5. Remove `spare_disk` — the *middle* PV, not the one holding the least or the most data:**
-> ```sh
-> sudo pvmove "$spare_disk" "$source_disk"
-> ```
-> ```text
->   /dev/vde: Moved: 41.00%
->   /dev/vde: Moved: 100.00%
-> ```
-> Naming `source_disk` as the second argument tells `pvmove` exactly where to send the evacuated extents, instead of leaving the choice to the allocator — useful whenever you want to control which disk absorbs the load, not just that *some* disk does.
->
-> **6. Confirm the extent list one more time:**
-> ```sh
-> sudo lvs -o +devices
-> ```
-> ```text
->   LV                VG              Attr       LSize     Devices
->   shared_documents  company_storage -wi-ao---- 1250.00m  /dev/vdd(0),/dev/vdc(0),/dev/vdc(75)
-> ```
-> `spare_disk` (`/dev/vde`) is gone from the list entirely. `source_disk` (`/dev/vdc`) now carries two separate ranges — its original 300 MiB starting at extent 0, plus the 600 MiB just migrated onto it starting right after, at extent 75 (300 MiB ÷ 4 MiB per extent) — which is exactly why the same PV can appear more than once in this column: each entry is one contiguous range, not one entry per disk.
->
-> **7. Detach and wipe the now-empty PV, same as Part 3:**
-> ```sh
-> sudo vgreduce company_storage "$spare_disk"
-> sudo pvremove "$spare_disk"
-> ```
-> ```text
->   Removed "/dev/vde" from volume group "company_storage"
->   Labels on physical volume "/dev/vde" successfully wiped.
-> ```
->
-> **8. Confirm the VG is back to two PVs and the LV is untouched:**
-> ```sh
-> sudo pvs
-> sudo vgs
-> ```
-> ```text
->   PV        VG              Fmt  Attr PSize    PFree
->   /dev/vdd  company_storage lvm2 a--  1020.00m  670.00m
->   /dev/vdc  company_storage lvm2 a--  1020.00m  120.00m
->
->   VG               #PV #LV #SN Attr   VSize VFree
->   company_storage   2   1   0 wz--n- 1.99g 0.77g
-> ```
-> `#PV 2`, same as after Part 3 — but the disks making up the pair have changed (`second_disk` and `source_disk` now, not `second_disk` and `spare_disk`), and `shared_documents` is still 1250 MiB, still mounted, still readable the entire time. Removing one PV out of three worked exactly like removing one PV out of two — because it *is* the same operation.
+### Hands-on: build a three-way spread, then remove one PV out of three
+
+`source_disk` has been sitting raw and unclaimed since Part 3 removed it — that's the disk this exercise reuses to reach three PVs, no new hardware needed.
+
+**0. Make sure the disk-name variables are loaded in this shell** (if your session from earlier parts closed, or you're picking this up fresh, `$source_disk` and `$spare_disk` won't be set otherwise):
+```sh
+. /etc/playground-disks
+```
+This file is a shortcut specific to this playground, written by its setup script — it will not exist on a real server or a different lab. Elsewhere, find the same disks with `lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,SERIAL` and reference them by their `/dev/disk/by-id/…` path instead.
+
+**1. Rejoin `source_disk` to the volume group as an ordinary third PV:**
+```sh
+sudo pvcreate "$source_disk"
+sudo vgextend company_storage "$source_disk"
+```
+```text
+  Physical volume "/dev/vdc" successfully created.
+  Volume group "company_storage" successfully extended
+```
+Same two commands as Part 2 — nothing about rejoining a previously-removed disk is different from adding a brand-new one.
+
+**2. Grow `shared_documents` by 600 MiB, restricted to `spare_disk`:**
+```sh
+sudo lvextend -L +600M /dev/company_storage/shared_documents "$spare_disk"
+```
+```text
+  Size of logical volume company_storage/shared_documents changed from 350.00 MiB to 950.00 MiB.
+```
+Naming a PV after the size argument restricts the *new* extents to that PV specifically — the same technique this playground's own setup script used back in Part 1 to force every extent onto one disk. Here it guarantees the growth lands on `spare_disk`, not wherever the default allocator would otherwise choose.
+
+**3. Grow it again by 300 MiB, this time restricted to `source_disk`:**
+```sh
+sudo lvextend -L +300M /dev/company_storage/shared_documents "$source_disk"
+```
+```text
+  Size of logical volume company_storage/shared_documents changed from 950.00 MiB to 1250.00 MiB.
+```
+
+**4. Confirm the extent list now spans all three PVs:**
+```sh
+sudo lvs -o +devices
+```
+```text
+  LV                VG              Attr       LSize     Devices
+  shared_documents  company_storage -wi-ao---- 1250.00m  /dev/vdd(0),/dev/vde(0),/dev/vdc(0)
+```
+Three comma-separated entries in one `Devices` cell — one LV, three PVs. This is the layout the earlier "one dying disk" scenario never showed you: `second_disk` (`/dev/vdd`) holds the original 350 MiB, `spare_disk` (`/dev/vde`) holds the 600 MiB from step 2, `source_disk` (`/dev/vdc`) holds the 300 MiB from step 3.
+
+**5. Remove `spare_disk` — the *middle* PV, not the one holding the least or the most data:**
+```sh
+sudo pvmove "$spare_disk" "$source_disk"
+```
+```text
+  /dev/vde: Moved: 41.00%
+  /dev/vde: Moved: 100.00%
+```
+Naming `source_disk` as the second argument tells `pvmove` exactly where to send the evacuated extents, instead of leaving the choice to the allocator — useful whenever you want to control which disk absorbs the load, not just that *some* disk does.
+
+**6. Confirm the extent list one more time:**
+```sh
+sudo lvs -o +devices
+```
+```text
+  LV                VG              Attr       LSize     Devices
+  shared_documents  company_storage -wi-ao---- 1250.00m  /dev/vdd(0),/dev/vdc(0),/dev/vdc(75)
+```
+`spare_disk` (`/dev/vde`) is gone from the list entirely. `source_disk` (`/dev/vdc`) now carries two separate ranges — its original 300 MiB starting at extent 0, plus the 600 MiB just migrated onto it starting right after, at extent 75 (300 MiB ÷ 4 MiB per extent) — which is exactly why the same PV can appear more than once in this column: each entry is one contiguous range, not one entry per disk.
+
+**7. Detach and wipe the now-empty PV, same as Part 3:**
+```sh
+sudo vgreduce company_storage "$spare_disk"
+sudo pvremove "$spare_disk"
+```
+```text
+  Removed "/dev/vde" from volume group "company_storage"
+  Labels on physical volume "/dev/vde" successfully wiped.
+```
+
+**8. Confirm the VG is back to two PVs and the LV is untouched:**
+```sh
+sudo pvs
+sudo vgs
+```
+```text
+  PV        VG              Fmt  Attr PSize    PFree
+  /dev/vdd  company_storage lvm2 a--  1020.00m  670.00m
+  /dev/vdc  company_storage lvm2 a--  1020.00m  120.00m
+
+  VG               #PV #LV #SN Attr   VSize VFree
+  company_storage   2   1   0 wz--n- 1.99g 0.77g
+```
+`#PV 2`, same as after Part 3 — but the disks making up the pair have changed (`second_disk` and `source_disk` now, not `second_disk` and `spare_disk`), and `shared_documents` is still 1250 MiB, still mounted, still readable the entire time. Removing one PV out of three worked exactly like removing one PV out of two — because it *is* the same operation.
 
 ## What `pvremove` doesn't do
 
