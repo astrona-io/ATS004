@@ -70,6 +70,12 @@ Two patterns cover almost everything in this module:
 > ```
 > These three lines are just plain shell variable assignments, written by the playground's setup script — not LVM output. `source_disk` and `second_disk` are the two PVs already pooled into the VG; `spare_disk` is a third disk left untouched for Part 2.
 >
+> **`/etc/playground-disks` is this one playground's convenience shortcut — it will not exist on a real server, a different VM, or any of this module's graded labs.** Don't rely on it existing anywhere but here. The general way to find the same information anywhere else is the method Module 1 already taught:
+> ```sh
+> lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,SERIAL
+> ```
+> Match disks by their `SERIAL` column (stable across reboots) rather than the `vdX` letter (which can shift), then reference them directly by their `/dev/disk/by-id/…` path in every command instead of a `$source_disk`-style variable. This module's own graded labs do exactly that — see any of their `question.md` files for the pattern.
+>
 > **2. List the physical volumes:**
 > ```sh
 > sudo pvs

@@ -25,6 +25,8 @@ Both commands only add free extents to the pool's bookkeeping. No LV's extent li
 > ```
 > The leading `.` is the shell's "source" command — it runs that file's `source_disk=...` lines directly in your current shell, so `$spare_disk` etc. now expand to real device paths in every command below. Nothing prints because it's just setting variables, not running a program.
 >
+> Reminder from Part 1: `/etc/playground-disks` only exists on this specific playground VM. Anywhere else, find the same disks with `lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,SERIAL` and reference them by their `/dev/disk/by-id/…` path instead of a `$…_disk` variable.
+>
 > **2. Initialise the spare disk as a PV:**
 > ```sh
 > sudo pvcreate "$spare_disk"

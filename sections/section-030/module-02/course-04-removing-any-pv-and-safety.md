@@ -25,6 +25,12 @@ Compare the `pv_used` figure for the PV you're about to drain against the sum of
 >
 > `source_disk` has been sitting raw and unclaimed since Part 3 removed it — that's the disk this exercise reuses to reach three PVs, no new hardware needed.
 >
+> **0. Make sure the disk-name variables are loaded in this shell** (if your session from earlier parts closed, or you're picking this up fresh, `$source_disk` and `$spare_disk` won't be set otherwise):
+> ```sh
+> . /etc/playground-disks
+> ```
+> This file is a shortcut specific to this playground, written by its setup script — it will not exist on a real server or a different lab. Elsewhere, find the same disks with `lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,SERIAL` and reference them by their `/dev/disk/by-id/…` path instead.
+>
 > **1. Rejoin `source_disk` to the volume group as an ordinary third PV:**
 > ```sh
 > sudo pvcreate "$source_disk"

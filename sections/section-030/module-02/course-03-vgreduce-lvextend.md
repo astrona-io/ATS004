@@ -25,6 +25,7 @@ Order matters for the same reason: `pvremove` refuses to run on a disk that is s
 > ```text
 > (no output)
 > ```
+> Remember, this file is a shortcut specific to this playground — elsewhere, find the same disks with `lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,SERIAL` and use their `/dev/disk/by-id/…` path directly.
 >
 > **2. Detach the now-empty disk from the volume group:**
 > ```sh
