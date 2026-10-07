@@ -51,6 +51,7 @@ modules:
       - type: lab
         title: "Filesystem Creation & Mounting Sandbox Lab"
         path: sections/section-010/module-01/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: Question
@@ -63,6 +64,7 @@ modules:
       - type: lab
         title: "Diagnosing & Evicting a Busy Mount Lab"
         path: sections/section-010/module-01/labs/lab-02
+        difficulty: intermediate
 
       - type: reading
         title: "Module 2: Partitioning Raw Storage"
@@ -87,6 +89,7 @@ modules:
       - type: lab
         title: "Partitioning Raw Storage: GPT/MBR Lab"
         path: sections/section-010/module-02/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 3: Securing Data-at-Rest with LUKS"
@@ -115,6 +118,7 @@ modules:
       - type: lab
         title: "LUKS Block-level Encryption Lab"
         path: sections/section-010/module-03/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 4: Filesystem Maintenance, Labeling, & Tuning"
@@ -139,6 +143,7 @@ modules:
       - type: lab
         title: "Filesystem Repairs, Labeling, & UUIDs Lab"
         path: sections/section-010/module-04/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 5: /etc/fstab in Depth"
@@ -163,6 +168,7 @@ modules:
       - type: lab
         title: "Persistent fstab Mounting Lab"
         path: sections/section-010/module-05/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 6: systemd Mount and Automount Units"
@@ -191,6 +197,7 @@ modules:
       - type: lab
         title: "systemd .mount and .automount Units Lab"
         path: sections/section-010/module-06/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 7: Removable Media & the FAT32 Filesystem"
@@ -215,6 +222,7 @@ modules:
       - type: lab
         title: "FAT32 Removable Media Lab"
         path: sections/section-010/module-07/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 8: Backing Up & Cloning Storage Devices"
@@ -239,6 +247,7 @@ modules:
       - type: lab
         title: "Disk Cloning & Backup Lab"
         path: sections/section-010/module-08/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Section 010 Knowledge Check: Local Storage & Forensics"
@@ -255,6 +264,7 @@ modules:
       - type: lab
         title: "Local Storage Integration Capstone Lab"
         path: sections/section-010/capstone/labs/lab-01
+        difficulty: advanced
 
   - id: module-020
     title: "Section 020: Remote Filesystems (SSHFS and NFS)"
@@ -291,6 +301,7 @@ modules:
       - type: lab
         title: "SSHFS User-space Mounting Lab"
         path: sections/section-020/module-01/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 2: Enterprise Sharing with NFS"
@@ -315,6 +326,7 @@ modules:
       - type: lab
         title: "NFS Enterprise Network Sharing Lab"
         path: sections/section-020/module-02/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Section 020 Knowledge Check: Remote Filesystems"
@@ -331,6 +343,7 @@ modules:
       - type: lab
         title: "Remote Filesystems: SSHFS and NFS Capstone Lab"
         path: sections/section-020/capstone/labs/lab-01
+        difficulty: advanced
 
   - id: module-030
     title: "Section 030: Dynamic & Redundant Volumes (LVM & RAID)"
@@ -373,6 +386,7 @@ modules:
       - type: lab
         title: "LVM Fundamentals: PV, VG, and LV Allocation Lab"
         path: sections/section-030/module-01/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: Question
@@ -385,6 +399,7 @@ modules:
       - type: lab
         title: "LVM Fundamentals: Pooling PVs Across Disks Lab"
         path: sections/section-030/module-01/labs/lab-02
+        difficulty: intermediate
 
       - type: reading
         title: "Module 2: Advanced LVM Operations"
@@ -417,6 +432,7 @@ modules:
       - type: lab
         title: "Advanced LVM: Live Extent Migration & VG Reduction Lab"
         path: sections/section-030/module-02/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: Question
@@ -429,6 +445,7 @@ modules:
       - type: lab
         title: "LVM Live Grow & Safe Shrink Lab"
         path: sections/section-030/module-02/labs/lab-02
+        difficulty: intermediate
 
       - type: reading
         title: Question
@@ -441,6 +458,7 @@ modules:
       - type: lab
         title: "LVM: vgextend a Live Pool, Then Evacuate a Disk Lab"
         path: sections/section-030/module-02/labs/lab-03
+        difficulty: intermediate
 
       - type: reading
         title: Question
@@ -453,6 +471,7 @@ modules:
       - type: lab
         title: "LVM: Removing One PV Out of Three, Mixed Extents Lab"
         path: sections/section-030/module-02/labs/lab-04
+        difficulty: intermediate
 
       - type: reading
         title: Question
@@ -465,6 +484,7 @@ modules:
       - type: lab
         title: "LVM: Growing an XFS Volume Lab"
         path: sections/section-030/module-02/labs/lab-05
+        difficulty: intermediate
 
       - type: reading
         title: "Module 3: Software RAID Fundamentals"
@@ -489,6 +509,7 @@ modules:
       - type: lab
         title: "RAID 5 Array Creation & Persistence Lab"
         path: sections/section-030/module-03/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 4: RAID Maintenance and Recovery"
@@ -513,6 +534,7 @@ modules:
       - type: lab
         title: "RAID Failure, Replacement & Rebuild Lab"
         path: sections/section-030/module-04/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: Question
@@ -525,6 +547,7 @@ modules:
       - type: lab
         title: "RAID Grow & Failure Monitoring Lab"
         path: sections/section-030/module-04/labs/lab-02
+        difficulty: intermediate
 
       - type: reading
         title: "Section 030 Knowledge Check: Dynamic & Redundant Volumes"
@@ -541,6 +564,7 @@ modules:
       - type: lab
         title: "LVM Volume Groups and Logical Volumes Capstone Lab"
         path: sections/section-030/capstone/labs/lab-01
+        difficulty: advanced
 
   - id: module-040
     title: "Section 040: Swap Space Management"
@@ -577,6 +601,7 @@ modules:
       - type: lab
         title: "Swap File Allocation & Security Lab"
         path: sections/section-040/module-01/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 2: Permanent Swap Partitions & Priority Scheduling"
@@ -601,6 +626,7 @@ modules:
       - type: lab
         title: "Swap Partition Formatting & Priorities Lab"
         path: sections/section-040/module-02/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Section 040 Knowledge Check: Swap Space Management"
@@ -617,6 +643,7 @@ modules:
       - type: lab
         title: "Swap Space Management Capstone Lab"
         path: sections/section-040/capstone/labs/lab-01
+        difficulty: advanced
 
   - id: module-050
     title: "Section 050: On-Demand Mounting (autofs)"
@@ -653,6 +680,7 @@ modules:
       - type: lab
         title: "autofs Direct Maps & Timeouts Lab"
         path: sections/section-050/module-01/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 2: Network Automount Maps & Tuning"
@@ -677,6 +705,7 @@ modules:
       - type: lab
         title: "Network autofs Wildcard Mounts Lab"
         path: sections/section-050/module-02/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Section 050 Knowledge Check: On-Demand Mounting (autofs)"
@@ -693,6 +722,7 @@ modules:
       - type: lab
         title: "Filesystem Automount with autofs Capstone Lab"
         path: sections/section-050/capstone/labs/lab-01
+        difficulty: advanced
 
   - id: module-060
     title: "Section 060: Virtual Filesystems (/proc and /sys)"
@@ -730,6 +760,7 @@ modules:
       - type: lab
         title: "proc System Limits & File Descriptors Auditing Lab"
         path: sections/section-060/module-01/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 2: The Hardware Tree & Runtime Tuning: /sys & sysctl"
@@ -754,6 +785,7 @@ modules:
       - type: lab
         title: "sysctl IPv4 Forwarding Tuning Lab"
         path: sections/section-060/module-02/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Section 060 Knowledge Check: Virtual Filesystems"
@@ -770,6 +802,7 @@ modules:
       - type: lab
         title: "Virtual Filesystems /proc and /sys Capstone Lab"
         path: sections/section-060/capstone/labs/lab-01
+        difficulty: advanced
 
   - id: module-070
     title: "Section 070: Storage Performance Monitoring"
@@ -806,6 +839,7 @@ modules:
       - type: lab
         title: "Storage Performance Monitoring: iostat Wait Latency Lab"
         path: sections/section-070/module-01/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 2: Process-Level Auditing: Identifying the Culprit"
@@ -830,6 +864,7 @@ modules:
       - type: lab
         title: "Storage Performance: iotop and lsof Active Profiling Lab"
         path: sections/section-070/module-02/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Section 070 Knowledge Check: Storage Performance"
@@ -846,6 +881,7 @@ modules:
       - type: lab
         title: "Storage Performance Monitoring Capstone Lab"
         path: sections/section-070/capstone/labs/lab-01
+        difficulty: advanced
 
   - id: module-080
     title: "Section 080: Capacity, Quotas & the Filesystem Hierarchy"
@@ -883,6 +919,7 @@ modules:
       - type: lab
         title: "Directory Capacity Profiling (du -xh) Lab"
         path: sections/section-080/module-01/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 2: User and Group Disk Quotas"
@@ -907,6 +944,7 @@ modules:
       - type: lab
         title: "ext4 User & Group Quotas Lab"
         path: sections/section-080/module-02/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: Question
@@ -919,6 +957,7 @@ modules:
       - type: lab
         title: "ext4 Quota Hard Limit & Grace Period Lab"
         path: sections/section-080/module-02/labs/lab-02
+        difficulty: intermediate
 
       - type: reading
         title: "Module 3: XFS Quotas and Project Quotas"
@@ -943,6 +982,7 @@ modules:
       - type: lab
         title: "XFS Project Quota Lab"
         path: sections/section-080/module-03/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Module 4: Navigating Shortcuts: Symbolic Links & FHS"
@@ -967,6 +1007,7 @@ modules:
       - type: lab
         title: "Navigating Shortcuts: Symbolic Links Lab"
         path: sections/section-080/module-04/labs/lab-01
+        difficulty: intermediate
 
       - type: reading
         title: "Section 080 Knowledge Check: Capacity, Quotas & Symlinks"
@@ -983,6 +1024,7 @@ modules:
       - type: lab
         title: "Filesystem Hierarchy and Directory Sizing Capstone Lab"
         path: sections/section-080/capstone/labs/lab-01
+        difficulty: advanced
 
   - id: module-090
     title: "LFCS Storage Domain Certification Quiz"
