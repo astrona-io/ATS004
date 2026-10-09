@@ -46,7 +46,7 @@ modules:
         title: "The Lifecycle of Local Storage"
         path: sections/section-010/module-01/course.md
       - type: reading
-        title: "Discovery, Formatting & Mounting"
+        title: "Discovery, Formatting and Mounting"
         path: sections/section-010/module-01/course-01-discovery-formatting-mounting.md
       - type: reading
         title: Question
@@ -97,16 +97,22 @@ modules:
             url: https://man7.org/linux/man-pages/man1/kill.1.html
           - name: "umount(8) manual page"
             url: https://man7.org/linux/man-pages/man8/umount.8.html
+      - type: reading
+        title: "Finding Hidden Space"
+        path: sections/section-010/module-01/course-03-finding-hidden-space.md
+      - type: reading
+        title: "Wrap-Up: Mission Debrief"
+        path: sections/section-010/module-01/course-04-wrap-up.md
 
       - type: reading
-        title: "Splitting the Acre: Partitioning Raw Storage"
+        title: "Splitting the Hold: Partitioning Raw Storage"
         path: sections/section-010/module-02/course.md
       - type: reading
         title: "Partition Tables: MBR vs GPT"
         path: sections/section-010/module-02/course-01-partition-tables-mbr-vs-gpt.md
       - type: reading
-        title: "Tools, Alignment & the Kernel Re-read Problem"
-        path: sections/section-010/module-02/course-02-tools-alignment-and-kernel-rescan.md
+        title: "Write an Aligned GPT Partition"
+        path: sections/section-010/module-02/course-02-write-an-aligned-gpt-partition.md
       - type: reading
         title: Question
         path: sections/section-010/module-02/labs/lab-01/question.md
@@ -129,6 +135,12 @@ modules:
             url: https://man7.org/linux/man-pages/man8/fdisk.8.html
           - name: "lsblk(8) manual page"
             url: https://man7.org/linux/man-pages/man8/lsblk.8.html
+      - type: reading
+        title: "When the Kernel Keeps the Old Table"
+        path: sections/section-010/module-02/course-03-when-the-kernel-keeps-the-old-table.md
+      - type: reading
+        title: "Wrap-Up: Mission Debrief"
+        path: sections/section-010/module-02/course-04-wrap-up.md
 
       - type: reading
         title: "Under Lock and Key: Securing Data-at-Rest with LUKS"
@@ -137,10 +149,10 @@ modules:
         title: "The LUKS Model: Locking a Disk"
         path: sections/section-010/module-03/course-01-the-luks-model.md
       - type: reading
-        title: "Creating a Container & Its Keyslots"
+        title: "Creating a Container and Its Keyslots"
         path: sections/section-010/module-03/course-02-creating-a-container-and-keyslots.md
       - type: reading
-        title: "Opening, Using, Closing & What's Visible Outside"
+        title: "Opening, Using and Closing the Vault"
         path: sections/section-010/module-03/course-03-opening-using-closing.md
       - type: reading
         title: Question
@@ -166,15 +178,18 @@ modules:
             url: https://man7.org/linux/man-pages/man8/cryptsetup-open.8.html
           - name: "dm-crypt (kernel documentation)"
             url: https://docs.kernel.org/admin-guide/device-mapper/dm-crypt.html
+      - type: reading
+        title: "Wrap-Up: Mission Debrief"
+        path: sections/section-010/module-03/course-04-wrap-up.md
 
       - type: reading
         title: "The Digital Auditor: Filesystem Maintenance, Labeling, and Tuning"
         path: sections/section-010/module-04/course.md
       - type: reading
-        title: "Filesystem Corruption & the fsck Repair Model"
+        title: "Filesystem Corruption and the fsck Repair Model"
         path: sections/section-010/module-04/course-01-fsck-repair-model.md
       - type: reading
-        title: "Labels, UUIDs & Tuning Check Intervals"
+        title: "Labels, UUIDs and Tuning Check Intervals"
         path: sections/section-010/module-04/course-02-labels-uuids-and-tuning.md
       - type: reading
         title: Question
@@ -200,15 +215,18 @@ modules:
             url: https://man7.org/linux/man-pages/man8/blkid.8.html
           - name: "fstab(5) manual page"
             url: https://man7.org/linux/man-pages/man5/fstab.5.html
+      - type: reading
+        title: "Wrap-Up: Mission Debrief"
+        path: sections/section-010/module-04/course-03-wrap-up.md
 
       - type: reading
         title: "/etc/fstab in Depth"
         path: sections/section-010/module-05/course.md
       - type: reading
-        title: "fstab Fields & Stable Identifiers"
+        title: "fstab Fields and Stable Identifiers"
         path: sections/section-010/module-05/course-01-fields-and-stable-identifiers.md
       - type: reading
-        title: "Options & Verifying Before You Trust It"
+        title: "Options and Verifying Before You Trust It"
         path: sections/section-010/module-05/course-02-options-and-verifying.md
       - type: reading
         title: Question
@@ -234,6 +252,9 @@ modules:
             url: https://man7.org/linux/man-pages/man8/mount.8.html
           - name: "blkid(8) manual page"
             url: https://man7.org/linux/man-pages/man8/blkid.8.html
+      - type: reading
+        title: "Wrap-Up: Mission Debrief"
+        path: sections/section-010/module-05/course-03-wrap-up.md
 
       - type: reading
         title: "systemd Mount and Automount Units"
@@ -269,6 +290,9 @@ modules:
       - type: reading
         title: "The fstab Shortcut and Common Pitfalls"
         path: sections/section-010/module-06/course-03-fstab-shortcut-and-pitfalls.md
+      - type: reading
+        title: "Wrap-Up: Mission Debrief"
+        path: sections/section-010/module-06/course-04-wrap-up.md
 
       - type: reading
         title: "Removable Media & the FAT32 Filesystem"
@@ -301,6 +325,9 @@ modules:
             url: https://man7.org/linux/man-pages/man8/mount.8.html
           - name: "VFAT filesystem (kernel documentation)"
             url: https://docs.kernel.org/filesystems/vfat.html
+      - type: reading
+        title: "Wrap-Up: Mission Debrief"
+        path: sections/section-010/module-07/course-03-wrap-up.md
 
       - type: reading
         title: "Backing Up & Cloning Storage Devices"
@@ -335,6 +362,9 @@ modules:
             url: https://man7.org/linux/man-pages/man1/cmp.1.html
           - name: "lsblk(8) manual page"
             url: https://man7.org/linux/man-pages/man8/lsblk.8.html
+      - type: reading
+        title: "Wrap-Up: Mission Debrief"
+        path: sections/section-010/module-08/course-03-wrap-up.md
 
       - type: reading
         title: "Section 010 Knowledge Check: Local Storage & Forensics"

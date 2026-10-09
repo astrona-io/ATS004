@@ -1,63 +1,84 @@
-# Part 1 — What FAT32 Is & Creating One
+# What FAT32 Is & Creating One
 
-> Prerequisite: [Module landing page](./course.md). Next: [Part 2 — Mounting FAT32 & Its Unix-less Quirks](./course-02-mounting-fat32-quirks.md).
+Every ext4 filesystem stores, next to each file's data, a Unix owner, a group and permission bits. That stored information is why `chmod` and `chown` work. This part covers a filesystem that was never designed to store any of it, why makers of removable media use it anyway, and how you create one.
 
-Every filesystem you've built so far in this section stores, alongside each file's data, a Unix owner, a group, and permission bits — that metadata is *why* `chmod` and `chown` work. This part covers a filesystem that was never designed to store any of that, why manufacturers ship removable media with it anyway, and how to create one.
+## Why an old format is still the default
 
-## Why a decades-old format is still the default
+FAT32 is older than most of the Linux tools you use, yet it is still on almost every new USB stick. This section explains what FAT32 is made of and why that simple design is exactly what makes it popular.
 
-FAT32 (File Allocation Table, 32-bit) traces back to MS-DOS. Its on-disk structure is a flat table mapping each file to a chain of storage blocks — no inodes, no journal, no concept of a file "owner" at all. That simplicity is exactly why every operating system still speaks it fluently: Windows, macOS, and Linux all include native FAT32 support with no extra drivers, which is not true of ext4 (Windows/macOS need third-party tools) or NTFS (Linux support is read-write but not default everywhere). A USB stick formatted ext4 works perfectly on Linux and is a mystery to a Windows laptop; a USB stick formatted FAT32 works everywhere. That's the entire reason camera manufacturers, USB drive vendors, and router firmware all default to it.
+### A flat table and nothing more
 
-In Linux, the kernel driver for FAT32 is called **vfat** (*virtual FAT* — the driver that added long-filename support on top of the original 8.3-name FAT format). You'll see both names: FAT32 refers to the on-disk format, `vfat` is what shows up in `mount` output and `/etc/fstab` as the filesystem type.
+FAT32 stands for File Allocation Table, 32-bit. It comes from MS-DOS. On the disk, it keeps one flat table that maps each file to a chain of storage blocks. There are no inodes (the cargo tags that record owner and size on ext4), no journal and no idea of a file "owner" at all.
 
-> As an analogy: ext4 is a library with a card catalogue recording who checked out each book and when it's due back. FAT32 is a single shelf list — title and location, nothing else. The shelf list works in any building; the card catalogue only works in libraries with the same rules for who's allowed to check things out.
+That simple design is why every operating system still reads it. Windows, macOS and Linux all have FAT32 support built in, with no extra drivers. ext4 is different: Windows and macOS need extra tools to read it. A USB stick formatted as ext4 works perfectly on Linux and is a mystery to a Windows laptop. A USB stick formatted as FAT32 works everywhere. That is the whole reason camera makers, USB drive vendors and router firmware all default to it.
+
+In space terms: ext4 is a cargo hold where every crate carries a tag with its owner's name and who may open it. FAT32 is a plain shelf list with only a name and a shelf number. The shelf list can be read on any ship in the galaxy, but it can never tell you whose crate is whose.
+
+### FAT32 and vfat: two names, one thing
+
+In Linux, the kernel driver for FAT32 is called **vfat** (virtual FAT). It is the driver that added long file names on top of the original FAT format, which only allowed names like `REPORT.TXT`. You see both names: FAT32 is the format on the disk, and `vfat` is the filesystem type that shows up in `mount` output and in `/etc/fstab`.
 
 ## Creating a FAT32 filesystem
 
-`mkfs.vfat` builds a FAT-family filesystem. The FAT format actually has three generations — FAT12, FAT16, FAT32 — that differ in how large a volume they can address, and `mkfs.vfat` will pick FAT16 on a small enough device unless you're explicit. `-F 32` forces the FAT32 variant regardless of device size, which matters because some LFCS-style tasks and some real hardware (very small flash chips) would otherwise silently format as FAT16 — a different on-disk layout that behaves slightly differently under the hood, even though most day-to-day commands don't visibly care.
+You build FAT32 with `mkfs.vfat`. This section shows the one option you must not forget, and then the command itself.
 
-> [!TIP]
-> **Try it — format the spare disk as FAT32**
->
-> ```sh
-> lsblk
-> sudo mkfs.vfat -F 32 -n USBDATA /dev/vdb
-> ```
->
-> Expect something like:
->
-> ```text
-> mkfs.fat 4.2 (2021-01-31)
-> ```
->
-> `-n USBDATA` sets the volume label at format time, the FAT32 equivalent of `mkfs.ext4`'s label option. `mkfs.vfat` is deliberately quiet on success — no pass/fail report like `mkfs.ext4`'s block-group summary, because there's a lot less structure to build.
+### Why you always pass `-F 32`
+
+The FAT format has three generations: FAT12, FAT16 and FAT32. They differ in how large a disk they can handle. On a small enough disk, `mkfs.vfat` picks FAT16 unless you tell it otherwise.
+
+The `-F 32` option forces FAT32, whatever the size of the disk. This matters because exam tasks, and some real hardware such as very small flash chips, would otherwise end up with FAT16. FAT16 is a different layout on the disk, even though most everyday commands do not show the difference.
+
+### See it in action
+
+Here is the command on a Linux machine with a blank spare disk at `/dev/vdb`. It finds the disk and formats it as FAT32 with the label `USBDATA`:
+
+```sh
+lsblk
+sudo mkfs.vfat -F 32 -n USBDATA /dev/vdb
+```
+
+Expect something like:
+
+```text
+mkfs.fat 4.2 (2021-01-31)
+```
+
+The `-n USBDATA` option sets the volume label (the hold's painted name) while formatting. It does the same job as the label option of `mkfs.ext4`. `mkfs.vfat` prints almost nothing when it works. There is no long summary like the one `mkfs.ext4` prints, because there is much less structure to build.
 
 ## Labeling after the fact
 
-If you need to relabel a FAT32 filesystem without reformatting it, `fatlabel` does what `tune2fs -L` does for ext4 — except it's a separate tool, because FAT32 is a completely different on-disk format with its own utilities, not a `tune2fs` mode.
+Sometimes you need to rename a FAT32 filesystem without formatting it again. This section shows the tool for that job.
 
-> [!TIP]
-> **Try it — read and change the label**
->
-> ```sh
-> sudo fatlabel /dev/vdb
-> sudo fatlabel /dev/vdb TRAVEL_DRIVE
-> sudo fatlabel /dev/vdb
-> ```
->
-> Expect something like:
->
-> ```text
-> USBDATA
->
-> TRAVEL_DRIVE
-> ```
->
-> Called with just a device, `fatlabel` prints the current label; called with a device and a new name, it writes it. `blkid /dev/vdb` would also show `LABEL="TRAVEL_DRIVE" TYPE="vfat"` — same identification pattern as every other filesystem type in this course, just naming a different `TYPE`.
+### `fatlabel` instead of `tune2fs`
 
-> *FAT32 isn't a smaller or older version of ext4 — it's a different kind of filesystem entirely, one built with no concept of a file owner. Part 2 covers what that means the moment you try to mount one.*
+For ext4 you change the label with `tune2fs -L`. FAT32 is a completely different format on the disk, with its own tools, so it uses a separate tool: `fatlabel`. Called with only a device, `fatlabel` prints the current label. Called with a device and a new name, it writes the new label.
 
-## Reference
+### See the label change
 
-- `man 8 mkfs.fat` — every FAT-family option, including the FAT12/16/32 selection logic `-F` overrides.
-- `man 8 fatlabel` — the FAT label tool used above.
+Read the label, change it, and read it again:
+
+```sh
+sudo fatlabel /dev/vdb
+sudo fatlabel /dev/vdb TRAVEL_DRIVE
+sudo fatlabel /dev/vdb
+```
+
+Expect something like:
+
+```text
+USBDATA
+
+TRAVEL_DRIVE
+```
+
+The first call shows the old label, the second writes the new one, and the third shows the new label. `blkid /dev/vdb` would now also show `LABEL="TRAVEL_DRIVE" TYPE="vfat"`. That is the same way every other filesystem in this course is identified; only the `TYPE` is different.
+
+## Common pitfalls
+
+> [!WARNING]
+> - **Forgetting `-F 32` on a small disk.** `mkfs.vfat` may pick FAT16 instead, a different layout with a smaller size limit. Always pass `-F 32` when the task asks for FAT32.
+> - **Looking for `vfat` in the task text and `FAT32` in the tools, or the other way around.** FAT32 is the format; `vfat` is the type name in `mount`, `blkid` and `/etc/fstab`. Both describe the same filesystem.
+> - **Trying `tune2fs -L` on a FAT32 disk.** `tune2fs` only works on the ext family. Use `fatlabel` for FAT32.
+> - **Formatting the wrong disk.** `mkfs.vfat` overwrites whatever is on the device. Confirm the device with `lsblk` before you format.
+
+> *FAT32 is not a smaller or older ext4. It is a different kind of filesystem, built with no idea of a file owner.*

@@ -1,12 +1,34 @@
-# Part 1 — How /etc/fstab Becomes systemd Units
+# How /etc/fstab Becomes systemd Units
 
-> Prerequisite: [Module landing page](./course.md). Next: [Part 2 — Writing Native .mount and .automount Units](./course-02-native-mount-and-automount-units.md).
+Astronaut, before you write a duty order by hand, look at the ones your ship already has. Every line in `/etc/fstab` is quietly turned into a `.mount` unit for you. This page shows when that happens, where those units live, which copy wins when there are two, and the naming rule that lets systemd find any mount unit from its path alone.
 
-Before writing a single unit by hand, it helps to see that you are already surrounded by them: every line in `/etc/fstab` is quietly turned into a `.mount` unit for you. This part settles two things Part 2 depends on — *when* that conversion happens, and the exact filename rule that lets systemd (and you) find any mount unit from its path alone.
+## Every mount is a unit
 
-## The systemd-fstab-generator boot pass
+On Ubuntu 24.04, **systemd** starts and watches almost everything on the machine. Think of it as the ship's duty officer: at every launch it starts each system in the right order. A **unit** is one item on the duty officer's list, such as a service or a mount.
 
-`systemctl cat -- -.mount` on any systemd machine shows a real unit file, even though nobody wrote one:
+A **`.mount` unit** is a duty order to dock a cargo hold to a hatch. Mounting is docking: the kernel attaches a filesystem to a directory, called the mount point, so you can reach it. `/etc/fstab` is the ship's logbook of holds to dock at every launch.
+
+### See it in your playground
+
+List the mount units the duty officer knows about, then print the unit for the root filesystem:
+
+<!-- astrona:playground:renew -->
+
+```sh
+systemctl list-units --type=mount
+systemctl cat -- -.mount
+```
+
+The list looks something like this (shortened):
+
+```text
+UNIT              LOAD   ACTIVE SUB     DESCRIPTION
+-.mount           loaded active mounted Root Mount
+boot.mount        loaded active mounted /boot
+...
+```
+
+And `systemctl cat` prints a real unit file, even though nobody wrote one:
 
 ```text
 # /run/systemd/generator/-.mount
@@ -20,75 +42,82 @@ Where=/
 Type=ext4
 ```
 
-**Generators** are a systemd concept distinct from services: small programs systemd itself runs, not units it manages. `systemd-fstab-generator` is one of them. It runs at two points only — very early in boot, before any unit starts (the "generator" phase, ahead of `basic.target`), and again every time you run `systemctl daemon-reload`. Each run reads the *current* `/etc/fstab` top to bottom and writes one `.mount` unit per line into `/run/systemd/generator/`.
+The root filesystem is the unit `-.mount`, which is systemd's name for `/`. Its first line shows that it lives in `/run/systemd/generator/`, so a program wrote it, not a person. Every line in `/etc/fstab` has a matching unit like this.
 
-```text
-/etc/fstab  --(read by)-->  systemd-fstab-generator  --(writes)-->  /run/systemd/generator/*.mount
-              ^                                                              |
-              |                                                              v
-       (boot, or daemon-reload)                                   systemd loads it like
-                                                                    any other unit
+The rows in your list, and the `What=` line, will show your own ship's devices. The `abcd-1234` value above is only an example.
+
+## The fstab generator
+
+The unit above came from **`systemd-fstab-generator`**. A **generator** is a small program that systemd itself runs. It is not a unit that systemd manages. Picture it as the duty officer's clerk: it reads the logbook and copies each line into a duty order.
+
+### When the generator runs
+
+The generator runs at two moments only:
+
+- very early in boot, before any unit starts, and
+- every time you run `sudo systemctl daemon-reload`.
+
+Each run reads the current `/etc/fstab` from top to bottom. It writes one `.mount` unit per line into `/run/systemd/generator/`. systemd then loads those units like any other.
+
+```mermaid
+flowchart TB
+    F["/etc/fstab"] -->|"read at boot or daemon-reload"| G["systemd-fstab-generator"]
+    G -->|"writes one unit per line"| R["/run/systemd/generator/"]
+    H["Hand-written unit"] -->|"saved by you"| E["/etc/systemd/system/"]
+    R -->|"loaded"| S["systemd"]
+    E -->|"loaded after daemon-reload"| S
+    S -->|"start"| M["Filesystem mounted"]
 ```
 
-`/run/` is a tmpfs — memory-backed, wiped every reboot. That is deliberate: the generated units are not a cache to edit, they are a *projection* of `/etc/fstab` at the moment the generator last ran. Edit the generated file directly and the edit survives exactly until the next boot or `daemon-reload`, when it is silently regenerated from `/etc/fstab` and your change is gone. If you want a change to stick, it goes in `/etc/fstab` (Section 015) or in a hand-written unit under `/etc/systemd/system/` (Part 2) — never in `/run/systemd/generator/`.
+The diagram shows the two ways to describe a mount. A line in `/etc/fstab` and a hand-written unit both end up as the same kind of `.mount` unit that systemd starts.
 
-> [!TIP]
-> **Try it — see the mount units**
->
-> ```sh
-> systemctl list-units --type=mount
-> systemctl cat -- -.mount
-> ```
->
-> Expect something like:
->
-> ```text
-> UNIT              LOAD   ACTIVE SUB     DESCRIPTION
-> -.mount           loaded active mounted Root Mount
-> boot.mount        loaded active mounted /boot
-> ...
-> ```
->
-> The root filesystem is the unit `-.mount` (systemd's escaped name for `/`), and `systemctl cat` shows it living in `/run/systemd/generator/` — generated, not hand-written. Every fstab line has a matching unit like this.
+### Why you never edit the generated file
+
+`/run/` is a **tmpfs**: a filesystem that lives in memory and is wiped at every reboot. That is on purpose. A generated unit is a copy of `/etc/fstab` at the moment the generator last ran, not a file to edit.
+
+If you edit the generated file, your change lasts only until the next boot or `daemon-reload`. Then the generator writes the file again from `/etc/fstab`, and your change is gone without a warning. A change that must last goes in `/etc/fstab`, or in a hand-written unit under `/etc/systemd/system/`.
 
 ## Which copy wins: the unit search order
 
-systemd does not merge unit files. When it needs a unit named `srv-data.mount`, it looks for that exact filename across a fixed, priority-ordered set of directories and loads the **first** match — the rest are ignored entirely, not blended in:
+Suppose two files have the same unit name, one written by you and one written by the generator. systemd does not merge them. It looks for the exact filename in a fixed list of directories, in order, and loads the **first** match. The others are ignored completely.
 
-```text
-highest  /etc/systemd/system/       <- hand-written / admin units (Part 2 lives here)
-         /run/systemd/system/       <- other runtime-generated units
-lowest   /run/systemd/generator/    <- systemd-fstab-generator's output
-         /usr/lib/systemd/system/   <- vendor-shipped units
-```
+The directories that matter here, from highest to lowest priority:
 
-The practical consequence: if you hand-write `/etc/systemd/system/srv-data.mount` for a path that also has an `/etc/fstab` line, your version wins outright. The generator still runs and still produces its own `srv-data.mount` in `/run/systemd/generator/`, but systemd never loads it — `/etc/systemd/system/` is checked first and the search stops there. Keep this rule in mind; Part 3 comes back to it when `x-systemd.*` fstab options and hand-written units both target the same path.
+1. `/etc/systemd/system/`: units written by the administrator. Hand-written units go here.
+2. `/run/systemd/system/`: other units created while the machine runs.
+3. `/run/systemd/generator/`: the output of `systemd-fstab-generator`.
+4. `/usr/lib/systemd/system/`: units shipped with installed packages.
+
+So if you write `/etc/systemd/system/srv-data.mount` for a path that also has a line in `/etc/fstab`, your file wins outright. The generator still writes its own `srv-data.mount` into `/run/systemd/generator/`, but systemd never loads it. The search stops at `/etc/systemd/system/`.
 
 ## The unit filename rule
 
-A `.mount` unit's filename **must** be the mount path, run through systemd's path-escaping: slashes become dashes, the leading slash is dropped, and `.mount` is appended. `/srv/data` becomes `srv-data.mount`; `/srv/app/logs` becomes `srv-app-logs.mount`; `/` is the special case `-.mount`. This is exactly the rule the generator used above — `systemd-escape` does the same conversion for you, and the `Where=` line inside a hand-written unit must match it.
+A duty order is filed under the hatch it docks to. Here is the real case first: the mount point `/srv/data` needs a unit named `srv-data.mount`, and `/srv/app/logs` needs `srv-app-logs.mount`.
 
-> [!TIP]
-> **Try it — the name for a path**
->
-> ```sh
-> systemd-escape -p --suffix=mount /srv/data
-> systemd-escape -p --suffix=mount /srv/app/logs
-> ```
->
-> Expect something like:
->
-> ```text
-> srv-data.mount
-> srv-app-logs.mount
-> ```
->
-> `-p` means "treat the argument as a path"; `--suffix=mount` appends the unit type. A unit file with any other name for `/srv/data` is not ignored gracefully — systemd never associates it with that path at all, so `Where=/srv/data` inside it has no effect.
+The rule behind it: a `.mount` unit's filename **must** be its mount path, run through systemd's path escaping. The leading slash is dropped, every other slash becomes a dash, and `.mount` is added at the end. The root `/` is the special case `-.mount`. The generator uses the same rule, and the `Where=` line inside a hand-written unit must match the filename.
 
-> *A `.mount` unit's name is not a label — it's the address systemd uses to find it, computed straight from the path.*
+### See the name for a path
 
-## Reference
+`systemd-escape` does the conversion for you:
 
-- `man systemd-fstab-generator` — the generator's exact timing and the `/run/systemd/generator/` output path.
-- `man systemd.unit` — the full unit file search-path order across `/etc`, `/run`, and `/usr/lib`.
-- `man systemd-escape` — the path-escaping algorithm behind the unit filename rule.
+```sh
+systemd-escape -p --suffix=mount /srv/data
+systemd-escape -p --suffix=mount /srv/app/logs
+```
+
+Expect something like:
+
+```text
+srv-data.mount
+srv-app-logs.mount
+```
+
+`-p` means "treat the argument as a path", and `--suffix=mount` adds the unit type. If a unit file for `/srv/data` has any other name, systemd does not link it to that path at all, so the `Where=/srv/data` line inside it has no effect.
+
+> *A `.mount` unit's name is not a label. It is the address systemd uses to find it, worked out straight from the path.*
+
+## Common pitfalls
+
+> [!WARNING]
+> - **Unit filename not matching the path.** `/srv/data` *must* be `srv-data.mount` with `Where=/srv/data`. With any mismatch, systemd never links the file to that path. Get the name from `systemd-escape -p --suffix=mount`.
+> - **Editing a generated unit in `/run/systemd/generator/`.** The change is lost at the next boot or `daemon-reload`, when the generator writes the file again from `/etc/fstab`. Change `/etc/fstab`, or write your own unit in `/etc/systemd/system/`.

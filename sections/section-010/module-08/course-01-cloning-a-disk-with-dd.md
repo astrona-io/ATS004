@@ -1,87 +1,108 @@
-# Part 1 — Cloning a Disk with dd
+# Cloning a Disk with dd
 
-> Prerequisite: [Module landing page](./course.md). Next: [Part 2 — File-Level Backups with tar, and Verifying Them](./course-02-tar-backups-and-verifying.md).
+`dd` copies raw bytes from one place to another, one block at a time. The name is historical; think of it as "data duplicator". `dd` does not know what a partition table, a filesystem or a file is. That is exactly why it is the right tool for a whole-disk clone. It does not need to understand the source to copy it perfectly: partition table, filesystem data, every file and every byte of unused space.
 
-`dd` (the name is historical — think "data duplicator", not the honest but ridiculed original expansion) copies raw bytes from one place to another, a block at a time. It does not know what a partition table is, what a filesystem is, or what a file is. That ignorance is exactly what makes it the right tool for a whole-disk clone: it doesn't need to understand the source's structure to reproduce it perfectly, byte for byte — partition table, filesystem metadata, every file, and every byte of unused free space along with it.
+In space terms, `dd` copies a cargo hold crate by crate, empty corners included. It never reads the labels on the crates.
 
-## The command, and what each part does
+## The command and its parts
+
+A `dd` command is short, but every part of it matters. This section explains each option before you run one.
+
+### The shape of the command
 
 ```text
 dd if=<source> of=<destination> bs=<block size> status=progress
 ```
 
-- **`if=`** (*input file*) — what to read from. Almost always a block device (`/dev/vdb`) for a disk clone, or an image file when restoring.
-- **`of=`** (*output file*) — what to write to. A block device to clone onto, or a file to image into.
-- **`bs=`** — how many bytes to read/write per chunk. The default is 512 bytes — historically accurate, practically terrible; at that size `dd` spends almost all its time on per-chunk overhead instead of moving data. `bs=4M` or `bs=64M` gets close to the disk's real throughput. Bigger isn't free either: a very large block size wastes memory on partial reads/writes at the end of a device that isn't an exact multiple of it. `4M`–`64M` is the practical range for a whole-disk clone.
-- **`status=progress`** — prints a running byte count while it works. Without it, `dd` runs completely silent until it finishes, which on a large disk looks indistinguishable from a hung command.
+- **`if=`** (input file): what to read from. For a disk clone this is almost always a block device such as `/dev/vdb`. When you restore, it is an image file.
+- **`of=`** (output file): what to write to. A block device to clone onto, or a file to copy the disk into.
+- **`bs=`** (block size): how many bytes to read and write in each chunk. The default is 512 bytes. At that size, `dd` spends almost all its time on the work around each chunk instead of moving data. `bs=4M` or `bs=64M` gets close to the real speed of the disk.
+- **`status=progress`**: prints a running byte count while `dd` works. Without it, `dd` is silent until it finishes. On a large disk, that looks just like a command that hangs.
+
+### Picking a block size
+
+Bigger is not always better. A very large block size wastes memory on the last, partial chunk at the end of a device whose size is not an exact multiple of it. For a whole-disk clone, `4M` to `64M` is the practical range.
 
 ## Cloning a whole disk
 
-Clone `/dev/vdb` onto `/dev/vdc` — both the same size — and the destination ends up an exact duplicate: same partition table, same filesystems, same files, same UUID.
+Here you clone `/dev/vdb` onto `/dev/vdc`. Both disks are the same size, and the destination ends up an exact copy: the same partition table, the same filesystems, the same files and the same UUID.
 
-> [!TIP]
-> **Try it — clone a disk**
->
-> ```sh
-> lsblk
-> sudo dd if=/dev/vdb of=/dev/vdc bs=4M status=progress
-> ```
->
-> Expect something like:
->
-> ```text
-> NAME MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
-> vda  253:0    0   15G  0 disk
-> vdb  253:1    0    1G  0 disk
-> vdc  253:2    0    1G  0 disk
->
-> 1048576000 bytes (1.0 GB, 1000 MiB) copied, 4 s, 250 MB/s
-> 250+0 records in
-> 250+0 records out
-> 1048576000 bytes (1.0 GB, 1000 MiB) copied, 4.19286 s, 250 MB/s
-> ```
->
-> `lsblk` first, always — confirming both device names and that `vdc` is the disk you actually mean to overwrite, before `dd` ever runs. `status=progress` prints the running total as it copies; the final three lines are `dd`'s own summary once it's done.
+### See it in action
 
-## The one warning that matters more than anything else in this module
+On a machine with two 1 GB spare disks, list the disks first, then clone one onto the other:
 
-`dd` has no confirmation prompt. No "are you sure". No undo. It does exactly what `if=` and `of=` say, immediately, and a destination that already had data on it is gone the instant the first block is written — not moved to trash, not recoverable with `fsck`, just overwritten. Getting `if=` and `of=` backwards, or targeting the wrong device because you trusted memory instead of `lsblk` output, is infamous enough in Linux folklore to have its own name: **"dd, the disk destroyer"** — every experienced admin either has a story about this or knows someone who does.
+```sh
+lsblk
+sudo dd if=/dev/vdb of=/dev/vdc bs=4M status=progress
+```
 
-There is no clever flag that makes this safe. The only real protection is procedural:
+Expect something like:
 
-- Run `lsblk` or `blkid` **immediately before** the command, in the same terminal, and read the device names off that output — not from memory, not from a note you made ten minutes ago.
-- Say the direction out loud (or in a comment) before running it: "*from* vdb *to* vdc" — `if=` is the disk you're reading, `of=` is the disk about to be overwritten.
-- Always include `status=progress`. A `dd` that should finish in five seconds and is still running after fifty means something is wrong — a much bigger destination device than expected, usually — and you want that visible immediately, not discovered after it finishes.
+```text
+NAME MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+vda  253:0    0   15G  0 disk
+vdb  253:1    0    1G  0 disk
+vdc  253:2    0    1G  0 disk
 
-## Imaging a disk to a file, and restoring it
+1048576000 bytes (1.0 GB, 1000 MiB) copied, 4 s, 250 MB/s
+250+0 records in
+250+0 records out
+1048576000 bytes (1.0 GB, 1000 MiB) copied, 4.19286 s, 250 MB/s
+```
 
-`of=` doesn't have to be a device — it can be a plain file, which turns a live disk into a portable backup image you can store elsewhere, restore later, or restore onto different hardware entirely.
+Always run `lsblk` first. It confirms both device names, and that `vdc` really is the disk you mean to overwrite, before `dd` runs. `status=progress` prints the running total while the copy runs. The last three lines are the summary `dd` prints when it is done.
 
-> [!TIP]
-> **Try it — image a disk, then restore it**
->
-> ```sh
-> sudo dd if=/dev/vdb of=/root/vdb-backup.img bs=4M status=progress
-> ls -lh /root/vdb-backup.img
->
-> # ...later, onto a fresh disk...
-> sudo dd if=/root/vdb-backup.img of=/dev/vdc bs=4M status=progress
-> ```
->
-> Expect something like:
->
-> ```text
-> 1048576000 bytes (1.0 GB, 1000 MiB) copied, 4 s, 250 MB/s
-> -rw-r--r-- 1 root root 1000M ... /root/vdb-backup.img
->
-> 1048576000 bytes (1.0 GB, 1000 MiB) copied, 4 s, 250 MB/s
-> ```
->
-> The image file is exactly the size of the source disk, whether or not that space held real data — `dd` copied every block, used and unused alike. That's the tradeoff for imaging being an exact, no-questions-asked duplicate: no compression, no awareness of "empty" versus "used" space, unless you pipe through a compressor yourself (`dd ... | gzip > image.img.gz`, not covered here).
+## The warning that matters most
 
-> *`dd` doesn't know what a file is — that's the whole point. It reproduces a disk exactly because it never has to understand it, and it destroys a disk exactly as fast, for exactly the same reason.*
+`dd` has no "are you sure?" question and no undo. This section explains why that makes it dangerous, and the habits that keep you safe.
 
-## Reference
+### No questions, no undo
 
-- `man dd` — every block-size and conversion option; `conv=sync,noerror` is worth knowing for cloning a disk with bad sectors, not covered here.
-- `man lsblk` — the command to run, without exception, before every `dd` that targets a device.
+`dd` does exactly what `if=` and `of=` say, at once. A destination that already held data is gone the moment the first block is written. It is not moved to a bin, and `fsck` cannot bring it back; it is simply overwritten.
+
+Swapping `if=` and `of=`, or picking the wrong device because you trusted your memory instead of `lsblk`, is so common that administrators gave `dd` a nickname: "disk destroyer". Every experienced administrator either has a story about it or knows someone who does.
+
+### The habits that protect you
+
+No option makes `dd` safe. The only real protection is a routine:
+
+- Run `lsblk` or `blkid` **right before** the command, in the same terminal. Read the device names from that output, not from memory and not from a note you made ten minutes ago.
+- Say the direction out loud, or write it in a comment, before you run it: "*from* vdb *to* vdc". `if=` is the disk you read; `of=` is the disk that is about to be overwritten.
+- Always add `status=progress`. If a copy that should take five seconds is still running after fifty, something is wrong, usually a much bigger destination than you expected. You want to see that at once.
+
+## Copying a disk to a file, and back
+
+`of=` does not have to be a device. It can be a plain file. That turns a live disk into a portable image that you can store somewhere else and restore later, even onto different hardware.
+
+### See it in action
+
+Copy `/dev/vdb` into an image file, look at its size, and later write the image onto a fresh disk:
+
+```sh
+sudo dd if=/dev/vdb of=/root/vdb-backup.img bs=4M status=progress
+ls -lh /root/vdb-backup.img
+
+# ...later, onto a fresh disk...
+sudo dd if=/root/vdb-backup.img of=/dev/vdc bs=4M status=progress
+```
+
+Expect something like:
+
+```text
+1048576000 bytes (1.0 GB, 1000 MiB) copied, 4 s, 250 MB/s
+-rw-r--r-- 1 root root 1000M ... /root/vdb-backup.img
+
+1048576000 bytes (1.0 GB, 1000 MiB) copied, 4 s, 250 MB/s
+```
+
+The image file is exactly the size of the source disk, whether or not that space held real data. `dd` copied every block, used and unused. That is the price of an exact copy: no compression, and no idea of "empty" or "used" space. You can send the output through a compressor yourself (`dd ... | gzip > image.img.gz`), but this module does not cover that.
+
+## Common pitfalls
+
+> [!WARNING]
+> - **Swapping `if=` and `of=`.** The most common way to destroy the wrong disk. Read the device names from `lsblk` right before you run the command, every time.
+> - **Forgetting `bs=`.** The default block size of 512 bytes makes a large clone many times slower. Set `bs=4M` or larger.
+> - **Cloning onto a smaller disk.** `dd` does not compare sizes. A larger source written to a smaller destination stops when the destination is full, with no clear error, and leaves a broken filesystem behind.
+> - **Running `dd` without `status=progress`.** A silent `dd` looks the same as a stuck one, so you cannot spot a wrong target until it is too late.
+
+> *`dd` does not know what a file is, and that is the whole point. It copies a disk exactly because it never has to understand it, and it destroys a disk just as fast, for the same reason.*

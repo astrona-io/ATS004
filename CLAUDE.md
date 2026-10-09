@@ -528,9 +528,10 @@ Check facts here before writing them down. Prefer these over memory.
   filesystem page and the software RAID (`md`) page.
 - **Ubuntu Server documentation:** <https://documentation.ubuntu.com/server/>
   for the Ubuntu 24.04 defaults (NFS, autofs, LVM, swap).
-- **Tools without a man7 page:** `sshfs(1)`, `autofs(5)`, `auto.master(5)`,
-  `xfs_quota(8)`, `iostat(1)` and `iotop(8)`; read them with `man` on the
-  lab machine.
+- **The other tools:** man7 also has `sshfs(1)`, `autofs(5)`,
+  `auto.master(5)`, `exportfs(8)`, `xfs_quota(8)`, `mkfs.fat(8)`,
+  `iostat(1)`, `pidstat(1)`, `iotop(8)` and the quota tools. On the lab
+  machine, `man <tool>` shows the Ubuntu 24.04 version.
 
 ### Skills to use here
 

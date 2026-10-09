@@ -1,99 +1,117 @@
-# Part 2 — Creating a Container & Its Keyslots
+# Creating a Container and Its Keyslots
 
-> Prerequisite: [Part 1 — The LUKS Model: Locking a Disk](./course-01-the-luks-model.md). Next: [Part 3 — Opening, Using, Closing & What's Visible Outside](./course-03-opening-using-closing.md).
-
-Part 1 named the four operations. This part covers the first one in depth — `luksFormat` — and the key mechanism that makes multiple people able to share one encrypted device without sharing one secret.
+A LUKS disk is fitted with its vault door once, with `cryptsetup luksFormat`. After that, the door can have several keys, so more than one person can open the same disk without sharing one secret. This part shows both: how to create the container, and how its keys work.
 
 ## Creating a LUKS container
 
-`cryptsetup luksFormat <device>` initializes the encryption. It overwrites the start of the device, so it demands you type `YES` in capitals, then asks for a passphrase twice. On current systems it creates a **LUKS2** header by default (LUKS1 still exists for compatibility with older tooling, but has no reason to be chosen new).
+`cryptsetup luksFormat <device>` sets up the encryption. It writes over the start of the disk, so it asks you to type `YES` in capital letters first. Then it asks for a passphrase twice. On Ubuntu 24.04 it creates a **LUKS2** header by default. The older LUKS1 format still exists for old tools, but there is no reason to choose it for a new disk.
+
+The examples encrypt the whole disk `/dev/vdb`. On a real server you would usually encrypt a partition such as `/dev/vdb1` instead. The commands are the same.
+
+### See it in your playground: lock the disk and read the header
+
+Confirm with `lsblk` that the 2 GB disk is `/dev/vdb`. Then format it as a LUKS container and print its header:
+
+<!-- astrona:playground:renew -->
+
+```sh
+sudo cryptsetup luksFormat /dev/vdb
+sudo cryptsetup luksDump /dev/vdb
+```
+
+`luksFormat` asks these questions:
+
+```text
+WARNING!
+========
+This will overwrite data on /dev/vdb irrevocably.
+
+Are you sure? (Type 'yes' in capital letters): YES
+Enter passphrase for /dev/vdb:
+Verify passphrase:
+```
+
+`luksDump` then prints something like this (shortened):
+
+```text
+LUKS header information
+Version:        2
+...
+Data segments:
+  0: crypt
+        offset: 16777216 [bytes]
+        cipher: aes-xts-plain64
+Keyslots:
+  0: luks2
+        Key:        512 bits
+        PBKDF:      argon2id
+```
+
+The header records the cipher, `aes-xts-plain64`, and one keyslot in use, slot `0`, which holds your passphrase. The data area starts 16 MiB in, after the header. There is no filesystem yet. You add one later, on the opened device.
 
 > [!TIP]
-> **Try it — format and inspect the header**
->
-> ```sh
-> sudo cryptsetup luksFormat /dev/vdb
-> sudo cryptsetup luksDump /dev/vdb
-> ```
->
-> `luksFormat` prompts:
->
-> ```text
-> WARNING!
-> ========
-> This will overwrite data on /dev/vdb irrevocably.
->
-> Are you sure? (Type 'yes' in capital letters): YES
-> Enter passphrase for /dev/vdb:
-> Verify passphrase:
-> ```
->
-> `luksDump` then prints something like:
->
-> ```text
-> LUKS header information
-> Version:        2
-> ...
-> Data segments:
->   0: crypt
->         offset: 16777216 [bytes]
->         cipher: aes-xts-plain64
-> Keyslots:
->   0: luks2
->         Key:        512 bits
->         PBKDF:      argon2id
-> ```
->
-> The header records the cipher (`aes-xts-plain64`) and one active keyslot (`0`) holding your passphrase. The data region starts 16 MiB in, after the header. No filesystem exists yet — that comes in Part 3, after you open the device.
->
-> *Scripting note:* to avoid the prompts you can pipe the passphrase in:
+> In a script you can skip the questions and pipe the passphrase in:
 > `printf 'my-pass' | sudo cryptsetup luksFormat /dev/vdb --batch-mode --key-file=-`.
 
 ## Master key and keyslots
 
-Your passphrase does not encrypt your data directly. It is too short and too guessable to serve as an AES-XTS key directly, and it's also completely impractical to re-encrypt an entire disk's worth of data every time someone adds or revokes a passphrase. Instead, `luksFormat` generates a long random **master key** — cryptographically strong, generated once — and it is the master key alone that encrypts every data block via `dm-crypt`.
+Your passphrase does not scramble your data. Something stronger does that, and the passphrase only unlocks it. This split is what lets you add or remove passphrases in seconds, on a disk of any size.
 
-The master key itself is then stored — encrypted — in a **keyslot** in the header. Your passphrase is run through a deliberately slow **key-derivation function** (Argon2id on LUKS2, chosen specifically because it is expensive to brute-force even with GPUs) and the result encrypts the master key into keyslot 0. LUKS2 has room for many keyslots, so several different passphrases can each independently unlock the *same* master key — which is the whole trick: adding or revoking a passphrase only ever touches one small keyslot, never the multi-gigabyte data region the master key protects.
+### Why your passphrase does not encrypt the data
 
-That is how you grant a second person access without sharing your passphrase: `cryptsetup luksAddKey <device>` authenticates with an existing passphrase (to prove you're allowed to derive the current master key), then encrypts that same master key under a new passphrase and stores it in the next free slot.
+A passphrase is too short and too easy to guess to be a good AES-XTS key. It would also be slow to scramble the whole disk again each time someone adds or removes a passphrase. So `luksFormat` creates a long, random **master key** once. The master key is the vault's one real key. Only the master key scrambles the data blocks, through `dm-crypt` in the kernel.
+
+The master key itself is stored, locked, in a **keyslot** in the header. A keyslot is one of several keys that open the same vault door. Inside, each keyslot is a small locked box that holds a copy of the master key.
+
+`cryptsetup` runs your passphrase through a slow **key-derivation function**. That is a recipe that turns a passphrase into a key, and it is slow on purpose so that guessing millions of passphrases takes too long. LUKS2 uses Argon2id, which is costly to attack even with graphics cards. The result locks the master key into keyslot 0.
+
+LUKS2 has room for many keyslots. Each one can hold the same master key, locked with a different passphrase. Adding or removing a passphrase only touches one small keyslot. It never touches the large data area that the master key protects.
+
+### How a second passphrase works
+
+To let a second person in without sharing your passphrase, use `cryptsetup luksAddKey <device>`. It first asks for a passphrase that already works, to prove you may unlock the master key. Then it locks the same master key with the new passphrase and stores it in the next free keyslot.
 
 ```mermaid
-flowchart LR
-    P1["passphrase 1"] -->|Argon2id| K0["keyslot 0"]
-    P2["passphrase 2<br/>(luksAddKey)"] -->|Argon2id| K1["keyslot 1"]
-    K0 --> MK(("master key"))
-    K1 --> MK
-    MK -->|aes-xts-plain64| DATA["every data block<br/>on the device"]
+flowchart TB
+    P1["Passphrase 1"] -->|"Argon2id"| K0["Keyslot 0"]
+    P2["Passphrase 2"] -->|"Argon2id"| K1["Keyslot 1"]
+    K0 -->|"unlocks"| MK["Master key"]
+    K1 -->|"unlocks"| MK
+    MK -->|"aes-xts-plain64"| D["Every data block"]
 ```
 
-Either passphrase unlocks its own keyslot to recover the same master key — that is what makes both of them work on the same data, and it's also why revoking one person's access (`cryptsetup luksKillSlot`) never requires re-encrypting anything: only their keyslot is destroyed, the master key and data are untouched.
+The diagram shows that passphrase 2, added with `luksAddKey`, opens its own keyslot but reaches the same master key, so both passphrases open the same data on the disk.
 
-> [!TIP]
-> **Try it — add a second passphrase**
->
-> ```sh
-> sudo cryptsetup luksAddKey /dev/vdb
-> sudo cryptsetup luksDump /dev/vdb | grep -A1 '^  [0-9]*: luks2'
-> ```
->
-> Expect something like:
->
-> ```text
-> Enter any existing passphrase:
-> Enter new passphrase for key slot:
-> Verify passphrase:
->
->   0: luks2
->         Key:        512 bits
->   1: luks2
->         Key:        512 bits
-> ```
->
-> There are now two keyslots. Either passphrase decrypts its slot to recover the one shared master key, so both unlock the same data. Removing a person's access is `cryptsetup luksKillSlot /dev/vdb 1` — only slot 1 is destroyed, the master key (and everything encrypted under it) is unaffected.
+This is also why removing one person's access with `cryptsetup luksKillSlot` needs no new encryption. Only their keyslot is destroyed. The master key and the data stay as they are.
 
-> *A keyslot is not "a copy of your data encrypted with your passphrase" — it's the master key, encrypted with your passphrase. That's the whole reason adding a tenth passphrase costs nothing more than adding a second one.*
+### See it in your playground: add a second passphrase
 
-## Reference
+Add a new passphrase, then list the keyslots in the header:
 
-- `man 8 cryptsetup` — `luksAddKey`, `luksKillSlot`, and `luksChangeKey` all operate on keyslots without ever touching the data region.
-- LUKS2 on-disk format spec (`cryptsetup` project wiki) — the exact JSON metadata area layout, if you need to reason about header size or a corrupted header by hand.
+```sh
+sudo cryptsetup luksAddKey /dev/vdb
+sudo cryptsetup luksDump /dev/vdb | grep -A1 '^  [0-9]*: luks2'
+```
+
+Expect something like:
+
+```text
+Enter any existing passphrase:
+Enter new passphrase for key slot:
+Verify passphrase:
+
+  0: luks2
+        Key:        512 bits
+  1: luks2
+        Key:        512 bits
+```
+
+There are now two keyslots. Either passphrase opens its own slot and gets back the one shared master key, so both open the same data. To remove a person's access, run `cryptsetup luksKillSlot /dev/vdb 1`. Only slot 1 is destroyed, and the master key and everything locked with it stay safe. `luksChangeKey` also works on keyslots only, and never on the data area.
+
+## Common pitfalls
+
+> [!WARNING]
+> - **A lost passphrase means lost data.** If nobody knows a passphrase for any keyslot, and you have no header backup, the master key cannot be recovered. There is no back door, by design. Keep passphrases in a real password store, and think about `cryptsetup luksHeaderBackup`.
+> - **Typing `yes` in small letters.** `luksFormat` only goes on when you type `YES` in capital letters, because it is about to write over the start of the disk.
+
+> *A keyslot is not "a copy of your data locked with your passphrase". It is the master key, locked with your passphrase. That is why a tenth passphrase costs no more than a second one.*

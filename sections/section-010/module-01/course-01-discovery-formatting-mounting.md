@@ -1,154 +1,187 @@
-# Part 1 — Discovery, Formatting & Mounting
+# Discovery, Formatting and Mounting
 
-> Prerequisite: [Landing page](./course.md). Next: [Part 2 — Diagnosing a Stuck Disk](./course-02-diagnosing-a-stuck-disk.md).
+Astronaut, this is your first storage mission. You take a disk that the kernel can see but nothing can use, and you turn it into a directory you can write files into. Busy mounts and stuck processes only happen to a disk that has already been through these steps.
 
-This part takes a disk from raw sectors the kernel can see but nothing can use, to a directory you can write files into. Everything in Part 2 — busy mounts, stuck processes — only happens to a disk that has already been through the steps here.
-
-## The unified file tree
+## One tree for every disk
 
 On Windows, each disk gets its own letter: `C:`, `D:`, `E:`. The drives sit side by side, and you pick one by its letter.
 
-Linux does not work that way. There is exactly one directory tree, and it starts at the root directory, written `/`. Every disk, whether it is an internal SSD, a USB drive, or a network share on another continent, has to be attached to *some directory inside that one tree* before you can use it. Attaching a disk to a directory is called **mounting**, and the directory it gets attached to is the disk's **mount point**. Once a disk is mounted at, say, `/mnt/backup`, writing a file to `/mnt/backup/report.txt` sends that data to the mounted disk; the kernel handles the redirection invisibly.
+Linux does not work that way. There is exactly one directory tree, and it starts at the root directory, written `/`. Think of it as the ship's one long corridor. Every disk, whether it is an internal SSD, a USB drive or a network share far away, must be attached to some directory inside that one tree before you can use it.
 
-The layer that makes every kind of storage behave the same way to your programs is the kernel's **Virtual Filesystem (VFS)**. Because of VFS, an application writing a file does not need to know or care whether the target directory is on a local disk, a USB stick, or a remote server.
+Attaching a disk to a directory is called **mounting**. The directory it gets attached to is the disk's **mount point**. In space terms, mounting docks a cargo hold to a hatch in the ship's corridor. Once a disk is mounted at `/mnt/backup`, a file written to `/mnt/backup/report.txt` goes to that disk. The kernel does this redirection for you, out of sight.
 
-> As an analogy: mounting is like connecting a new wing to an existing building rather than parking a separate trailer outside. Visitors walk through the same front door and down the same hallways to reach the new rooms. The analogy breaks down in that a mounted disk can be detached cleanly at any time, which is not true of a building wing.
+The kernel layer that makes every kind of storage behave the same way for your programs is the **Virtual Filesystem (VFS)**. Because of it, a program that writes a file does not need to know whether the directory sits on a local disk, a USB stick or a remote server.
 
-### What `mount` actually changes
+## Find the raw disk
 
-`mount` does not copy or move any data, and it does not depend on the size of the filesystem being attached — mounting a 500 GB disk is exactly as fast as mounting a 5 GB one. That is because mounting is a purely in-memory bookkeeping operation: the kernel keeps a table of every currently active mount (you can see it as `/proc/mounts`), and each entry is a small record — the source device, the mount point, the filesystem type, the options — plus a pointer that splices the mounted filesystem's root directory into the directory tree at exactly the mount point's location. Walking into `/mnt/backup` after the mount, the kernel's path lookup hits that splice point and transparently continues resolution inside the mounted filesystem instead of the one underneath it.
+A brand-new disk shows up as a **raw block device**. That is an empty cargo hold: the kernel knows its size and can read and write it, but there are no shelves and no labels. It has no filesystem yet, so you cannot mount it.
 
-```mermaid
-flowchart LR
-    A["mount /dev/vdb /mnt/backup"] --> B["kernel adds one entry<br/>to the active-mounts table"]
-    B --> C["/mnt/backup's lookup path<br/>now splices to /dev/vdb's root"]
-    C --> D["reads/writes under /mnt/backup<br/>go to /dev/vdb"]
-    D -->|umount| E["entry removed --<br/>original directory reappears"]
-```
+Two commands help you find it, and this section shows both on your training ship.
 
-This is also why unmounting is safe and reversible: `umount` just removes that table entry and un-splices the path. Whatever was in `/mnt/backup` *before* the mount was never touched — it was only hidden underneath the mounted filesystem — so it reappears exactly as it was.
+### Two commands that read the disks
 
-## Discovering an unformatted disk
+`lsblk` ("list block devices") shows every disk the kernel sees, as a tree. Whole disks are named `sda`, `sdb` and so on on physical hardware, or `vda`, `vdb` and so on in a virtual machine. Partitions cut out of a disk show up indented under it (`vda1`, `vda2`).
 
-A brand-new disk shows up to the kernel as a **raw block device**: the kernel knows its size and can read and write its sectors, but there is no filesystem on it, so it has no UUID, no label, and cannot be mounted yet.
+A disk with a filesystem also has a **UUID** (universally unique identifier) written into its header. The UUID is the hold's serial number: a 128-bit value that no other filesystem shares. `blkid` ("block ID") reads those headers and reports the UUID and the filesystem type of every formatted device.
 
-The command to list what block devices the kernel currently sees is `lsblk` ("list block devices"). It prints a tree: whole disks (named `sda`, `sdb`, … on physical hardware, or `vda`, `vdb`, … on virtual machines) with any partitions carved out of them shown as indented children (`vda1`, `vda2`, …).
+A raw disk has no header for `blkid` to read, so it does not appear in the output at all. That absence is your safety check: if `blkid` does not list a disk, there is no filesystem on it to destroy.
 
-A disk that has a filesystem also has a 128-bit **UUID** (universally unique identifier) written into its header. The `blkid` ("block ID") command reads those headers and reports the UUID and filesystem type of every formatted device. A raw disk has no header for `blkid` to read, so it simply does not appear in the output. That absence is how you confirm a disk is safe to format: if `blkid` does not mention it, there is no filesystem there to destroy.
+### See it in your playground
 
-> [!TIP]
-> **Try it — spot the raw disk**
->
-> ```sh
-> lsblk
-> sudo blkid
-> ```
->
-> Expect something like:
->
-> ```text
-> NAME    MAJ:MIN RM SIZE RO TYPE MOUNTPOINTS
-> vda     254:0    0  15G  0 disk
-> └─vda1  254:1    0  15G  0 part /
-> vdb     254:16   0   2G  0 disk
->
-> /dev/vda1: UUID="a1b2c3d4-..." TYPE="ext4" PARTUUID="..."
-> ```
->
-> `vda1` is mounted at `/` and shows up in `blkid` with a UUID and `TYPE`. `vdb` has no mount point, no children, and no line in `blkid` at all — that is the raw 2 GB disk, unformatted and safe to work on. Device names vary; confirm which one is the spare by its 2 GB size and empty mount point.
+List the disks, then ask `blkid` which ones carry a filesystem.
 
-## Formatting: putting a filesystem on the disk
-
-**Formatting** a disk means writing a **filesystem** onto it: an on-disk data structure that tracks file names, where each file's data blocks live, and metadata like permissions and timestamps. Without a filesystem, the disk is just an undifferentiated array of sectors.
-
-This module uses **ext4** (the "fourth extended filesystem"), the long-standing default on many Linux distributions. It is a **journaling** filesystem, which matters for reliability: before changing its on-disk tables, ext4 writes a short description of the intended change to a reserved area called the journal. If power is lost mid-write, the kernel replays the journal on the next boot and the filesystem stays consistent instead of corrupting.
-
-The tool that creates a filesystem is `mkfs` ("make filesystem"). You call the ext4-specific version directly:
+<!-- astrona:playground:renew -->
 
 ```sh
-sudo mkfs.ext4 /dev/vdb
+lsblk
+sudo blkid
 ```
 
-This command overwrites the target. Running it on the wrong device destroys that device's data, so always confirm the device name with `lsblk` first.
+Expect something like:
 
-### Why `mkfs` takes time proportional to size — and how you can run out of space with free bytes left
+```text
+NAME    MAJ:MIN RM SIZE RO TYPE MOUNTPOINTS
+vda     254:0    0  15G  0 disk
+└─vda1  254:1    0  15G  0 part /
+vdb     254:16   0   2G  0 disk
 
-During the run, `mkfs.ext4` does three things that scale with the disk's size: it calculates the total block count, it lays out and reserves space for the **inode table** (the fixed-size array of per-file metadata records — permissions, timestamps, pointers to data blocks — one entry per file the filesystem will ever be able to hold), and it initializes the journal. The inode table is the part worth understanding, because it is sized *at format time* and never grows afterward: `mkfs.ext4` picks a **bytes-per-inode ratio** (how many bytes of disk space get one inode) and pre-allocates that many inode slots, whether or not you ever use them.
+/dev/vda1: UUID="a1b2c3d4-..." TYPE="ext4" PARTUUID="..."
+```
 
-That fixed inode count is a real, separate resource from disk space. A filesystem that is nowhere near full on `df -h` can still refuse every new file with "No space left on device" if it holds far more small files than the default ratio anticipated (a mail spool or a cache directory with millions of tiny files is the classic case). `df -i` reports inode usage the same way `df -h` reports block usage — checking both is the only way to tell which resource is actually exhausted.
+`vda1` is mounted at `/`, and `blkid` lists it with a UUID and a `TYPE`. `vdb` has no mount point, no children and no line in `blkid`: that is the raw 2 GB disk, safe to work on. Device names can differ, so confirm the spare disk by its 2 GB size and its empty mount point.
 
-> [!TIP]
-> **Try it — before and after formatting, and check both space and inodes**
->
-> ```sh
-> sudo blkid /dev/vdb
-> sudo mkfs.ext4 /dev/vdb
-> sudo blkid /dev/vdb
-> df -i /dev/vdb 2>/dev/null || echo "(mount it first to query inode usage)"
-> ```
->
-> Expect something like:
->
-> ```text
-> (first blkid prints nothing and exits non-zero — no filesystem yet)
->
-> mke2fs 1.47.0 (5-Feb-2023)
-> Creating filesystem with 524288 4k blocks and 131072 inodes
-> ...
-> Writing superblocks and filesystem accounting information: done
->
-> /dev/vdb: UUID="9f8e7d6c-5b4a-3210-fedc-ba9876543210" TYPE="ext4"
-> ```
->
-> The first `blkid` says nothing because there is no filesystem to identify. After `mkfs.ext4`, the same command reports a fresh UUID and `TYPE="ext4"`. The `mke2fs` line — `524288 4k blocks and 131072 inodes` — is the fixed inode budget for this filesystem, decided right now, for the life of the filesystem.
+## Format the disk with ext4
 
-## Mounting: attaching the disk to the tree
+**Formatting** a disk means writing a **filesystem** onto it. In space terms, you build the shelves and the labelling system inside the empty hold. The filesystem keeps track of file names, where each file's data sits, and details like owners, permissions and times. Anything stored on the disk before is lost.
 
-A formatted disk still is not usable until it is mounted. Trying to `cd /dev/vdb` fails, because `/dev/vdb` is a device file, not a directory.
+This section shows the command, then explains the one limit that formatting fixes for good.
 
-Mounting needs two things: an existing empty directory to serve as the mount point, and the `mount` command to connect the disk to it. Secondary disks are conventionally mounted under `/mnt`.
+### The command and the filesystem it builds
+
+This module uses **ext4** (the "fourth extended filesystem"), the long-standing default on many Linux systems. It is a **journaling** filesystem. The journal is the cargo officer's notebook: before ext4 changes its own tables on the disk, it writes a short note about the change into the journal. If the power fails in the middle of a write, the kernel replays the journal at the next start, and the filesystem stays in one piece.
+
+The tool that creates a filesystem is `mkfs` ("make filesystem"). You call the ext4 version directly, as `sudo mkfs.ext4 /dev/vdb`. This command overwrites the target disk. If you run it on the wrong device, that device's data is gone, so always confirm the device name with `lsblk` first.
+
+### The inode budget is fixed when you format
+
+`mkfs.ext4` does three jobs that grow with the size of the disk. It counts the total blocks, it sets up the journal, and it reserves room for the **inode table**.
+
+An **inode** is the cargo tag on each item: it records the owner, the permissions, the times and where the file's data blocks sit. Every file needs one inode. The inode table holds a fixed number of them, one for each file the filesystem will ever hold at the same time.
+
+`mkfs.ext4` picks a **bytes-per-inode ratio**, that is, how many bytes of disk space get one inode. It creates that many inode slots right away, whether you use them or not. The table never grows later. To choose the ratio yourself, `mkfs.ext4` has the `-i` option; `man mke2fs` describes it and every other setting you can choose at format time.
+
+So inodes are a separate resource from disk space. A filesystem that `df -h` shows as far from full can still refuse every new file with "No space left on device". This happens when it holds far more small files than the ratio expected. A mail spool or a cache directory with millions of tiny files is the classic case. `df -i` shows inode use the same way `df -h` shows space use. Check both to learn which one ran out.
+
+### See it in your playground
+
+Check the disk before and after you format it.
+
+```sh
+sudo blkid /dev/vdb
+sudo mkfs.ext4 /dev/vdb
+sudo blkid /dev/vdb
+df -i /dev/vdb 2>/dev/null || echo "(mount it first to query inode usage)"
+```
+
+Expect something like:
+
+```text
+(first blkid prints nothing and exits non-zero — no filesystem yet)
+
+mke2fs 1.47.0 (5-Feb-2023)
+Creating filesystem with 524288 4k blocks and 131072 inodes
+...
+Writing superblocks and filesystem accounting information: done
+
+/dev/vdb: UUID="9f8e7d6c-5b4a-3210-fedc-ba9876543210" TYPE="ext4"
+```
+
+The first `blkid` says nothing, because there is no filesystem to identify. After `mkfs.ext4`, the same command reports a fresh UUID and `TYPE="ext4"`. The line `524288 4k blocks and 131072 inodes` is the inode budget for this filesystem, fixed now for its whole life.
+
+The recorded output above has no line for `df -i`. While `/dev/vdb` is not mounted, `df` reports the filesystem that holds the device file in `/dev` instead, so run `df -i /mnt/backup-black` after you mount the disk to see its real inode numbers.
+
+## Mount the disk
+
+A formatted disk is still not usable until it is mounted. `cd /dev/vdb` fails, because `/dev/vdb` is a device file, not a directory. This section docks the disk to a directory, then looks at what the kernel really changed.
+
+### Dock the disk to a directory
+
+Mounting needs two things: an existing directory to act as the mount point, and the `mount` command to connect the disk to it. Extra disks usually go under `/mnt`.
 
 ```sh
 sudo mkdir -p /mnt/backup-black
 sudo mount /dev/vdb /mnt/backup-black
 ```
 
-After the `mount` call, any read or write under `/mnt/backup-black` goes to `/dev/vdb` instead of to the root disk. If the mount-point directory already contained files, those files are not deleted — they are hidden underneath the mount until you unmount, at which point they reappear, exactly as the mechanism above describes.
+From now on, every read or write under `/mnt/backup-black` goes to `/dev/vdb` instead of the root disk.
 
-The `df` ("disk free") command lists mounted filesystems with their capacity and usage; the `-h` flag makes the sizes human-readable.
+`df` ("disk free") lists mounted filesystems with their size and use. It shows how full each hold is. The `-h` option prints sizes that are easy to read. Check the new mount with it:
 
-> [!TIP]
-> **Try it — confirm the mount**
->
-> ```sh
-> sudo mkdir -p /mnt/backup-black
-> sudo mount /dev/vdb /mnt/backup-black
-> df -h /mnt/backup-black
-> sudo touch /mnt/backup-black/completed
-> ls -l /mnt/backup-black
-> ```
->
-> Expect something like:
->
-> ```text
-> Filesystem      Size  Used Avail Use% Mounted on
-> /dev/vdb        2.0G   24K  1.9G   1% /mnt/backup-black
-> ...
-> -rw-r--r-- 1 root root 0 Aug 29 12:00 /mnt/backup-black/completed
-> ```
->
-> `df` now lists `/dev/vdb` against the mount point `/mnt/backup-black`, and the `completed` file you created lives on the new disk's sectors, not on the root disk.
+```sh
+df -h /mnt/backup-black
+```
+
+Expect something like:
+
+```text
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vdb        2.0G   24K  1.9G   1% /mnt/backup-black
+```
+
+`df` now lists `/dev/vdb` against the mount point `/mnt/backup-black`. Any file you create in that directory lands on the new disk, not on the root disk.
+
+### What `mount` really changes
+
+`mount` does not copy or move any data. Mounting a 500 GB disk is exactly as fast as mounting a 5 GB one, because mounting only changes a record in the kernel's memory.
+
+The kernel keeps a table of every active mount; you can read it in `/proc/mounts`. Each entry is a small record: the source device, the mount point, the filesystem type and the options. The entry also holds a pointer that joins the mounted filesystem's root directory into the tree at the mount point. When a program walks into `/mnt/backup`, the kernel's path lookup reaches that joint and carries on inside the mounted filesystem, not the directory underneath.
+
+```mermaid
+flowchart TB
+    A["mount command"] -->|"adds one entry"| B["Kernel mount table"]
+    B -->|"joins the path"| C["/mnt/backup"]
+    C -->|"reads and writes"| D["/dev/vdb root directory"]
+    B -->|"umount removes the entry"| E["Original /mnt/backup contents"]
+```
+
+The diagram shows that `mount /dev/vdb /mnt/backup` only adds a table entry, and that `umount` removes it so the original directory shows again.
+
+This is also why unmounting is safe and can be undone. `umount` removes the table entry and undoes the joint. If the mount point already held files, the mount never touched them. They were only hidden under the mounted filesystem, and they come back exactly as they were. `man 5 proc` (search for "mounts") explains what `/proc/mounts` and `/proc/self/mountinfo` show about this live table.
+
+## Common pitfalls
 
 > [!WARNING]
-> **Common pitfalls**
->
-> - **Running `mkfs` on the wrong device.** `mkfs.ext4 /dev/vda` would wipe the running system. There is no confirmation prompt and no undo. Always run `lsblk` and match the size and mount point before formatting.
-> - **Only checking `df -h`.** A filesystem full of many small files can exhaust its inode budget long before its block budget. Check `df -i` too when "No space left on device" shows up on a mount that `df -h` says has room.
+> - **Running `mkfs` on the wrong device.** `mkfs.ext4 /dev/vda` would wipe the running system. There is no question to confirm and no undo. Always run `lsblk` and match the size and mount point before you format.
+> - **Only checking `df -h`.** A filesystem full of small files can run out of inodes long before it runs out of space. Check `df -i` too when "No space left on device" shows up on a mount that `df -h` says has room.
 
-> *Formatting fixes a filesystem's inode budget forever; mounting only ever edits an in-memory table, never the data underneath it.*
+> *Formatting fixes a filesystem's inode budget for good; mounting only edits a table in the kernel's memory, never the data underneath.*
 
-## Reference
+## Your mission: Filesystem Creation & Mounting Sandbox
 
-- `man mount` — the full list of mount options and behaviors this part only summarizes.
-- `man mkfs.ext4` (or `man mke2fs`) — every format-time tunable, including `-i` to set the bytes-per-inode ratio explicitly.
-- `man 5 proc` (search "mounts") — what `/proc/mounts` and `/proc/self/mountinfo` expose about the live mount table this part describes conceptually.
+You can now find a raw disk, format it with ext4 and mount it. The mission asks you to do exactly that on a fresh disk, mount it at `/mnt/backup-black` and leave a marker file on it.
+
+The mission runs on its own training ship. A playground cannot be paused, so remove it first to free memory; it always starts clean again:
+
+```sh
+astrona destroy section-010-module-01-playground
+```
+
+Then start the mission and connect to it:
+
+```sh
+astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-01/labs/lab-01
+astrona ssh ats-004-lab-014
+```
+
+Read the task in [`question.md`](./labs/lab-01/question.md) and solve it on your own first. When you think you are done, send it for grading:
+
+```sh
+astrona submit -c sections/section-010/module-01/labs/lab-01
+```
+
+When the mission is done, remove it and start a fresh playground:
+
+```sh
+astrona destroy ats-004-lab-014
+astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-010/module-01/playground
+```

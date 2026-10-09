@@ -1,61 +1,75 @@
-# Part 3 — The fstab Shortcut and Common Pitfalls
+# The fstab Shortcut and Common Pitfalls
 
-> Prerequisite: [Part 2 — Writing Native .mount and .automount Units](./course-02-native-mount-and-automount-units.md). Next: [Section 010 Knowledge Check](../quiz.md).
+Astronaut, two hand-written unit files are one way to dock a hold on demand. There is a shorter way: a single line in `/etc/fstab`, the ship's logbook. On this page you get the same on-demand mount from that one line, using `x-systemd.*` options that the fstab generator understands. Then you see why a logbook line and a hand-written unit for the same hatch never mix.
 
-Part 2 hand-wrote two units — a `.mount` and a paired `.automount` — to get on-demand mounting. This part gets the same result from a single `/etc/fstab` line, using the `x-systemd.*` options the generator (Part 1) understands, then closes the module with the mistakes that trip people up across all three parts.
+## `x-systemd.*`: fstab options for the generator
 
-## `x-systemd.*`: fstab options that drive the generator
+`systemd-fstab-generator` is the small program that systemd runs at boot and on every `daemon-reload` to turn each `/etc/fstab` line into a unit. Options that start with `x-systemd.` are notes for that program. They tell it to write an `.automount` unit and extra dependencies for you, just as if you had written the unit files yourself.
 
-You rarely need to hand-write automount units. `x-systemd.*` options in an `/etc/fstab` line tell `systemd-fstab-generator` to build the `.automount` and its dependencies for you, the same as if you had written the two files from Part 2 by hand:
+### The options that matter
 
-- `x-systemd.automount` — create a paired `.automount`, mount on first access.
-- `x-systemd.idle-timeout=30` — unmount after 30 s idle.
-- `x-systemd.device-timeout=10` — give up waiting for the device after 10 s.
-- `x-systemd.requires=<unit>` — order this mount after another unit.
-- `_netdev` — already covered in Section 015: wait for the network.
+- `x-systemd.automount`: write a paired `.automount` unit, so the hold is mounted on first access.
+- `x-systemd.idle-timeout=30`: unmount after 30 seconds with nobody using it.
+- `x-systemd.device-timeout=10`: give up waiting for the device after 10 seconds.
+- `x-systemd.requires=<unit>`: require another unit, and mount only after it.
+- `_netdev`: the filesystem needs the network, so wait for the network before mounting.
 
-> [!TIP]
-> **Try it — automount straight from fstab**
->
-> ```sh
-> sudo systemctl disable --now srv-data.automount
-> sudo rm /etc/systemd/system/srv-data.mount /etc/systemd/system/srv-data.automount
-> UUID=$(sudo blkid -s UUID -o value /dev/vdb)
-> sudo mkdir -p /srv/data2
-> echo "UUID=$UUID  /srv/data2  ext4  defaults,nofail,x-systemd.automount,x-systemd.idle-timeout=30  0  2" | sudo tee -a /etc/fstab
-> sudo systemctl daemon-reload
-> ls /srv/data2
-> findmnt /srv/data2
-> ```
->
-> Expect something like:
->
-> ```text
-> (ls output)
->
-> TARGET      SOURCE    FSTYPE OPTIONS
-> /srv/data2  /dev/vdb  ext4   rw,relatime,nofail
-> ```
->
-> One fstab line produced the same on-demand mount as the two unit files from Part 2, and `daemon-reload` was enough to activate it — no `enable` needed, because the *generator* wrote the `[Install]` wiring for you this time. Roll back with `sudo cp /etc/fstab.orig /etc/fstab && sudo systemctl daemon-reload`.
+### Automount straight from fstab
+
+The spare disk is usually `/dev/vdb`; confirm it with `lsblk`. If you wrote `srv-data.mount` and `srv-data.automount` by hand earlier, remove them first so they do not hold the disk. In a fresh playground these files do not exist, and you can skip these two commands:
+
+<!-- astrona:playground:renew -->
+
+```sh
+sudo systemctl disable --now srv-data.automount
+sudo rm /etc/systemd/system/srv-data.mount /etc/systemd/system/srv-data.automount
+```
+
+Now add one line to `/etc/fstab` for a new mount point, `/srv/data2`, reload, and knock on the hatch:
+
+```sh
+UUID=$(sudo blkid -s UUID -o value /dev/vdb)
+sudo mkdir -p /srv/data2
+echo "UUID=$UUID  /srv/data2  ext4  defaults,nofail,x-systemd.automount,x-systemd.idle-timeout=30  0  2" | sudo tee -a /etc/fstab
+sudo systemctl daemon-reload
+ls /srv/data2
+findmnt /srv/data2
+```
+
+Expect something like:
+
+```text
+(ls output)
+
+TARGET      SOURCE    FSTYPE OPTIONS
+/srv/data2  /dev/vdb  ext4   rw,relatime,nofail
+```
+
+One logbook line gave the same on-demand mount as the two hand-written unit files. You did not need `enable`, because the generator links the units it writes into the boot order itself.
+
+`daemon-reload` writes the new `srv-data2.automount` unit, but it does not always start it before the next boot. If `findmnt` prints nothing, start the trigger with `sudo systemctl start srv-data2.automount` and run `ls /srv/data2` again. `findmnt` may also list the `systemd-1` `autofs` line next to the ext4 line.
+
+### Roll back
+
+Your playground saved the original logbook as `/etc/fstab.orig`. Put it back and reload:
+
+```sh
+sudo cp /etc/fstab.orig /etc/fstab && sudo systemctl daemon-reload
+```
 
 ## When an fstab line and a hand-written unit target the same path
 
-Part 1's unit search order answers a question this raises immediately: what if `/srv/data2` had *both* the `x-systemd.automount` fstab line above *and* a hand-written `/etc/systemd/system/srv-data2.mount`? They do not merge. `/etc/systemd/system/` is checked first in the search order, so the hand-written unit wins outright — the generator still writes its version into `/run/systemd/generator/`, but systemd never loads it. The fstab line's options are not "overridden", they are simply never read for that path. This is why the two approaches in this module are alternatives, not layers: pick fstab options for a mount, or hand-written units for it, never both.
+What if `/srv/data2` had both the `x-systemd.automount` line above and a hand-written `/etc/systemd/system/srv-data2.mount`? The two do not merge.
+
+systemd looks for a unit's filename in a fixed list of directories and loads only the first match. `/etc/systemd/system/` comes before `/run/systemd/generator/`, so the hand-written unit wins outright. The generator still writes its own version into `/run/systemd/generator/`, but systemd never loads it. The options on the fstab line are not "overridden": for that path, they are simply never read.
+
+That is why the two ways in this module are alternatives, not layers. For each mount, pick fstab options or hand-written units, never both.
+
+> *`x-systemd.*` options do not change what fstab does. They change what the generator writes, so anything hand-written for the same path always wins over them.*
 
 ## Common pitfalls
 
-- **Unit filename not matching the path.** `/srv/data` *must* be `srv-data.mount` with `Where=/srv/data`. Any mismatch and systemd never associates the file with that path at all. Generate the name with `systemd-escape -p --suffix=mount`.
-- **Editing a unit and not reloading.** systemd only re-reads unit files on `daemon-reload` — a plain `restart` reuses what was already loaded in memory. Run `sudo systemctl daemon-reload` after every create or edit, including changes to `/etc/fstab`.
-- **Enabling the `.mount` instead of the `.automount`.** For on-demand behaviour, enable and start the `.automount`; leave the `.mount` to be triggered. Enabling the `.mount` mounts it unconditionally at boot instead.
-- **Assuming systemd automount replaces autofs.** It has no wildcards, no map files, no LDAP/NIS maps. For many similar mounts (user home directories, per-host maps) autofs (Section 050) is still the tool; for a handful of fixed mounts, `x-systemd.automount` is simpler.
-- **Leaving `nofail` off a `.mount` unit.** Same rule as fstab — a required-but-missing device fails the unit, and anything ordered `After=` it may not start.
-- **Writing both an fstab line and a hand-written unit for one mount point.** They do not combine. `/etc/systemd/system/` always wins the search, so the fstab options for that path are silently unused — confusing to debug later, since nothing errors.
-
-> *`x-systemd.*` options don't change what fstab does — they change what the generator writes, so anything hand-written for the same path always wins over them.*
-
-## Reference
-
-- `man 5 fstab` — the `x-systemd.*` option list and their generator-facing meaning.
-- `man systemd-fstab-generator` — how these options translate into generated `.automount` units.
-- `man systemd.automount` — the automount unit's own directives, for comparing against the fstab-option shortcut.
+> [!WARNING]
+> - **Assuming systemd automount replaces autofs.** It has no wildcards, no map files and no maps from a directory service such as LDAP or NIS. For many similar mounts, such as user home directories or one mount per server, autofs (the docking robot with its maps) is still the tool. For a handful of fixed mounts, `x-systemd.automount` is simpler.
+> - **Writing both an fstab line and a hand-written unit for one mount point.** They do not combine. `/etc/systemd/system/` always wins the search, so the fstab options for that path go unused. Nothing prints an error, which makes this confusing to debug later.
+> - **Forgetting `daemon-reload` after editing `/etc/fstab`.** The generator only reads the file at boot and on `daemon-reload`. Until then, systemd still uses the old units.

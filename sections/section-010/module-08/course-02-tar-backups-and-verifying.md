@@ -1,10 +1,14 @@
-# Part 2 — File-Level Backups with tar, and Verifying Them
+# File-Level Backups with tar, and Verifying Them
 
-> Prerequisite: [Part 1 — Cloning a Disk with dd](./course-01-cloning-a-disk-with-dd.md). Next: [Module landing page](./course.md).
+`dd` copies bytes; `tar` copies files. That difference decides which one you use. A `dd` image of a 1 TB disk that is 5% full is still 1 TB, because every unused block is copied with the real data. A `tar` archive of the same disk's files is about the size of the real data. `tar` walks the filesystem's folders and only touches real files, the same way `cp` or `ls -R` would.
 
-`dd` copies bytes; `tar` copies files. That difference decides which one you reach for. A `dd` image of a 1 TB disk that's 5% full is still 1 TB — every unused block gets copied along with the real data. A `tar` archive of the same disk's files is roughly the size of the actual data, because `tar` walks the filesystem's directory tree and only ever touches real files, the same way `cp` or `ls -R` would. It's also filesystem-agnostic in the other direction: a `tar` archive restores onto a differently-sized disk, a different filesystem type, even a different Linux distribution, because it never cared about the source's block layout to begin with. `dd`'s exactness is `tar`'s flexibility, and neither is strictly better — they solve different problems.
+In space terms, `dd` copies the whole cargo hold, crate by crate, while `tar` packs chosen items into one shipping container. The container can be unpacked on a differently sized disk, a different filesystem type, even a different Linux distribution, because `tar` never cared about the source's block layout. Neither tool is better; they solve different problems.
 
 ## Creating and restoring an archive
+
+Three `tar` commands cover almost every backup task: create, list and extract. This section shows the three, then runs them on a real folder.
+
+### The three commands
 
 ```text
 tar czf backup.tar.gz <path>      # create (c), gzip-compress (z), to this file (f)
@@ -12,74 +16,109 @@ tar tzf backup.tar.gz             # list contents without extracting (t)
 tar xzf backup.tar.gz -C <dest>   # extract (x) into <dest>
 ```
 
-> [!TIP]
-> **Try it — back up and restore a directory**
->
-> ```sh
-> sudo tar czf /root/data-backup.tar.gz -C /mnt/data .
-> tar tzf /root/data-backup.tar.gz | head -5
-> sudo rm -rf /mnt/data/*
-> sudo tar xzf /root/data-backup.tar.gz -C /mnt/data
-> ls /mnt/data
-> ```
->
-> Expect something like:
->
-> ```text
-> ./
-> ./report.txt
-> ./notes/
-> ./notes/todo.txt
->
-> report.txt  notes
-> ```
->
-> `-C /mnt/data .` tells `tar` to change into that directory first and archive its contents as relative paths (`./report.txt`, not `/mnt/data/report.txt`) — the reason a `tar` archive restores cleanly into a different directory, or a different machine, without every path being wrong. `tzf` lists the table of contents so you can check what's actually in an archive before trusting it.
+### See it in action
 
-## Preserving ownership and permissions
+On a machine with a filesystem mounted at `/mnt/data`, back up its contents, list the archive, empty the folder and restore it:
 
-By default `tar` (run as root, restoring as root) preserves ownership and permissions automatically — but the moment a non-root user, a different UID mapping, or certain archive formats are involved, add `-p` (`--preserve-permissions`) explicitly to make sure it's not left to default behavior. This matters most for a system backup you intend to restore onto a fresh machine: a config file restored `root:root 644` when it needs to be `www-data:www-data 640` is a silent, easy-to-miss failure.
+```sh
+sudo tar czf /root/data-backup.tar.gz -C /mnt/data .
+tar tzf /root/data-backup.tar.gz | head -5
+sudo rm -rf /mnt/data/*
+sudo tar xzf /root/data-backup.tar.gz -C /mnt/data
+ls /mnt/data
+```
 
-## When to reach for tar instead of dd
+Expect something like:
 
-- **Restoring onto different-sized or different-typed storage.** A `tar` archive doesn't care if the new disk is bigger, smaller (as long as it fits the actual data), or a different filesystem entirely. A `dd` image only restores onto a destination at least as large as the original, and reproduces the *exact same filesystem type* — no flexibility either way.
-- **Restoring individual files.** `tar tzf` / `tar xzf path/to/one-file` pulls a single file back out. A `dd` image has no such concept — you'd need to loop-mount the whole image first.
-- **Repeated, space-efficient backups.** `tar` only archives real files, so repeated backups of a mostly-unchanged filesystem stay small relative to the disk. (For genuinely incremental backups — only what changed since last time — the standard tool is `rsync`, not covered in depth here, but worth knowing it exists for that job.)
+```text
+./
+./report.txt
+./notes/
+./notes/todo.txt
 
-`dd` still wins when the goal is an exact duplicate regardless of content — cloning a boot disk with a bootloader and partition table intact, for instance, where `tar`'s file-level view has nothing to say about the bytes outside any filesystem.
+report.txt  notes
+```
 
-## Verifying a backup is actually good
+`-C /mnt/data .` tells `tar` to change into that folder first and store its contents with relative paths (`./report.txt`, not `/mnt/data/report.txt`). That is why the archive restores cleanly into a different folder or onto a different machine. `tzf` lists the table of contents, so you can check what is in an archive before you trust it.
 
-A copy command exiting with no error means the command ran — not that the data is correct. The only way to know a backup or clone actually matches its source is to check, and the tool is a checksum: a short fingerprint of the data such that any difference in the data produces a completely different fingerprint.
+## Keeping owners and permissions
 
-> [!TIP]
-> **Try it — verify a disk clone matches its source**
->
-> ```sh
-> sudo sha256sum /dev/vdb /dev/vdc
-> ```
->
-> Expect something like:
->
-> ```text
-> 8f3b1c9e2a7d4f6b1e0c9a8d7b6e5f4a3c2b1a09e8d7c6b5a4f3e2d1c0b9a8f7  /dev/vdb
-> 8f3b1c9e2a7d4f6b1e0c9a8d7b6e5f4a3c2b1a09e8d7c6b5a4f3e2d1c0b9a8f7  /dev/vdc
-> ```
->
-> Identical hashes mean identical bytes, end to end — the strongest possible confirmation that a `dd` clone or image genuinely matches its source. `cmp /dev/vdb /dev/vdc` does the same job for two block devices directly, and stops at the first differing byte if there is one, which is faster than a full checksum when you just need a yes/no answer. For a `tar` archive, the equivalent check is simpler: `tar tzf` catches a corrupted archive (`tar` will error partway through listing it), and spot-checking a few restored files' content is normal practice — a full checksum comparison only makes sense against an unpacked copy, not the archive itself.
+When `root` creates and restores an archive, `tar` keeps owners and permissions by default. But as soon as a normal user, a different mapping of user IDs, or some archive formats are involved, add `-p` (`--preserve-permissions`) so you do not depend on the default.
 
-> *A backup nobody has verified is a hope, not a backup. The five extra seconds a checksum takes is the entire difference between "I have a backup" and "I have a file I assume is a backup."*
+This matters most for a system backup that you plan to restore on a fresh machine. A configuration file restored as `root:root 644` when it needs to be `www-data:www-data 640` is a silent failure that is easy to miss.
+
+## When tar beats dd
+
+The two tools overlap, so it helps to know the cases where `tar` is clearly the better choice, and the one case where `dd` still wins.
+
+### Where tar is the better tool
+
+- **Restoring onto storage of a different size or type.** A `tar` archive does not care if the new disk is bigger, smaller (as long as the real data fits) or uses another filesystem. A `dd` image only restores onto a disk at least as large as the original, and always brings back the exact same filesystem type.
+- **Restoring single files.** `tar tzf` and `tar xzf <archive> path/to/one-file` pull out one file. A `dd` image has no such idea; you would need to mount the whole image first.
+- **Repeated, small backups.** `tar` only stores real files, so repeated backups of a mostly unchanged filesystem stay small. For true incremental backups (only what changed since last time), the usual tool is `rsync`, which this module does not cover.
+
+### Where dd still wins
+
+`dd` wins when you need an exact copy whatever the content. Cloning a boot disk with its boot loader and partition table is the classic case. Those bytes sit outside any filesystem, so `tar`, which only sees files, cannot copy them.
+
+## Proving a backup is good
+
+A copy command that ends with no error only proves that the command ran. It does not prove the data is correct. This section shows how to check, using a checksum.
+
+### A fingerprint of the data
+
+A checksum is a short fingerprint of the data. Any change in the data, even one byte, gives a completely different fingerprint. So two identical checksums mean two identical copies.
+
+### See it in action
+
+After cloning `/dev/vdb` onto `/dev/vdc`, compare the checksums of the two disks:
+
+```sh
+sudo sha256sum /dev/vdb /dev/vdc
+```
+
+Expect something like:
+
+```text
+8f3b1c9e2a7d4f6b1e0c9a8d7b6e5f4a3c2b1a09e8d7c6b5a4f3e2d1c0b9a8f7  /dev/vdb
+8f3b1c9e2a7d4f6b1e0c9a8d7b6e5f4a3c2b1a09e8d7c6b5a4f3e2d1c0b9a8f7  /dev/vdc
+```
+
+Your checksum will be a different string. What matters is that both lines show the same one. Identical checksums mean identical bytes from start to end, the strongest proof that a `dd` clone or image matches its source.
+
+### Faster yes-or-no checks
+
+`cmp /dev/vdb /dev/vdc` does the same job for two block devices directly. It stops at the first byte that differs, so it is faster than a full checksum when you only need a yes or no.
+
+For a `tar` archive, the check is simpler. `tar tzf` catches a damaged archive, because `tar` stops with an error partway through the list. Spot-checking the content of a few restored files is normal practice. A full checksum comparison only makes sense against an unpacked copy, not against the archive itself.
+
+## Common pitfalls
 
 > [!WARNING]
-> **Common pitfalls**
->
-> - **Swapping `if=` and `of=`.** The single most common way to destroy the wrong disk. Read the device names off `lsblk` immediately before running the command — every time, not just the first time.
-> - **Forgetting `bs=`.** `dd`'s default 512-byte block size is real but almost never what you want — expect an order-of-magnitude slowdown on a large clone. Set `bs=4M` or larger.
-> - **Cloning onto a smaller destination disk.** `dd` doesn't check sizes for you. Writing a larger source onto a smaller destination truncates silently — the copy stops when the destination runs out of space, with no error pointing at "wrong size," just a broken filesystem on the far end.
-> - **Skipping `-p` on a `tar` restore where ownership matters.** Files restore with whatever ownership the extracting process defaults to unless permissions are explicitly preserved — easy to miss on a config or system backup.
-> - **Trusting a backup that was never verified.** "The command didn't error" is not verification. Check a clone with `sha256sum`/`cmp`; check an archive with `tar tzf` and a spot-check restore.
+> - **Skipping `-p` on a `tar` restore where owners matter.** Files come back with whatever owner the extracting process picks, unless you keep permissions on purpose. Easy to miss on a configuration or system backup.
+> - **Trusting a backup you never checked.** "The command did not show an error" is not a check. Compare a clone with `sha256sum` or `cmp`; check an archive with `tar tzf` and a test restore.
 
-## Reference
+> *A backup nobody has checked is a hope, not a backup. The few extra seconds a checksum takes are the whole difference between "I have a backup" and "I have a file I assume is a backup".*
 
-- `man tar` — the full flag set; `--exclude=` is worth knowing for skipping large, regenerable directories (caches, build output) from a backup.
-- `man sha256sum` / `man cmp` — the two checksum-style verification tools referenced above.
+## Your mission: Disk Cloning & Backup
+
+You can now clone a disk with `dd` and prove the clone is exact. The mission asks you to clone a disk that holds data onto a blank disk, byte for byte, and check the result.
+
+Start the mission and connect to its machine:
+
+```sh
+astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-08/labs/lab-01
+astrona ssh ats-004-lab-018
+```
+
+Read the task in [`question.md`](./labs/lab-01/question.md) and solve it on your own first. When you think you are done, send it for grading:
+
+```sh
+astrona submit -c sections/section-010/module-08/labs/lab-01
+```
+
+When the mission is done, remove it:
+
+```sh
+astrona destroy ats-004-lab-018
+```

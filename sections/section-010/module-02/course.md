@@ -1,33 +1,45 @@
-# Splitting the Acre: Partitioning Raw Storage
+# Splitting the Hold: Partitioning Raw Storage
 
-<!-- astrona:playground -->
-> [!NOTE]
-> 🧪 **Hands-on playground for this module** — a clean, throwaway machine to explore on. No task, no grading. Folder: [`playground/`](https://github.com/astrona-io/ATS004/tree/main/sections/section-010/module-02/playground)
->
-> ```sh
-> astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-010/module-02/playground
-> astrona destroy section-010-module-02-playground
-> ```
+A new disk is an empty cargo hold: one long run of space, with no walls and no labels. Before you build shelves in it with a filesystem, you almost always split it into rooms first. Each room is a **partition**, and the deck plan that lists the rooms is the **partition table**.
 
-A raw disk is one continuous run of sectors. Before a filesystem goes on it, you almost always divide it into one or more **partitions**: numbered, fixed regions with a recorded start and end. Even a disk that will hold a single filesystem normally gets one partition first, because a partition gives the filesystem a defined boundary and lets tools reason about the disk's layout.
-
-## How this module is organised
-
-1. **[Part 1 — Partition Tables: MBR vs GPT](./course-01-partition-tables-mbr-vs-gpt.md)** — what actually lives in each table format on-disk, why MBR has no redundancy and a hard capacity ceiling, and why GPT's dual-copy, CRC-checked design fixes both.
-2. **[Part 2 — Tools, Alignment & the Kernel Re-read Problem](./course-02-tools-alignment-and-kernel-rescan.md)** — writing a table with `fdisk` and `parted`, why partitions start at sector 2048, and what "the kernel still uses the old table" actually means and how to fix it.
+Astronaut, in this module you learn the two kinds of deck plan, MBR and GPT, and why GPT is the one to choose. Then you draw rooms yourself with `fdisk` and `parted`, start them in the right place, and make the ship's core (the kernel) see the new plan.
 
 ## Learning objectives
 
 After this module you can:
 
-- Explain what a partition table is and how MBR and GPT differ in partition count, capacity limit, and redundancy — and why GPT's redundancy is a structural design choice, not a feature bullet.
-- Choose GPT over MBR for any modern disk and say why.
-- Create a GPT label and an aligned partition with `parted` non-interactively, and describe the equivalent `fdisk` session.
-- Explain write amplification and why partitions start at sector 2048 to avoid it.
-- Recognise the "kernel still uses the old table" condition, explain what `BLKRRPART` does, and resolve it with `partprobe`.
+- Explain what a partition table is, and how MBR and GPT differ in the number of partitions, the largest disk they can use, and how many copies of the table they keep.
+- Choose GPT over MBR for any modern disk, and say why.
+- Create a GPT label and an aligned partition with `parted` in one go, and describe the same steps in an `fdisk` session.
+- Explain write amplification, and why partitions start at sector 2048 to avoid it.
+- Recognise the "kernel still uses the old table" message, explain what the `BLKRRPART` request does, and fix the problem with `partprobe`.
 
 ## Before you start
 
-You should have read the previous module or otherwise know what `lsblk` and `blkid` show, and be comfortable in a Linux shell with `sudo`.
+Every mission starts with a pre-flight check. Make sure you know the basics below, and know what waits for you in your training ship.
 
-The linked playground gives you an Ubuntu server VM with passwordless `sudo` and one spare 12 GB disk (commonly `/dev/vdb`) that has **no partition table** — its tables are cleared on every boot. Run the command blocks in Parts 1–2 in that VM after connecting with `astrona ssh astro-section-010-module-02-playground`. `fdisk`, `parted`, `sfdisk`, `partprobe`, and `wipefs` are already installed.
+### What you should already know
+
+- How to find a disk with `lsblk` and see what is on it with `blkid`.
+- How to move around a Linux shell and run commands with `sudo`.
+
+### What is in your playground
+
+Your playground is one training spaceship: an Ubuntu 24.04 virtual machine with passwordless `sudo`.
+
+- The system disk, `/dev/vda`, holds the operating system.
+- One extra 12 GB disk has **no partition table** at all. It is usually `/dev/vdb`, and it is also reachable as `/dev/disk/by-id/virtio-s10m02-raw`. Always confirm the name with `lsblk`. The playground clears this disk's partition tables every time it starts.
+- The partitioning tools are already installed: `fdisk`, `parted`, `sfdisk`, `partprobe`, `lsblk`, `blkid` and `wipefs`.
+
+Start the playground and connect to it with `astrona ssh section-010-module-02-playground`. Run every command in the parts in that shell.
+
+<!-- astrona:playground -->
+
+## The parts of this module
+
+Read the parts in this order. The mission comes right after the part it tests.
+
+1. [Partition Tables: MBR vs GPT](./course-01-partition-tables-mbr-vs-gpt.md): what each kind of deck plan stores on the disk, and why GPT keeps two checked copies.
+2. [Write an Aligned GPT Partition](./course-02-write-an-aligned-gpt-partition.md): write a table with `fdisk` and `parted`, and why the first partition starts at sector 2048. Ends with your mission.
+3. [When the Kernel Keeps the Old Table](./course-03-when-the-kernel-keeps-the-old-table.md): why the kernel's copy of the table can lag behind the disk, and how `partprobe` fixes it.
+4. [Wrap-Up: Mission Debrief](./course-04-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.

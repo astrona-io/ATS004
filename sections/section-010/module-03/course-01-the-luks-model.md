@@ -1,49 +1,64 @@
-# Part 1 — The LUKS Model: Locking a Disk
+# The LUKS Model: Locking a Disk
 
-> Prerequisite: [Module landing page](./course.md). Next: [Part 2 — Creating a Container & Its Keyslots](./course-02-creating-a-container-and-keyslots.md).
+Picture a cargo hold full of crates, each with a paper label. On your own ship, the crew rules decide who may open which crate. Those are your file permissions. Now someone unbolts the whole hold and flies it to their own ship. Your crew rules stay behind, and every label can be read.
 
-Filesystem permissions protect data only while the operating system enforcing them is running. Pull the disk out and read it on another machine, or clone a cloud volume offline, and permissions are irrelevant — the bytes are right there. This part covers exactly what threat LUKS answers, and the mapping model every other part builds on.
+That is the real risk with a stolen or copied disk. This part explains the one threat LUKS answers, and the simple model behind every `cryptsetup` command in this module.
 
 ## What LUKS protects against
 
-**LUKS** (Linux Unified Key Setup) encrypts every block before it reaches the physical media and decrypts it on the way back, using a key derived from a passphrase you supply. It defends against:
+LUKS stands for Linux Unified Key Setup. Think of it as a vault door on a cargo hold: no passphrase, no cargo. The ship's core (the kernel) scrambles every block before it reaches the disk, and unscrambles it on the way back. The key for that comes from a passphrase you type.
 
-- a disk removed from a server and read elsewhere,
-- an offline copy or snapshot of a cloud volume,
-- a discarded or RMA'd drive that still holds readable data.
+LUKS protects you in these cases:
 
-It does **not** protect a running system where the volume is already unlocked and mounted — at that point the kernel is decrypting reads for anyone with filesystem access. Nor does it help if the passphrase is weak or written on a sticky note. LUKS is one layer, aimed squarely at the "someone has the disk, not your running system" case.
+- A disk is pulled out of a server and read on another machine.
+- Someone makes an offline copy, or snapshot, of a cloud disk.
+- An old or returned disk still holds data that someone could read.
 
-## The mental model: lock the disk, work through a mapping
+LUKS does **not** protect a running system where the disk is already open and mounted. At that point the kernel unscrambles every read for anyone who has normal file access. A weak passphrase, or one written on a sticky note, does not help either. LUKS is one layer, aimed at one case: someone has your disk, but not your running system.
 
-You never write a filesystem onto the locked device directly. Instead, four operations move a device between two states — **locked** (an opaque block device) and **mapped** (a decrypted virtual device you can use normally):
+## Lock the disk, work through a mapping
 
-1. `cryptsetup luksFormat` writes a **LUKS header** to the start of the device and marks the rest as an encrypted region. This is a one-time setup step, done once per device.
-2. `cryptsetup open` asks for the passphrase and, if it checks out, creates a decrypted **virtual device** under `/dev/mapper/`. This is not a copy or a temp file — it's a **device-mapper target**: the kernel registers a new block device whose reads and writes are transformed on the fly by `dm-crypt` before/after they reach the real, still-encrypted device underneath. Nothing decrypted ever touches the disk.
-3. You format and mount the `/dev/mapper/` device like any normal disk — `mkfs`, `mount`, `umount` do not know or care that a crypt layer sits underneath.
-4. `cryptsetup close` unregisters the virtual device. The physical disk is back to being an opaque encrypted blob; the decryption path that existed only in the kernel's device-mapper table is gone.
+You never write a filesystem straight onto the locked disk. Instead, the disk moves between two states, and four commands move it. Knowing which state the disk is in tells you which command comes next.
+
+### The two states and the four commands
+
+A LUKS disk is either **locked** or **mapped**:
+
+- **Locked:** the disk is a closed block of scrambled bytes. No filesystem is visible.
+- **Mapped:** the kernel shows a second, unscrambled device that you use like a normal disk.
+
+Think of the mapped device as an airlock on the vault door. Cargo passes through it, and is unlocked on the way in and locked again on the way out. The hold itself only ever stores locked cargo.
+
+These four steps move the disk between the states:
+
+1. `cryptsetup luksFormat` writes a LUKS **header** to the start of the disk. The header is the label plate on the vault door: it says which lock this is and how to open it. The rest of the disk becomes the scrambled data area. You do this once per disk.
+2. `cryptsetup open` asks for the passphrase. If it is right, the kernel creates a new, unscrambled device under `/dev/mapper/`. This is not a copy and not a temporary file. It is a **device-mapper** target: the kernel's device mapper adds a new block device, and its `dm-crypt` module scrambles and unscrambles each block on its way to and from the real disk. Nothing unscrambled is ever written to the disk.
+3. You format and mount the `/dev/mapper/` device like any other disk. `mkfs`, `mount` and `umount` do not know that an encryption layer sits underneath.
+4. `cryptsetup close` removes the mapped device. The real disk is back to a closed block of scrambled bytes. The way through the airlock existed only in the kernel's memory, and now it is gone.
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Locked: cryptsetup luksFormat
-    Locked --> Mapped: cryptsetup open<br/>(correct passphrase)
-    Mapped --> InUse: mkfs.ext4 + mount<br/>/dev/mapper/name
-    InUse --> Mapped: umount
-    Mapped --> Locked: cryptsetup close
-
-    note right of Locked
-        stolen or copied at this state:
-        header only, data is high-entropy noise
-    end note
+flowchart TB
+    R["Raw disk"] -->|"cryptsetup luksFormat"| L["Locked"]
+    L -->|"cryptsetup open, correct passphrase"| M["Mapped"]
+    M -->|"mkfs.ext4 and mount"| U["In use"]
+    U -->|"umount"| M
+    M -->|"cryptsetup close"| L
 ```
 
-> As an analogy: the locked device is a heavy safe. `open` is spinning the dial to the right combination, which lets a service window (`/dev/mapper/secure_vault`) appear that you can pass documents through. `close` shuts the safe and the window disappears. The analogy breaks down because the "documents" (your filesystem) are never physically inside anything — `dm-crypt` transforms each block as it passes through the window, and nothing readable is ever stored.
+The diagram shows the cycle a LUKS disk goes through. If someone steals or copies the disk while it is locked, they only get the header, followed by data that looks like random noise.
 
-The cipher doing that per-block transform is `aes-xts-plain64` by default: **XTS mode** is specifically designed for block storage — it encrypts each sector independently (tweaked by that sector's own position, the "plain64" part), so seeking to and rewriting one 512-byte sector never requires touching, decrypting, or re-encrypting any other sector on the disk. A stream cipher mode would not have that property, which is why disk encryption uses XTS rather than the modes typical for network traffic.
+### Why the cipher is AES-XTS
 
-> *A locked LUKS device is not "your files, scrambled" — it's an opaque block device with no filesystem visible at all until a passphrase re-derives the one key that makes `dm-crypt`'s per-sector transform reversible.*
+A cipher is the method the lock uses to scramble data. By default LUKS uses `aes-xts-plain64`. AES (Advanced Encryption Standard) is the scrambling method, and XTS is a mode built for disks.
 
-## Reference
+XTS scrambles each sector on its own. A sector is the smallest piece the disk reads or writes, often 512 bytes. Each sector's own position on the disk goes into its scrambling recipe; that is the `plain64` part. So the kernel can jump to one sector and rewrite it without touching any other sector. A stream cipher, the kind often used for network traffic, does not work like that, which is why disk encryption uses XTS.
 
-- `man 8 cryptsetup` — the full command reference; `open`/`close` and `luksFormat` are covered in the next two parts.
-- `man 4 dm-crypt` (or the kernel's `Documentation/admin-guide/device-mapper/dm-crypt.rst`) — the device-mapper target itself, including which cipher modes it supports beyond XTS.
+The full command reference is in `man 8 cryptsetup`. The kernel's own documentation for `dm-crypt` lists the other cipher modes it supports besides XTS.
+
+## Common pitfalls
+
+> [!WARNING]
+> - **Treating LUKS as protection for a live system.** Once the disk is open and mounted, anyone with normal file access can read its contents. LUKS only helps while the disk is closed.
+> - **Thinking `/dev/mapper/` holds an unscrambled copy.** The mapped device is a live path through the kernel, not a second copy of your data. When you close it, nothing readable is left behind.
+
+> *A locked LUKS disk is not "your files, scrambled". It is a closed block device with no filesystem in sight, until a passphrase brings back the one key that lets `dm-crypt` undo its work, sector by sector.*

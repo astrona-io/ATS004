@@ -1,150 +1,126 @@
-# Solution Guide (Offline & Exam Friendly)
+# Solution Walkthrough
 
-This guide shows you how to solve the lab using basic Linux commands and visual inspection. You do not need to memorize complex scripts or obscure command arguments.
+This capstone joins three skills: preparing a raw disk, reading disk usage, and freeing a disk that a running process holds. You only need basic commands and careful reading of their output.
 
----
+## Step 1: Identify the raw disk
 
-## Step 1: Identify the Raw Disk
+You need the disk that has no partitions and is not mounted. List all storage devices:
 
-You need to find a disk that has no partitions and is not mounted.
+```bash
+lsblk
+```
 
-1. List all available storage devices:
-   ```bash
-   lsblk
-   ```
-2. Look at the output. You are looking for a device (like `vdb` or `vdc`) that:
-   - Does not have any child partitions (e.g., no `vdb1` underneath it).
-   - Has a blank `MOUNTPOINT` column.
-   
-3. Verify that the disk is unformatted. Run:
-   ```bash
-   sudo blkid
-   ```
-   This command lists all formatted disks. Any disk listed in `lsblk` but **not** in `blkid` is raw and unformatted. Note this device name (for example, `/dev/vdb`).
+Look for a device (such as `vdb` or `vdc`) that:
 
----
+- has no child partitions underneath it (no `vdb1`), and
+- has an empty `MOUNTPOINTS` column.
 
-## Step 2: Format the Disk
+Then make sure it has no filesystem:
 
-Format your raw disk with the `ext4` filesystem. Replace `/dev/vdX` with your raw disk name:
+```bash
+sudo blkid
+```
+
+`blkid` lists every device that carries a filesystem. A disk that `lsblk` shows but `blkid` does not is raw. Note its name, for example `/dev/vdb`. The extra disks do not always get the same letters, so read the name from your own output.
+
+## Step 2: Format the disk
+
+Format the raw disk with ext4. Replace `/dev/vdX` with the name you found:
 
 ```bash
 sudo mkfs.ext4 /dev/vdX
 ```
 
----
+## Step 3: Mount the disk
 
-## Step 3: Mount the Disk
+Create the mount point and mount the new filesystem there:
 
-1. Create the mount directory:
-   ```bash
-   sudo mkdir -p /mnt/backup-black
-   ```
-2. Mount the formatted disk there:
-   ```bash
-   sudo mount /dev/vdX /mnt/backup-black
-   ```
+```bash
+sudo mkdir -p /mnt/backup-black
+sudo mount /dev/vdX /mnt/backup-black
+```
 
----
+## Step 4: Create the marker file
 
-## Step 4: Create the Marker File
-
-Create the required empty `completed` file:
+Create the empty `completed` file:
 
 ```bash
 sudo touch /mnt/backup-black/completed
 ```
 
----
+## Step 5: Find the disk with the higher usage
 
-## Step 5: Find the Disk with Higher Usage
+Show the space used on every mounted filesystem:
 
-1. Check disk space usage for all mounted filesystems:
-   ```bash
-   df -h
-   ```
-2. Find the rows for `/mnt/backup-blue` and `/mnt/backup-red` in the "Mounted on" column.
-3. Compare their **Used** or **Use%** columns. Note which one has higher usage.
-   - For example, if `/mnt/backup-blue` uses `2.1G` and `/mnt/backup-red` uses `980M`, then `/mnt/backup-blue` is the disk with higher usage.
+```bash
+df -h
+```
 
----
+Find the rows for `/mnt/backup-blue` and `/mnt/backup-red` in the "Mounted on" column, and compare their **Used** or **Use%** columns. For example, if `/mnt/backup-blue` uses `2.1G` and `/mnt/backup-red` uses `980M`, then `/mnt/backup-blue` is the busier disk.
 
-## Step 6: Empty the Trash Folder
+## Step 6: Empty the trash folder
 
-To empty the `.trash` directory on the busier disk, delete the folder and recreate it. Assuming the busier disk is `/mnt/backup-blue`:
+Empty the `.trash` folder on the busier disk by deleting it and creating it again. If the busier disk is `/mnt/backup-blue`:
 
 ```bash
 sudo rm -rf /mnt/backup-blue/.trash
 sudo mkdir /mnt/backup-blue/.trash
 ```
 
----
+The grader wants the folder to exist and be empty, so do not skip the `mkdir`.
 
-## Step 7: Compare Process Memory Usage
+## Step 7: Compare the memory use of the two processes
 
-Find which of the two running processes (`dark-matter-v1` or `dark-matter-v2`) consumes more memory.
-
-1. List the processes:
-   ```bash
-   ps aux | grep dark-matter
-   ```
-2. Look at the columns in the output:
-   - **PID** (Column 2): Process ID.
-   - **VSZ** (Column 5) or **RSS** (Column 6): Memory size columns.
-3. Compare the values for `dark-matter-v1` and `dark-matter-v2`. Note the PID of the one with larger memory numbers (this is usually `dark-matter-v2`).
-
----
-
-## Step 8: Locate the Process Executable Path
-
-Find the absolute path where the high-memory process is running from.
-
-- **Method A:** Look at the command column output of the `ps aux | grep dark-matter` command. The full path is often shown there (e.g., `/mnt/backup-red/bin/dark-matter-v2`).
-- **Method B:** If the command column only shows the binary name, run:
-   ```bash
-   ls -l /proc/<PID>/exe
-   ```
-   Replace `<PID>` with the actual process ID from Step 7. The output shows where the symbolic link points.
-
----
-
-## Step 9: Identify and Unmount the Disk Backing the Executable
-
-Based on the executable path (e.g., `/mnt/backup-red/bin/dark-matter-v2`), we can see it is on the `/mnt/backup-red` filesystem.
-
-1. Find the device mounted at `/mnt/backup-red`:
-   ```bash
-   df -h
-   ```
-   Look for `/mnt/backup-red` in the "Mounted on" column and note its device (e.g., `/dev/vdc`).
-
-2. Stop the process first, or the unmount command will fail with a `target is busy` error:
-   ```bash
-   sudo systemctl stop dark-matter-v2
-   ```
-   *(Or kill the process directly using its PID: `sudo kill -9 <PID>`)*
-
-3. Unmount the disk:
-   ```bash
-   sudo umount /mnt/backup-red
-   ```
-
----
-
-## Quick Verification
-
-Confirm everything is done correctly:
+List the two processes:
 
 ```bash
-# 1. Check if backup-black is mounted and formatted with ext4
-mount | grep backup-black
+ps aux | grep dark-matter
+```
 
-# 2. Check if the completed file exists
+Read these columns for `dark-matter-v1` and `dark-matter-v2`:
+
+- **PID** (column 2): the process ID, the crew member's badge number.
+- **VSZ** (column 5) and **RSS** (column 6): the virtual and the resident memory size.
+
+Note the PID of the process with the larger numbers.
+
+## Step 8: Find the process's executable file
+
+The command column of `ps aux` often shows the full path, for example `/mnt/backup-red/bin/dark-matter-v2`. If it only shows the name, ask the kernel where the running program came from:
+
+```bash
+ls -l /proc/<PID>/exe
+```
+
+Replace `<PID>` with the process ID from Step 7. The link points at the executable file, and the start of that path tells you which mounted disk holds it.
+
+## Step 9: Stop the process and unmount its disk
+
+If the executable is `/mnt/backup-red/bin/dark-matter-v2`, it lives on the `/mnt/backup-red` filesystem. `df -h` shows which device is mounted there.
+
+Stop the process first. While it runs, the kernel keeps the disk busy and `umount` fails with `target is busy`. The process runs as a systemd service, so stop the service:
+
+```bash
+sudo systemctl stop dark-matter-v2
+```
+
+You could also stop the process directly by its PID with `sudo kill <PID>`, and use `sudo kill -9 <PID>` only if it does not stop. Stopping the service is the cleaner way: systemd then knows the service was stopped on purpose. Then unmount the disk:
+
+```bash
+sudo umount /mnt/backup-red
+```
+
+## Step 10: Check what the grader checks
+
+```bash
+findmnt /mnt/backup-black
 ls -l /mnt/backup-black/completed
-
-# 3. Check if the .trash folder is empty (should return no files)
 sudo ls -A /mnt/backup-blue/.trash
+findmnt /mnt/backup-red
+```
 
-# 4. Check if the target disk is unmounted (should print nothing)
-mount | grep backup-red
+Look for an `ext4` row for `/mnt/backup-black`, a `completed` file of size `0`, no files listed for the `.trash` folder, and no output at all for `/mnt/backup-red` (it is no longer mounted). Then send the capstone for grading from your own computer:
+
+```bash
+astrona submit -c sections/section-010/capstone/labs/lab-01
 ```
