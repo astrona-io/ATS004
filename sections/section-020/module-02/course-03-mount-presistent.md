@@ -1,0 +1,1 @@
+how to make a NFS preisten using the "/etc/fstab" to survie a reboot both with exposefs+sshfs commands need to be here.
