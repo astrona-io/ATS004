@@ -453,7 +453,8 @@ this order:
 - Performance: `iostat`, `iotop`, `pidstat`, `io-wait`, `disk-latency`
 - Capacity and quotas: `df`, `du`, `quota`, `user-quota`, `group-quota`,
   `project-quota`, `xfs-quota`, `grace-period`
-- Links and hierarchy: `symlinks`, `hard-links`, `fhs`
+- Links and hierarchy: `symlinks`, `hard-links`, `readlink`, `find`,
+  `fhs`
 - Proof: `reboot-persistence`, `permissions`
 
 ### Running things

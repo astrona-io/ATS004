@@ -1,3 +1,16 @@
+# Course manifest for ATS004 - LFCS: Storage (Linux Foundation Certified
+# System Administrator).
+#
+# One entry per section under `modules:`. Each section lists, in order: its
+# README, then for each module the landing page (course.md), its parts
+# (course-0N-*.md), and right after the part a lab tests, the lab's
+# question.md reading and the `type: lab` entry. The module's wrap-up page
+# comes last. The section quiz and the section capstone close the section.
+# Playgrounds are not listed: the landing page's playground marker shows
+# them. Never list solution.md.
+#
+# Every `path:` is relative to this file.
+
 training:
   id: ATS004
   title: "LFCS: Storage"
@@ -14,6 +27,7 @@ training:
     weight: 20
 
 modules:
+
   - id: module-010
     title: "Section 010: Local Storage Preparation & Forensics"
     description: >
@@ -25,625 +39,863 @@ modules:
 
     content:
       - type: reading
-        title: Section Overview
+        title: "Section Overview"
         path: sections/section-010/README.md
 
       - type: reading
-        title: "Module 1: Filesystem Creation, Mounting, & Forensics"
+        title: "The Lifecycle of Local Storage"
         path: sections/section-010/module-01/course.md
-
       - type: reading
-        title: "Module 1.1: Discovery, Formatting & Mounting"
+        title: "Discovery, Formatting & Mounting"
         path: sections/section-010/module-01/course-01-discovery-formatting-mounting.md
-
-      - type: reading
-        title: "Module 1.2: Diagnosing a Stuck Disk"
-        path: sections/section-010/module-01/course-02-diagnosing-a-stuck-disk.md
-
       - type: reading
         title: Question
         path: sections/section-010/module-01/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-010/module-01/labs/lab-01/solution.md
-
       - type: lab
         title: "Filesystem Creation & Mounting Sandbox Lab"
         path: sections/section-010/module-01/labs/lab-01
         difficulty: intermediate
-
+        estimated_duration: 15m
+        topic: filesystems
+        task_kind: build
+        tags: [lsblk, blkid, mkfs, ext4, mount, findmnt]
+        learning_goals:
+          - Find the raw disk among the attached block devices without guessing its device name
+          - Format the disk with ext4 and mount it on the new directory /mnt/backup-black
+          - Create a marker file on the mounted filesystem to prove it is writable
+        resources:
+          - name: "lsblk(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lsblk.8.html
+          - name: "mke2fs(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mke2fs.8.html
+          - name: "mount(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mount.8.html
+      - type: reading
+        title: "Diagnosing a Stuck Disk"
+        path: sections/section-010/module-01/course-02-diagnosing-a-stuck-disk.md
       - type: reading
         title: Question
         path: sections/section-010/module-01/labs/lab-02/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-010/module-01/labs/lab-02/solution.md
-
       - type: lab
         title: "Diagnosing & Evicting a Busy Mount Lab"
         path: sections/section-010/module-01/labs/lab-02
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: filesystems
+        task_kind: troubleshooting
+        tags: [busy-mount, lsof, fuser, kill-signals, umount, findmnt]
+        learning_goals:
+          - Identify the process that keeps a mount busy with lsof or fuser
+          - Stop only that process, trying a graceful signal before a forced one
+          - Unmount /mnt/locked-vault cleanly without stopping unrelated services
+        resources:
+          - name: "lsof(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lsof.8.html
+          - name: "fuser(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/fuser.1.html
+          - name: "kill(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/kill.1.html
+          - name: "umount(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/umount.8.html
 
       - type: reading
-        title: "Module 2: Partitioning Raw Storage"
+        title: "Splitting the Acre: Partitioning Raw Storage"
         path: sections/section-010/module-02/course.md
-
       - type: reading
-        title: "Module 2.1: Partition Tables: MBR vs GPT"
+        title: "Partition Tables: MBR vs GPT"
         path: sections/section-010/module-02/course-01-partition-tables-mbr-vs-gpt.md
-
       - type: reading
-        title: "Module 2.2: Tools, Alignment & the Kernel Re-read Problem"
+        title: "Tools, Alignment & the Kernel Re-read Problem"
         path: sections/section-010/module-02/course-02-tools-alignment-and-kernel-rescan.md
-
       - type: reading
         title: Question
         path: sections/section-010/module-02/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-010/module-02/labs/lab-01/solution.md
-
       - type: lab
         title: "Partitioning Raw Storage: GPT/MBR Lab"
         path: sections/section-010/module-02/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: partitions
+        task_kind: build
+        tags: [gpt, parted, fdisk, lsblk]
+        learning_goals:
+          - Find the new 2 GB raw disk with standard discovery commands
+          - Write a GPT partition table to the disk
+          - Create a first partition aligned to start at sector 2048
+        resources:
+          - name: "parted(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/parted.8.html
+          - name: "fdisk(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/fdisk.8.html
+          - name: "lsblk(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lsblk.8.html
 
       - type: reading
-        title: "Module 3: Securing Data-at-Rest with LUKS"
+        title: "Under Lock and Key: Securing Data-at-Rest with LUKS"
         path: sections/section-010/module-03/course.md
-
       - type: reading
-        title: "Module 3.1: The LUKS Model: Locking a Disk"
+        title: "The LUKS Model: Locking a Disk"
         path: sections/section-010/module-03/course-01-the-luks-model.md
-
       - type: reading
-        title: "Module 3.2: Creating a Container & Its Keyslots"
+        title: "Creating a Container & Its Keyslots"
         path: sections/section-010/module-03/course-02-creating-a-container-and-keyslots.md
-
       - type: reading
-        title: "Module 3.3: Opening, Using, Closing & What's Visible Outside"
+        title: "Opening, Using, Closing & What's Visible Outside"
         path: sections/section-010/module-03/course-03-opening-using-closing.md
-
       - type: reading
         title: Question
         path: sections/section-010/module-03/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-010/module-03/labs/lab-01/solution.md
-
       - type: lab
         title: "LUKS Block-level Encryption Lab"
         path: sections/section-010/module-03/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 20m
+        topic: encryption
+        task_kind: build
+        tags: [luks, cryptsetup, mkfs, ext4, mount, lsblk]
+        learning_goals:
+          - Create a LUKS container on the raw 2 GB disk with the given passphrase
+          - Open the container as /dev/mapper/secure_volume and format the mapping with ext4
+          - Mount the unlocked volume at /mnt/secure-data and prove it is writable with a marker file
+        resources:
+          - name: "cryptsetup(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/cryptsetup.8.html
+          - name: "cryptsetup-luksFormat(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/cryptsetup-luksFormat.8.html
+          - name: "cryptsetup-open(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/cryptsetup-open.8.html
+          - name: "dm-crypt (kernel documentation)"
+            url: https://docs.kernel.org/admin-guide/device-mapper/dm-crypt.html
 
       - type: reading
-        title: "Module 4: Filesystem Maintenance, Labeling, & Tuning"
+        title: "The Digital Auditor: Filesystem Maintenance, Labeling, and Tuning"
         path: sections/section-010/module-04/course.md
-
       - type: reading
-        title: "Module 4.1: Filesystem Corruption & the fsck Repair Model"
+        title: "Filesystem Corruption & the fsck Repair Model"
         path: sections/section-010/module-04/course-01-fsck-repair-model.md
-
       - type: reading
-        title: "Module 4.2: Labels, UUIDs & Tuning Check Intervals"
+        title: "Labels, UUIDs & Tuning Check Intervals"
         path: sections/section-010/module-04/course-02-labels-uuids-and-tuning.md
-
       - type: reading
         title: Question
         path: sections/section-010/module-04/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-010/module-04/labs/lab-01/solution.md
-
       - type: lab
         title: "Filesystem Repairs, Labeling, & UUIDs Lab"
         path: sections/section-010/module-04/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 20m
+        topic: filesystems
+        task_kind: troubleshooting
+        tags: [fsck, labels, uuids, fstab, tune2fs, blkid, ext4]
+        learning_goals:
+          - Repair a corrupted ext4 filesystem offline with e2fsck
+          - Give the repaired filesystem the label RECOVERED_VOL and read its UUID
+          - Mount it at /mnt/recovered through an /etc/fstab entry keyed by UUID
+        resources:
+          - name: "e2fsck(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/e2fsck.8.html
+          - name: "tune2fs(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/tune2fs.8.html
+          - name: "blkid(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/blkid.8.html
+          - name: "fstab(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/fstab.5.html
 
       - type: reading
-        title: "Module 5: /etc/fstab in Depth"
+        title: "/etc/fstab in Depth"
         path: sections/section-010/module-05/course.md
-
       - type: reading
-        title: "Module 5.1: fstab Fields & Stable Identifiers"
+        title: "fstab Fields & Stable Identifiers"
         path: sections/section-010/module-05/course-01-fields-and-stable-identifiers.md
-
       - type: reading
-        title: "Module 5.2: Options & Verifying Before You Trust It"
+        title: "Options & Verifying Before You Trust It"
         path: sections/section-010/module-05/course-02-options-and-verifying.md
-
       - type: reading
         title: Question
         path: sections/section-010/module-05/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-010/module-05/labs/lab-01/solution.md
-
       - type: lab
         title: "Persistent fstab Mounting Lab"
         path: sections/section-010/module-05/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: persistent-mounts
+        task_kind: build
+        tags: [fstab, uuids, mount-options, findmnt, mkfs, ext4, labels, blkid]
+        learning_goals:
+          - Format the raw disk with ext4 and write an /etc/fstab entry for /mnt/appdata keyed by its real UUID
+          - Set the nofail option with dump 0 and pass 2, then mount the entry with mount -a
+          - Check the entry with findmnt --verify so it is safe to trust at boot
+        resources:
+          - name: "fstab(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/fstab.5.html
+          - name: "findmnt(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/findmnt.8.html
+          - name: "mount(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mount.8.html
+          - name: "blkid(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/blkid.8.html
 
       - type: reading
-        title: "Module 6: systemd Mount and Automount Units"
+        title: "systemd Mount and Automount Units"
         path: sections/section-010/module-06/course.md
-
       - type: reading
-        title: "Module 6.1: How /etc/fstab Becomes systemd Units"
+        title: "How /etc/fstab Becomes systemd Units"
         path: sections/section-010/module-06/course-01-fstab-generated-units-and-naming.md
-
       - type: reading
-        title: "Module 6.2: Writing Native .mount and .automount Units"
+        title: "Writing Native .mount and .automount Units"
         path: sections/section-010/module-06/course-02-native-mount-and-automount-units.md
-
-      - type: reading
-        title: "Module 6.3: The fstab Shortcut and Common Pitfalls"
-        path: sections/section-010/module-06/course-03-fstab-shortcut-and-pitfalls.md
-
       - type: reading
         title: Question
         path: sections/section-010/module-06/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-010/module-06/labs/lab-01/solution.md
-
       - type: lab
         title: "systemd .mount and .automount Units Lab"
         path: sections/section-010/module-06/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 20m
+        topic: persistent-mounts
+        task_kind: build
+        tags: [systemd-mount, systemd-automount, idle-timeout, mkfs, ext4, uuids]
+        learning_goals:
+          - Write a native srv-appdata.mount unit that mounts an ext4 disk at /srv/appdata
+          - Write a paired srv-appdata.automount unit with an idle timeout and enable it instead of the mount unit
+          - Trigger the mount by accessing /srv/appdata and confirm the mount unit becomes active
+        resources:
+          - name: "systemd.mount manual page"
+            url: https://www.freedesktop.org/software/systemd/man/latest/systemd.mount.html
+          - name: "systemd.automount manual page"
+            url: https://www.freedesktop.org/software/systemd/man/latest/systemd.automount.html
+          - name: "systemd-escape manual page"
+            url: https://www.freedesktop.org/software/systemd/man/latest/systemd-escape.html
+      - type: reading
+        title: "The fstab Shortcut and Common Pitfalls"
+        path: sections/section-010/module-06/course-03-fstab-shortcut-and-pitfalls.md
 
       - type: reading
-        title: "Module 7: Removable Media & the FAT32 Filesystem"
+        title: "Removable Media & the FAT32 Filesystem"
         path: sections/section-010/module-07/course.md
-
       - type: reading
-        title: "Module 7.1: What FAT32 Is & Creating One"
+        title: "What FAT32 Is & Creating One"
         path: sections/section-010/module-07/course-01-what-fat32-is-and-creating-one.md
-
       - type: reading
-        title: "Module 7.2: Mounting FAT32 & Its Unix-less Quirks"
+        title: "Mounting FAT32 & Its Unix-less Quirks"
         path: sections/section-010/module-07/course-02-mounting-fat32-quirks.md
-
       - type: reading
         title: Question
         path: sections/section-010/module-07/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-010/module-07/labs/lab-01/solution.md
-
       - type: lab
         title: "FAT32 Removable Media Lab"
         path: sections/section-010/module-07/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: filesystems
+        task_kind: build
+        tags: [vfat, mkfs, labels, mount-options, permissions, mount]
+        learning_goals:
+          - Format the disk as FAT32 with the volume label USBDATA
+          - Mount it at /mnt/usbdata with a uid option so files belong to the ubuntu user
+          - Create /mnt/usbdata/proof.txt as ubuntu without sudo and show that ubuntu can write to it
+        resources:
+          - name: "mkfs.fat(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mkfs.fat.8.html
+          - name: "mount(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mount.8.html
+          - name: "VFAT filesystem (kernel documentation)"
+            url: https://docs.kernel.org/filesystems/vfat.html
 
       - type: reading
-        title: "Module 8: Backing Up & Cloning Storage Devices"
+        title: "Backing Up & Cloning Storage Devices"
         path: sections/section-010/module-08/course.md
-
       - type: reading
-        title: "Module 8.1: Cloning a Disk with dd"
+        title: "Cloning a Disk with dd"
         path: sections/section-010/module-08/course-01-cloning-a-disk-with-dd.md
-
       - type: reading
-        title: "Module 8.2: File-Level Backups with tar, and Verifying Them"
+        title: "File-Level Backups with tar, and Verifying Them"
         path: sections/section-010/module-08/course-02-tar-backups-and-verifying.md
-
       - type: reading
         title: Question
         path: sections/section-010/module-08/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-010/module-08/labs/lab-01/solution.md
-
       - type: lab
         title: "Disk Cloning & Backup Lab"
         path: sections/section-010/module-08/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: backup
+        task_kind: migration
+        tags: [dd, checksums, lsblk, blkid, labels]
+        learning_goals:
+          - Tell the source disk from the blank clone disk before writing anything
+          - Clone the source disk onto the clone disk byte for byte with dd
+          - Prove the clone matches the source with a checksum comparison
+        resources:
+          - name: "dd(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/dd.1.html
+          - name: "sha256sum(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/sha256sum.1.html
+          - name: "cmp(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/cmp.1.html
+          - name: "lsblk(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lsblk.8.html
 
       - type: reading
         title: "Section 010 Knowledge Check: Local Storage & Forensics"
         path: sections/section-010/quiz.md
-
       - type: reading
         title: Question
         path: sections/section-010/capstone/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-010/capstone/labs/lab-01/solution.md
-
       - type: lab
         title: "Local Storage Integration Capstone Lab"
         path: sections/section-010/capstone/labs/lab-01
         difficulty: advanced
+        estimated_duration: 30m
+        topic: filesystems
+        task_kind: troubleshooting
+        tags: [lsblk, mkfs, ext4, mount, df, busy-mount, umount, hidden-files]
+        learning_goals:
+          - Find the unused disk, format it with ext4, mount it at /mnt/backup-black and add an empty completed file
+          - Compare usage of the two mounted disks with df and empty the hidden .trash folder on the fuller one
+          - Find the process using more memory and unmount the disk that holds its executable
+        resources:
+          - name: "lsblk(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lsblk.8.html
+          - name: "df(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/df.1.html
+          - name: "umount(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/umount.8.html
+          - name: "lsof(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lsof.8.html
 
   - id: module-020
     title: "Section 020: Remote Filesystems (SSHFS and NFS)"
     description: >
-      Bridge filesystems over network wires using SSHFS for secure,
-      ad-hoc user-space mounts and NFS, the industry-standard kernel-space
-      protocol for high-performance, multi-client storage sharing.
+      Bridge filesystems over network wires using SSHFS for secure, ad-hoc
+      user-space mounts and NFS, the industry-standard kernel-space protocol
+      for high-performance, multi-client storage sharing.
 
     content:
       - type: reading
-        title: Section Overview
+        title: "Section Overview"
         path: sections/section-020/README.md
 
       - type: reading
-        title: "Module 1: Ad-Hoc Mounting with SSHFS"
+        title: "Ad-Hoc Mounting with SSHFS"
         path: sections/section-020/module-01/course.md
-
       - type: reading
-        title: "Module 1.1: SSHFS and the FUSE Mechanism"
+        title: "SSHFS and the FUSE Mechanism"
         path: sections/section-020/module-01/course-01-sshfs-and-fuse.md
-
       - type: reading
-        title: "Module 1.2: Performance, Sharing & Unmounting"
+        title: "Performance, Sharing & Unmounting"
         path: sections/section-020/module-01/course-02-performance-sharing-and-unmounting.md
-
       - type: reading
         title: Question
         path: sections/section-020/module-01/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-020/module-01/labs/lab-01/solution.md
-
       - type: lab
         title: "SSHFS User-space Mounting Lab"
         path: sections/section-020/module-01/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: remote-filesystems
+        task_kind: build
+        tags: [sshfs, fuse, mount-options, findmnt]
+        learning_goals:
+          - Mount a remote directory over SSH with sshfs at /mnt/sshfs-share without using /etc/fstab
+          - Enable allow_other so other users on the system can read the FUSE mount
+          - Confirm the remote welcome.txt file is reachable through the mount
+        resources:
+          - name: "sshfs(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/sshfs.1.html
+          - name: "findmnt(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/findmnt.8.html
+          - name: "mount(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mount.8.html
 
       - type: reading
-        title: "Module 2: Enterprise Sharing with NFS"
+        title: "Enterprise Sharing with NFS"
         path: sections/section-020/module-02/course.md
-
       - type: reading
-        title: "Module 2.1: Client-Server Model & Exports"
+        title: "Client-Server Model & Exports"
         path: sections/section-020/module-02/course-01-client-server-and-exports.md
-
       - type: reading
-        title: "Module 2.2: Mounting, Read-Only & a Down Server"
+        title: "Mounting, Read-Only & a Down Server"
         path: sections/section-020/module-02/course-02-mounting-readonly-and-server-down.md
-
       - type: reading
         title: Question
         path: sections/section-020/module-02/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-020/module-02/labs/lab-01/solution.md
-
       - type: lab
         title: "NFS Enterprise Network Sharing Lab"
         path: sections/section-020/module-02/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 20m
+        topic: remote-filesystems
+        task_kind: build
+        tags: [nfs, nfs-exports, exportfs, nfs-mount-options, mount]
+        learning_goals:
+          - Export /var/nfs/public to all clients in /etc/exports and reload the export table
+          - Mount the export from 127.0.0.1 at /mnt/nfs-share over NFS
+          - Prove the mount is read-only by showing that writing to it fails
+        resources:
+          - name: "exports(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/exports.5.html
+          - name: "exportfs(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/exportfs.8.html
+          - name: "nfs(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/nfs.5.html
+          - name: "Ubuntu Server: install and configure NFS"
+            url: https://documentation.ubuntu.com/server/how-to/networking/install-nfs/
 
       - type: reading
         title: "Section 020 Knowledge Check: Remote Filesystems"
         path: sections/section-020/quiz.md
-
       - type: reading
         title: Question
         path: sections/section-020/capstone/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-020/capstone/labs/lab-01/solution.md
-
       - type: lab
         title: "Remote Filesystems: SSHFS and NFS Capstone Lab"
         path: sections/section-020/capstone/labs/lab-01
         difficulty: advanced
+        estimated_duration: 30m
+        topic: remote-filesystems
+        task_kind: build
+        tags: [sshfs, fuse, nfs, nfs-exports, exportfs, nfs-mount-options, mount-options]
+        learning_goals:
+          - Mount app-srv1:/data-export on terminal with sshfs, read-write and with allow_other
+          - Export /nfs/share from terminal read-only to the 10.10.40.0/24 network
+          - Mount terminal:/nfs/share read-only at /nfs/terminal/share on app-srv1
+        resources:
+          - name: "sshfs(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/sshfs.1.html
+          - name: "exports(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/exports.5.html
+          - name: "exportfs(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/exportfs.8.html
+          - name: "nfs(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/nfs.5.html
 
   - id: module-030
     title: "Section 030: Dynamic & Redundant Volumes (LVM & RAID)"
     description: >
       Combine raw disks into a single managed block device. LVM pools
       physical disks and slices out flexible logical volumes that can be
-      expanded, migrated, or shrunk on the fly; software RAID (mdadm)
-      builds fault-tolerant arrays that survive a disk failure and rebuild
-      onto a replacement without downtime.
+      expanded, migrated, or shrunk on the fly; software RAID (mdadm) builds
+      fault-tolerant arrays that survive a disk failure and rebuild onto a
+      replacement without downtime.
 
     content:
       - type: reading
-        title: Section Overview
+        title: "Section Overview"
         path: sections/section-030/README.md
 
       - type: reading
-        title: "Module 1: LVM Fundamentals"
+        title: "LVM Fundamentals"
         path: sections/section-030/module-01/course.md
-
       - type: reading
-        title: "Module 1.1: Why LVM & the Three-Layer Model"
+        title: "Why LVM & the Three-Layer Model"
         path: sections/section-030/module-01/course-01-why-lvm-and-the-stack.md
-
       - type: reading
-        title: "Module 1.2: Physical Volumes & Volume Groups"
+        title: "Physical Volumes & Volume Groups"
         path: sections/section-030/module-01/course-02-pv-and-vg.md
-
       - type: reading
-        title: "Module 1.3: Logical Volumes"
+        title: "Logical Volumes"
         path: sections/section-030/module-01/course-03-logical-volumes.md
-
       - type: reading
         title: Question
         path: sections/section-030/module-01/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-030/module-01/labs/lab-01/solution.md
-
       - type: lab
         title: "LVM Fundamentals: PV, VG, and LV Allocation Lab"
         path: sections/section-030/module-01/labs/lab-01
         difficulty: intermediate
-
+        estimated_duration: 15m
+        topic: lvm
+        task_kind: build
+        tags: [pvcreate, vgcreate, lvcreate, mkfs, ext4, mount, lsblk]
+        learning_goals:
+          - Initialise the raw disk as a physical volume and pool it into the volume group vg_data
+          - Create the 500M logical volume lv_storage in vg_data
+          - Format lv_storage with ext4 and mount it at /mnt/lvm-storage
+        resources:
+          - name: "pvcreate(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/pvcreate.8.html
+          - name: "vgcreate(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/vgcreate.8.html
+          - name: "lvcreate(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lvcreate.8.html
+          - name: "lvm(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lvm.8.html
       - type: reading
         title: Question
         path: sections/section-030/module-01/labs/lab-02/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-030/module-01/labs/lab-02/solution.md
-
       - type: lab
         title: "LVM Fundamentals: Pooling PVs Across Disks Lab"
         path: sections/section-030/module-01/labs/lab-02
         difficulty: intermediate
+        estimated_duration: 20m
+        topic: lvm
+        task_kind: build
+        tags: [pvcreate, vgcreate, lvcreate, mkfs, ext4, mount, by-id-paths]
+        learning_goals:
+          - Pool two 1 GB physical volumes into the single volume group vg_pool
+          - Create the 1500M logical volume lv_wide, format it with ext4 and mount it at /mnt/lvm-wide
+          - Show with lvs -o +devices that the extents of lv_wide span both disks
+        resources:
+          - name: "pvcreate(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/pvcreate.8.html
+          - name: "vgcreate(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/vgcreate.8.html
+          - name: "lvcreate(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lvcreate.8.html
+          - name: "lvs(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lvs.8.html
 
       - type: reading
-        title: "Module 2: Advanced LVM Operations"
+        title: "Advanced LVM Operations"
         path: sections/section-030/module-02/course.md
-
       - type: reading
-        title: "Module 2.1: The LVM Stack, Recapped & Reading State"
+        title: "The LVM Stack, Recapped & Reading State"
         path: sections/section-030/module-02/course-01-stack-and-state.md
-
       - type: reading
-        title: "Module 2.2: Live Migration: pvmove"
+        title: "Live Migration: pvmove"
         path: sections/section-030/module-02/course-02-pvmove-migration.md
-
       - type: reading
-        title: "Module 2.3: vgreduce, and Growing/Shrinking a Volume"
+        title: "vgreduce, and Growing/Shrinking a Volume"
         path: sections/section-030/module-02/course-03-vgreduce-lvextend.md
-
-      - type: reading
-        title: "Module 2.4: Removing Any PV, and Physical Disk Safety"
-        path: sections/section-030/module-02/course-04-removing-any-pv-and-safety.md
-
       - type: reading
         title: Question
         path: sections/section-030/module-02/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-030/module-02/labs/lab-01/solution.md
-
       - type: lab
         title: "Advanced LVM: Live Extent Migration & VG Reduction Lab"
         path: sections/section-030/module-02/labs/lab-01
         difficulty: intermediate
-
+        estimated_duration: 20m
+        topic: lvm
+        task_kind: migration
+        tags: [pvmove, vgreduce, by-id-paths, findmnt]
+        learning_goals:
+          - Move every allocated extent off the old disk with pvmove while the volume stays mounted
+          - Remove the emptied disk from vg_migration with vgreduce and wipe its label with pvremove
+          - Confirm the logical volume is still mounted at /mnt/lvm-migration with its data intact
+        resources:
+          - name: "pvmove(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/pvmove.8.html
+          - name: "vgreduce(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/vgreduce.8.html
+          - name: "pvremove(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/pvremove.8.html
       - type: reading
         title: Question
         path: sections/section-030/module-02/labs/lab-02/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-030/module-02/labs/lab-02/solution.md
-
       - type: lab
         title: "LVM Live Grow & Safe Shrink Lab"
         path: sections/section-030/module-02/labs/lab-02
         difficulty: intermediate
-
+        estimated_duration: 30m
+        topic: lvm
+        task_kind: migration
+        tags: [lvextend, lvreduce, resize2fs, fsck, umount, mount, ext4]
+        learning_goals:
+          - Grow lv_data with lvextend and grow its ext4 filesystem to match
+          - Shrink lv_data to 350M safely by checking and shrinking the filesystem before the volume
+          - Remount the volume at /mnt/resize-data with marker.txt unchanged
+        resources:
+          - name: "lvextend(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lvextend.8.html
+          - name: "lvreduce(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lvreduce.8.html
+          - name: "resize2fs(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/resize2fs.8.html
+          - name: "e2fsck(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/e2fsck.8.html
       - type: reading
         title: Question
         path: sections/section-030/module-02/labs/lab-03/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-030/module-02/labs/lab-03/solution.md
-
       - type: lab
         title: "LVM: vgextend a Live Pool, Then Evacuate a Disk Lab"
         path: sections/section-030/module-02/labs/lab-03
         difficulty: intermediate
-
-      - type: reading
-        title: Question
-        path: sections/section-030/module-02/labs/lab-04/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-030/module-02/labs/lab-04/solution.md
-
-      - type: lab
-        title: "LVM: Removing One PV Out of Three, Mixed Extents Lab"
-        path: sections/section-030/module-02/labs/lab-04
-        difficulty: intermediate
-
+        estimated_duration: 20m
+        topic: lvm
+        task_kind: migration
+        tags: [pvcreate, vgextend, pvmove, vgreduce, by-id-paths]
+        learning_goals:
+          - Add the raw spare disk to the full volume group vg_live with pvcreate and vgextend
+          - Evacuate the old disk with pvmove, remove it with vgreduce and wipe it with pvremove
+          - Keep lv_active mounted at /mnt/lvm-live with its data intact throughout
+        resources:
+          - name: "vgextend(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/vgextend.8.html
+          - name: "pvmove(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/pvmove.8.html
+          - name: "vgreduce(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/vgreduce.8.html
+          - name: "pvremove(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/pvremove.8.html
       - type: reading
         title: Question
         path: sections/section-030/module-02/labs/lab-05/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-030/module-02/labs/lab-05/solution.md
-
       - type: lab
         title: "LVM: Growing an XFS Volume Lab"
         path: sections/section-030/module-02/labs/lab-05
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: lvm
+        task_kind: migration
+        tags: [lvextend, xfs, xfs-growfs, df]
+        learning_goals:
+          - Grow the logical volume lv_xfs by 400M with lvextend
+          - Grow the mounted XFS filesystem with xfs_growfs instead of resize2fs
+          - Confirm the larger size and that the existing marker file survived
+        resources:
+          - name: "lvextend(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lvextend.8.html
+          - name: "xfs_growfs(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/xfs_growfs.8.html
+          - name: "xfs(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/xfs.5.html
+      - type: reading
+        title: "Removing Any PV, and Physical Disk Safety"
+        path: sections/section-030/module-02/course-04-removing-any-pv-and-safety.md
+      - type: reading
+        title: Question
+        path: sections/section-030/module-02/labs/lab-04/question.md
+      - type: lab
+        title: "LVM: Removing One PV Out of Three, Mixed Extents Lab"
+        path: sections/section-030/module-02/labs/lab-04
+        difficulty: intermediate
+        estimated_duration: 20m
+        topic: lvm
+        task_kind: migration
+        tags: [pvmove, vgreduce, by-id-paths, findmnt]
+        learning_goals:
+          - Show with lvs -o +devices that lv_data spreads across three disks
+          - Evacuate the middle disk with pvmove onto the free space of the other two, then remove it with vgreduce and pvremove
+          - Confirm vg_split keeps two physical volumes and lv_data stays mounted at its original size with data intact
+        resources:
+          - name: "pvmove(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/pvmove.8.html
+          - name: "vgreduce(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/vgreduce.8.html
+          - name: "pvremove(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/pvremove.8.html
+          - name: "lvs(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lvs.8.html
 
       - type: reading
-        title: "Module 3: Software RAID Fundamentals"
+        title: "Software RAID Fundamentals"
         path: sections/section-030/module-03/course.md
-
       - type: reading
-        title: "Module 3.1: RAID Levels"
+        title: "RAID Levels"
         path: sections/section-030/module-03/course-01-raid-levels.md
-
       - type: reading
-        title: "Module 3.2: Creating & Persisting an Array"
+        title: "Creating & Persisting an Array"
         path: sections/section-030/module-03/course-02-creating-and-persisting.md
-
       - type: reading
         title: Question
         path: sections/section-030/module-03/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-030/module-03/labs/lab-01/solution.md
-
       - type: lab
         title: "RAID 5 Array Creation & Persistence Lab"
         path: sections/section-030/module-03/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 30m
+        topic: raid
+        task_kind: build
+        tags: [mdadm, raid5, mdadm-conf, initramfs, mkfs, ext4, fstab, uuids]
+        learning_goals:
+          - Create a healthy RAID 5 array /dev/md0 from three raw disks
+          - Format the array with ext4 and mount it at /mnt/raid-data
+          - Record the array in /etc/mdadm/mdadm.conf and add an /etc/fstab entry keyed by UUID
+        resources:
+          - name: "mdadm(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mdadm.8.html
+          - name: "mdadm.conf(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/mdadm.conf.5.html
+          - name: "RAID arrays (kernel documentation)"
+            url: https://docs.kernel.org/admin-guide/md.html
+          - name: "fstab(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/fstab.5.html
 
       - type: reading
-        title: "Module 4: RAID Maintenance and Recovery"
+        title: "RAID Maintenance and Recovery"
         path: sections/section-030/module-04/course.md
-
       - type: reading
-        title: "Module 4.1: Reading Health and Handling a Failure"
+        title: "Reading Health and Handling a Failure"
         path: sections/section-030/module-04/course-01-health-and-failure.md
-
-      - type: reading
-        title: "Module 4.2: Growing an Array and Getting Notified"
-        path: sections/section-030/module-04/course-02-growth-and-monitoring.md
-
       - type: reading
         title: Question
         path: sections/section-030/module-04/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-030/module-04/labs/lab-01/solution.md
-
       - type: lab
         title: "RAID Failure, Replacement & Rebuild Lab"
         path: sections/section-030/module-04/labs/lab-01
         difficulty: intermediate
-
+        estimated_duration: 20m
+        topic: raid
+        task_kind: migration
+        tags: [mdadm, raid5, raid-rebuild, mount]
+        learning_goals:
+          - Mark a RAID 5 member as failed and remove it from /dev/md0
+          - Add the spare disk as a replacement and wait for the rebuild to finish
+          - Confirm the array is clean with three active devices and the data file is intact
+        resources:
+          - name: "mdadm(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mdadm.8.html
+          - name: "RAID arrays (kernel documentation)"
+            url: https://docs.kernel.org/admin-guide/md.html
+      - type: reading
+        title: "Growing an Array and Getting Notified"
+        path: sections/section-030/module-04/course-02-growth-and-monitoring.md
       - type: reading
         title: Question
         path: sections/section-030/module-04/labs/lab-02/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-030/module-04/labs/lab-02/solution.md
-
       - type: lab
         title: "RAID Grow & Failure Monitoring Lab"
         path: sections/section-030/module-04/labs/lab-02
         difficulty: intermediate
+        estimated_duration: 30m
+        topic: raid
+        task_kind: migration
+        tags: [mdadm, raid5, raid-grow, resize2fs, mdadm-conf, mdadm-monitor]
+        learning_goals:
+          - Add a fourth disk to the RAID 5 array and reshape it to four devices
+          - Grow the ext4 filesystem on /dev/md0 to use the new capacity with the data file intact
+          - Configure failure notification with a MAILADDR line in /etc/mdadm/mdadm.conf
+        resources:
+          - name: "mdadm(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mdadm.8.html
+          - name: "mdadm.conf(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/mdadm.conf.5.html
+          - name: "resize2fs(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/resize2fs.8.html
 
       - type: reading
         title: "Section 030 Knowledge Check: Dynamic & Redundant Volumes"
         path: sections/section-030/quiz.md
-
       - type: reading
         title: Question
         path: sections/section-030/capstone/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-030/capstone/labs/lab-01/solution.md
-
       - type: lab
         title: "LVM Volume Groups and Logical Volumes Capstone Lab"
         path: sections/section-030/capstone/labs/lab-01
         difficulty: advanced
+        estimated_duration: 20m
+        topic: lvm
+        task_kind: migration
+        tags: [pvmove, vgreduce, vgcreate, lvcreate, mkfs, ext4]
+        learning_goals:
+          - Find the physical volume that holds vol1/data1 and remove it from vol1
+          - Create the volume group vol2 on the freed disk with a 50M logical volume named p1
+          - Format vol2/p1 with ext4
+        resources:
+          - name: "pvmove(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/pvmove.8.html
+          - name: "vgreduce(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/vgreduce.8.html
+          - name: "vgcreate(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/vgcreate.8.html
+          - name: "lvcreate(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lvcreate.8.html
 
   - id: module-040
     title: "Section 040: Swap Space Management"
     description: >
       Configure swap space as a safety valve against memory exhaustion:
-      provision swap files for emergencies and dedicated swap partitions
-      for performance, and tune relative priorities between them.
+      provision swap files for emergencies and dedicated swap partitions for
+      performance, and tune relative priorities between them.
 
     content:
       - type: reading
-        title: Section Overview
+        title: "Section Overview"
         path: sections/section-040/README.md
 
       - type: reading
-        title: "Module 1: Temporary Safety Valves: Swap Files"
+        title: "Temporary Safety Valves: Swap Files"
         path: sections/section-040/module-01/course.md
-
       - type: reading
-        title: "Module 1.1: What Swap Is & Checking What You Have"
+        title: "What Swap Is & Checking What You Have"
         path: sections/section-040/module-01/course-01-what-swap-is-and-checking-it.md
-
       - type: reading
-        title: "Module 1.2: Allocating, Activating & Deactivating a Swap File"
+        title: "Allocating, Activating & Deactivating a Swap File"
         path: sections/section-040/module-01/course-02-allocating-activating-deactivating.md
-
       - type: reading
         title: Question
         path: sections/section-040/module-01/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-040/module-01/labs/lab-01/solution.md
-
       - type: lab
         title: "Swap File Allocation & Security Lab"
         path: sections/section-040/module-01/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: swap
+        task_kind: build
+        tags: [swap-file, mkswap, swapon, fstab, permissions]
+        learning_goals:
+          - Create a 512MB swap file at /swapfile that only root can read and write
+          - Format and activate /swapfile as swap space
+          - Add /swapfile to /etc/fstab so it survives a reboot
+        resources:
+          - name: "mkswap(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mkswap.8.html
+          - name: "swapon(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/swapon.8.html
+          - name: "fallocate(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/fallocate.1.html
+          - name: "fstab(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/fstab.5.html
 
       - type: reading
-        title: "Module 2: Permanent Swap Partitions & Priority Scheduling"
+        title: "Permanent Swap Partitions & Priority Scheduling"
         path: sections/section-040/module-02/course.md
-
       - type: reading
-        title: "Module 2.1: Partition vs File & Creating the Partition"
+        title: "Partition vs File & Creating the Partition"
         path: sections/section-040/module-02/course-01-partition-vs-file-and-creating-it.md
-
       - type: reading
-        title: "Module 2.2: Formatting, Priorities & Persistence"
+        title: "Formatting, Priorities & Persistence"
         path: sections/section-040/module-02/course-02-formatting-priorities-persistence.md
-
       - type: reading
         title: Question
         path: sections/section-040/module-02/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-040/module-02/labs/lab-01/solution.md
-
       - type: lab
         title: "Swap Partition Formatting & Priorities Lab"
         path: sections/section-040/module-02/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: swap
+        task_kind: build
+        tags: [swap-partition, mkswap, swapon, swap-priority, fstab, by-id-paths]
+        learning_goals:
+          - Format the dedicated disk as swap and activate it
+          - Give the disk swap priority 10 and the existing /swapfile priority 5
+          - Persist both swap areas with their priorities in /etc/fstab
+        resources:
+          - name: "mkswap(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mkswap.8.html
+          - name: "swapon(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/swapon.8.html
+          - name: "fstab(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/fstab.5.html
 
       - type: reading
         title: "Section 040 Knowledge Check: Swap Space Management"
         path: sections/section-040/quiz.md
-
       - type: reading
         title: Question
         path: sections/section-040/capstone/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-040/capstone/labs/lab-01/solution.md
-
       - type: lab
         title: "Swap Space Management Capstone Lab"
         path: sections/section-040/capstone/labs/lab-01
         difficulty: advanced
+        estimated_duration: 30m
+        topic: swap
+        task_kind: build
+        tags: [swap-file, swap-partition, mkswap, swapon, swap-priority, fstab, permissions, lsblk]
+        learning_goals:
+          - Create, secure and activate a 2G swap file and persist it in /etc/fstab
+          - Find the unformatted partition with lsblk and activate it as swap
+          - Prefer the partition by giving it priority 10 and the swap file priority 5
+        resources:
+          - name: "mkswap(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/mkswap.8.html
+          - name: "swapon(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/swapon.8.html
+          - name: "fstab(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/fstab.5.html
+          - name: "fallocate(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/fallocate.1.html
 
   - id: module-050
     title: "Section 050: On-Demand Mounting (autofs)"
@@ -654,377 +906,491 @@ modules:
 
     content:
       - type: reading
-        title: Section Overview
+        title: "Section Overview"
         path: sections/section-050/README.md
 
       - type: reading
-        title: "Module 1: On-Demand Mounting Fundamentals"
+        title: "On-Demand Mounting Fundamentals"
         path: sections/section-050/module-01/course.md
-
       - type: reading
-        title: "Module 1.1: How On-Demand Mounting Works, and Enabling autofs"
+        title: "How On-Demand Mounting Works, and Enabling autofs"
         path: sections/section-050/module-01/course-01-mechanism-and-enabling.md
-
       - type: reading
-        title: "Module 1.2: The Master Map, Triggering & Idle Unmount"
+        title: "The Master Map, Triggering & Idle Unmount"
         path: sections/section-050/module-01/course-02-master-map-and-triggering.md
-
       - type: reading
         title: Question
         path: sections/section-050/module-01/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-050/module-01/labs/lab-01/solution.md
-
       - type: lab
         title: "autofs Direct Maps & Timeouts Lab"
         path: sections/section-050/module-01/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 20m
+        topic: automount
+        task_kind: build
+        tags: [autofs, auto-master, direct-map, idle-timeout]
+        learning_goals:
+          - Add a direct map to /etc/auto.master with a 60 second timeout
+          - Map /mnt/secure_archive to a bind mount of /var/data/archive in the direct map file
+          - Trigger the mount by reading the archive file through /mnt/secure_archive
+        resources:
+          - name: "auto.master(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/auto.master.5.html
+          - name: "autofs(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/autofs.5.html
+          - name: "automount(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/automount.8.html
 
       - type: reading
-        title: "Module 2: Network Automount Maps & Tuning"
+        title: "Network Automount Maps & Tuning"
         path: sections/section-050/module-02/course.md
-
       - type: reading
-        title: "Module 2.1: Discovering Exports & Writing a Sub-map"
+        title: "Discovering Exports & Writing a Sub-map"
         path: sections/section-050/module-02/course-01-discovering-and-submap.md
-
       - type: reading
-        title: "Module 2.2: Idle Unmount & Wildcards"
+        title: "Idle Unmount & Wildcards"
         path: sections/section-050/module-02/course-02-wildcards-and-idle-unmount.md
-
       - type: reading
         title: Question
         path: sections/section-050/module-02/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-050/module-02/labs/lab-01/solution.md
-
       - type: lab
         title: "Network autofs Wildcard Mounts Lab"
         path: sections/section-050/module-02/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 20m
+        topic: automount
+        task_kind: build
+        tags: [autofs, auto-master, indirect-map, wildcard-map, idle-timeout, nfs]
+        learning_goals:
+          - Add an indirect map for /mnt/net to /etc/auto.master with a 120 second timeout
+          - Write a wildcard entry that uses * and & to mount any NFS export under /var/nfs/exports on demand
+          - Trigger the NFS mount by accessing /mnt/net/project-alpha
+        resources:
+          - name: "auto.master(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/auto.master.5.html
+          - name: "autofs(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/autofs.5.html
+          - name: "nfs(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/nfs.5.html
 
       - type: reading
         title: "Section 050 Knowledge Check: On-Demand Mounting (autofs)"
         path: sections/section-050/quiz.md
-
       - type: reading
         title: Question
         path: sections/section-050/capstone/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-050/capstone/labs/lab-01/solution.md
-
       - type: lab
         title: "Filesystem Automount with autofs Capstone Lab"
         path: sections/section-050/capstone/labs/lab-01
         difficulty: advanced
+        estimated_duration: 30m
+        topic: automount
+        task_kind: build
+        tags: [autofs, auto-master, indirect-map, idle-timeout, nfs, fstab]
+        learning_goals:
+          - Configure an autofs indirect map so that /mnt/auto/shared mounts data-001:/exports/shared on demand
+          - Set a 300 second idle timeout so the share is released after five minutes
+          - Keep the share out of /etc/fstab and prove access triggers a live mount
+        resources:
+          - name: "auto.master(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/auto.master.5.html
+          - name: "autofs(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/autofs.5.html
+          - name: "automount(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/automount.8.html
+          - name: "nfs(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/nfs.5.html
 
   - id: module-060
     title: "Section 060: Virtual Filesystems (/proc and /sys)"
     description: >
-      Explore the "everything is a file" philosophy of Linux: inspect
-      live kernel memory, process, and file-descriptor state through
-      /proc, and adjust active hardware/kernel tuning through /sys and
-      sysctl.
+      Explore the "everything is a file" philosophy of Linux: inspect live
+      kernel memory, process, and file-descriptor state through /proc, and
+      adjust active hardware/kernel tuning through /sys and sysctl.
 
     content:
       - type: reading
-        title: Section Overview
+        title: "Section Overview"
         path: sections/section-060/README.md
 
       - type: reading
-        title: "Module 1: The Process Blueprint: Inside /proc"
+        title: "The Process Blueprint: Inside /proc"
         path: sections/section-060/module-01/course.md
-
       - type: reading
-        title: "Module 1.1: /proc as a Live View & System-wide Files"
+        title: "/proc as a Live View & System-wide Files"
         path: sections/section-060/module-01/course-01-live-view-and-system-wide-files.md
-
       - type: reading
-        title: "Module 1.2: Per-Process Directories & Open File Descriptors"
+        title: "Per-Process Directories & Open File Descriptors"
         path: sections/section-060/module-01/course-02-per-process-and-file-descriptors.md
-
       - type: reading
         title: Question
         path: sections/section-060/module-01/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-060/module-01/labs/lab-01/solution.md
-
       - type: lab
         title: "proc System Limits & File Descriptors Auditing Lab"
         path: sections/section-060/module-01/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: virtual-filesystems
+        task_kind: build
+        tags: [procfs, file-descriptors, sysctl, lsof]
+        learning_goals:
+          - Find the PID of systemd-journald and count its open file descriptors under /proc
+          - Read the system-wide open file limit from the kernel and record it in an audit file
+        resources:
+          - name: "proc(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/proc.5.html
+          - name: "proc_pid_fd(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/proc_pid_fd.5.html
+          - name: "/proc/sys/fs (kernel documentation)"
+            url: https://docs.kernel.org/admin-guide/sysctl/fs.html
 
       - type: reading
-        title: "Module 2: The Hardware Tree & Runtime Tuning: /sys & sysctl"
+        title: "The Hardware Tree & Runtime Tuning: /sys & sysctl"
         path: sections/section-060/module-02/course.md
-
       - type: reading
-        title: "Module 2.1: The Hardware Tree & the Mount List"
+        title: "The Hardware Tree & the Mount List"
         path: sections/section-060/module-02/course-01-hardware-tree-and-mount-list.md
-
       - type: reading
-        title: "Module 2.2: sysctl: Viewing, Changing & Persisting"
+        title: "sysctl: Viewing, Changing & Persisting"
         path: sections/section-060/module-02/course-02-sysctl-viewing-changing-persisting.md
-
       - type: reading
         title: Question
         path: sections/section-060/module-02/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-060/module-02/labs/lab-01/solution.md
-
       - type: lab
         title: "sysctl IPv4 Forwarding Tuning Lab"
         path: sections/section-060/module-02/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: virtual-filesystems
+        task_kind: build
+        tags: [sysctl, sysctl-d, procfs, reboot-persistence]
+        learning_goals:
+          - Turn on IPv4 forwarding in the running kernel without rebooting
+          - Persist net.ipv4.ip_forward = 1 in a sysctl configuration file so it survives a reboot
+        resources:
+          - name: "sysctl(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/sysctl.8.html
+          - name: "sysctl.d(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/sysctl.d.5.html
+          - name: "IP sysctl (kernel documentation)"
+            url: https://docs.kernel.org/networking/ip-sysctl.html
 
       - type: reading
         title: "Section 060 Knowledge Check: Virtual Filesystems"
         path: sections/section-060/quiz.md
-
       - type: reading
         title: Question
         path: sections/section-060/capstone/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-060/capstone/labs/lab-01/solution.md
-
       - type: lab
         title: "Virtual Filesystems /proc and /sys Capstone Lab"
         path: sections/section-060/capstone/labs/lab-01
         difficulty: advanced
+        estimated_duration: 20m
+        topic: virtual-filesystems
+        task_kind: build
+        tags: [procfs, sysctl, file-descriptors, proc-mounts, findmnt]
+        learning_goals:
+          - Enable IPv4 forwarding for the current boot only, without writing it to any sysctl file
+          - Read memory totals, a process's open file descriptors and the root mount options straight from /proc
+        resources:
+          - name: "proc(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/proc.5.html
+          - name: "proc_meminfo(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/proc_meminfo.5.html
+          - name: "proc_pid_fd(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/proc_pid_fd.5.html
+          - name: "sysctl(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/sysctl.8.html
 
   - id: module-070
     title: "Section 070: Storage Performance Monitoring"
     description: >
       Shift focus from setting up storage to diagnosing it: monitor disk
-      queue latency, track live process-level I/O throughput, and trace
-      disk activity to the offending application.
+      queue latency, track live process-level I/O throughput, and trace disk
+      activity to the offending application.
 
     content:
       - type: reading
-        title: Section Overview
+        title: "Section Overview"
         path: sections/section-070/README.md
 
       - type: reading
-        title: "Module 1: Device-Level Diagnostics: Queues & Latency"
+        title: "Device-Level Diagnostics: Queues & Latency"
         path: sections/section-070/module-01/course.md
-
       - type: reading
-        title: "Module 1.1: I/O Wait, IOPS & Throughput"
+        title: "I/O Wait, IOPS & Throughput"
         path: sections/section-070/module-01/course-01-io-wait-iops-throughput.md
-
       - type: reading
-        title: "Module 1.2: Reading iostat & Watching Saturation"
+        title: "Reading iostat & Watching Saturation"
         path: sections/section-070/module-01/course-02-iostat-and-saturation.md
-
       - type: reading
         title: Question
         path: sections/section-070/module-01/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-070/module-01/labs/lab-01/solution.md
-
       - type: lab
         title: "Storage Performance Monitoring: iostat Wait Latency Lab"
         path: sections/section-070/module-01/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: performance
+        task_kind: troubleshooting
+        tags: [iostat, disk-latency, io-wait, lsblk]
+        learning_goals:
+          - Watch extended device statistics with iostat to spot the saturated disk
+          - Record the short kernel name of the busiest disk in /opt/course/audit/slow_device.txt
+        resources:
+          - name: "iostat(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/iostat.1.html
+          - name: "I/O statistics fields (kernel documentation)"
+            url: https://docs.kernel.org/admin-guide/iostats.html
 
       - type: reading
-        title: "Module 2: Process-Level Auditing: Identifying the Culprit"
+        title: "Process-Level Auditing: Identifying the Culprit"
         path: sections/section-070/module-02/course.md
-
       - type: reading
-        title: "Module 2.1: From Device to Process: iotop & pidstat"
+        title: "From Device to Process: iotop & pidstat"
         path: sections/section-070/module-02/course-01-iotop-and-pidstat.md
-
       - type: reading
-        title: "Module 2.2: lsof & Closing the Loop"
+        title: "lsof & Closing the Loop"
         path: sections/section-070/module-02/course-02-lsof-and-closing-the-loop.md
-
       - type: reading
         title: Question
         path: sections/section-070/module-02/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-070/module-02/labs/lab-01/solution.md
-
       - type: lab
         title: "Storage Performance: iotop and lsof Active Profiling Lab"
         path: sections/section-070/module-02/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: performance
+        task_kind: troubleshooting
+        tags: [iotop, pidstat, lsof, file-descriptors]
+        learning_goals:
+          - Identify the PID of the process generating heavy writes with iotop or pidstat
+          - Find the log file that process writes to with lsof and record both findings in culprit.txt
+        resources:
+          - name: "iotop(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/iotop.8.html
+          - name: "pidstat(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/pidstat.1.html
+          - name: "lsof(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/lsof.8.html
 
       - type: reading
         title: "Section 070 Knowledge Check: Storage Performance"
         path: sections/section-070/quiz.md
-
       - type: reading
         title: Question
         path: sections/section-070/capstone/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-070/capstone/labs/lab-01/solution.md
-
       - type: lab
         title: "Storage Performance Monitoring Capstone Lab"
         path: sections/section-070/capstone/labs/lab-01
         difficulty: advanced
+        estimated_duration: 30m
+        topic: performance
+        task_kind: troubleshooting
+        tags: [iostat, iotop, pidstat, disk-latency, io-wait, lsof, findmnt]
+        learning_goals:
+          - Identify the saturated block device and the mountpoint it backs
+          - Identify the process that generates the load and whether the load is read or write
+          - Record device, pid, process, direction and mountpoint in /opt/course/audit/io-report.txt
+        resources:
+          - name: "iostat(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/iostat.1.html
+          - name: "iotop(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/iotop.8.html
+          - name: "pidstat(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/pidstat.1.html
+          - name: "findmnt(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/findmnt.8.html
 
   - id: module-080
     title: "Section 080: Capacity, Quotas & the Filesystem Hierarchy"
     description: >
       Know and control where disk space goes: audit consumption with du
-      while staying on one device, cap per-user, per-group, and
-      per-directory usage with ext4 and XFS quotas (including project
-      quotas), and resolve the symbolic links the FHS relies on.
+      while staying on one device, cap per-user, per-group, and per-
+      directory usage with ext4 and XFS quotas (including project quotas),
+      and resolve the symbolic links the FHS relies on.
 
     content:
       - type: reading
-        title: Section Overview
+        title: "Section Overview"
         path: sections/section-080/README.md
 
       - type: reading
-        title: "Module 1: Directory Capacity Auditing"
+        title: "Directory Capacity Auditing"
         path: sections/section-080/module-01/course.md
-
       - type: reading
-        title: "Module 1.1: df vs du, and Reading du at a Sensible Depth"
+        title: "df vs du, and Reading du at a Sensible Depth"
         path: sections/section-080/module-01/course-01-df-vs-du-depth-and-units.md
-
       - type: reading
-        title: "Module 1.2: Staying on One Filesystem & Allocated vs Apparent Size"
+        title: "Staying on One Filesystem & Allocated vs Apparent Size"
         path: sections/section-080/module-01/course-02-one-filesystem-and-apparent-size.md
-
       - type: reading
         title: Question
         path: sections/section-080/module-01/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-080/module-01/labs/lab-01/solution.md
-
       - type: lab
         title: "Directory Capacity Profiling (du -xh) Lab"
         path: sections/section-080/module-01/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: capacity
+        task_kind: build
+        tags: [du, df, findmnt, mount]
+        learning_goals:
+          - Measure the immediate subdirectories of /var/log with du at a depth of one
+          - Stay on the root filesystem with du -x so a separately mounted disk is not counted
+          - Record the largest local subdirectory in /opt/course/audit/heavy_dirs.txt
+        resources:
+          - name: "du(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/du.1.html
+          - name: "df(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/df.1.html
+          - name: "findmnt(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/findmnt.8.html
 
       - type: reading
-        title: "Module 2: User and Group Disk Quotas"
+        title: "User and Group Disk Quotas"
         path: sections/section-080/module-02/course.md
-
       - type: reading
-        title: "Module 2.1: Turning Quotas On & Setting Limits"
+        title: "Turning Quotas On & Setting Limits"
         path: sections/section-080/module-02/course-01-turning-on-and-setting-limits.md
-
-      - type: reading
-        title: "Module 2.2: Hitting the Limit & the Grace Period"
-        path: sections/section-080/module-02/course-02-hitting-the-limit-and-grace-period.md
-
       - type: reading
         title: Question
         path: sections/section-080/module-02/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-080/module-02/labs/lab-01/solution.md
-
       - type: lab
         title: "ext4 User & Group Quotas Lab"
         path: sections/section-080/module-02/labs/lab-01
         difficulty: intermediate
-
+        estimated_duration: 20m
+        topic: quotas
+        task_kind: build
+        tags: [quota, user-quota, group-quota, mount-options, fstab]
+        learning_goals:
+          - Build the quota files and turn on user and group quota enforcement for /quota
+          - Set block limits for alice, bob and the group team
+          - Confirm the limits with repquota
+        resources:
+          - name: "quotacheck(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/quotacheck.8.html
+          - name: "quotaon(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/quotaon.8.html
+          - name: "setquota(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/setquota.8.html
+          - name: "repquota(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/repquota.8.html
+      - type: reading
+        title: "Hitting the Limit & the Grace Period"
+        path: sections/section-080/module-02/course-02-hitting-the-limit-and-grace-period.md
       - type: reading
         title: Question
         path: sections/section-080/module-02/labs/lab-02/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-080/module-02/labs/lab-02/solution.md
-
       - type: lab
         title: "ext4 Quota Hard Limit & Grace Period Lab"
         path: sections/section-080/module-02/labs/lab-02
         difficulty: intermediate
+        estimated_duration: 20m
+        topic: quotas
+        task_kind: build
+        tags: [quota, user-quota, grace-period, du, permissions]
+        learning_goals:
+          - Show that a write by carol is cut off at her 25M hard limit
+          - Set a two minute block grace period and push carol over her soft limit but under her hard limit
+          - Capture repquota output that shows carol over her soft limit in /root/grace-evidence.txt
+        resources:
+          - name: "setquota(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/setquota.8.html
+          - name: "repquota(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/repquota.8.html
+          - name: "quota(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/quota.1.html
 
       - type: reading
-        title: "Module 3: XFS Quotas and Project Quotas"
+        title: "XFS Quotas and Project Quotas"
         path: sections/section-080/module-03/course.md
-
       - type: reading
-        title: "Module 3.1: XFS Quotas & User Limits"
+        title: "XFS Quotas & User Limits"
         path: sections/section-080/module-03/course-01-xfs-quotas-and-user-limits.md
-
       - type: reading
-        title: "Module 3.2: Defining & Enforcing a Project Quota"
+        title: "Defining & Enforcing a Project Quota"
         path: sections/section-080/module-03/course-02-project-quotas.md
-
       - type: reading
         title: Question
         path: sections/section-080/module-03/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-080/module-03/labs/lab-01/solution.md
-
       - type: lab
         title: "XFS Project Quota Lab"
         path: sections/section-080/module-03/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 20m
+        topic: quotas
+        task_kind: build
+        tags: [xfs-quota, xfs, user-quota, project-quota, mount-options]
+        learning_goals:
+          - Set a 40m soft and 50m hard block quota for alice on the XFS filesystem /srv/xfs
+          - Register project webdata with ID 42 for /srv/xfs/webdata in /etc/projects and /etc/projid and initialise it
+          - Give the webdata project a 100m hard block limit and confirm it with xfs_quota reports
+        resources:
+          - name: "xfs_quota(8) manual page"
+            url: https://man7.org/linux/man-pages/man8/xfs_quota.8.html
+          - name: "xfs(5) manual page"
+            url: https://man7.org/linux/man-pages/man5/xfs.5.html
 
       - type: reading
-        title: "Module 4: Navigating Shortcuts: Symbolic Links & FHS"
+        title: "Navigating Shortcuts: Symbolic Links & FHS"
         path: sections/section-080/module-04/course.md
-
       - type: reading
-        title: "Module 4.1: What a Symlink Is & Finding Them"
+        title: "What a Symlink Is & Finding Them"
         path: sections/section-080/module-04/course-01-what-a-symlink-is-and-finding-them.md
-
       - type: reading
-        title: "Module 4.2: Resolving, du's Blind Spot & Removing Safely"
+        title: "Resolving, du's Blind Spot & Removing Safely"
         path: sections/section-080/module-04/course-02-resolving-du-and-removing-safely.md
-
       - type: reading
         title: Question
         path: sections/section-080/module-04/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-080/module-04/labs/lab-01/solution.md
-
       - type: lab
         title: "Navigating Shortcuts: Symbolic Links Lab"
         path: sections/section-080/module-04/labs/lab-01
         difficulty: intermediate
+        estimated_duration: 15m
+        topic: links-and-hierarchy
+        task_kind: build
+        tags: [symlinks, readlink, find, fhs]
+        learning_goals:
+          - Find every symbolic link under /usr/share/lab-links and read its target with readlink
+          - Record the links that point into /etc/alternative or /opt/target, sorted, in symlink_report.txt
+        resources:
+          - name: "symlink(7) manual page"
+            url: https://man7.org/linux/man-pages/man7/symlink.7.html
+          - name: "readlink(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/readlink.1.html
+          - name: "find(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/find.1.html
 
       - type: reading
         title: "Section 080 Knowledge Check: Capacity, Quotas & Symlinks"
         path: sections/section-080/quiz.md
-
       - type: reading
         title: Question
         path: sections/section-080/capstone/labs/lab-01/question.md
-
-      - type: reading
-        title: Solution Walkthrough
-        path: sections/section-080/capstone/labs/lab-01/solution.md
-
       - type: lab
         title: "Filesystem Hierarchy and Directory Sizing Capstone Lab"
         path: sections/section-080/capstone/labs/lab-01
         difficulty: advanced
+        estimated_duration: 30m
+        topic: capacity
+        task_kind: build
+        tags: [du, df, symlinks, fhs, procfs, sysfs, findmnt]
+        learning_goals:
+          - Write a size report of every top-level directory under / sorted largest first, excluding pseudo-filesystems
+          - Keep du on one filesystem so the large mount under /mnt is not counted
+          - List each top-level directory that is a symlink, with its target, in symlinks.txt
+        resources:
+          - name: "du(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/du.1.html
+          - name: "hier(7) manual page"
+            url: https://man7.org/linux/man-pages/man7/hier.7.html
+          - name: "symlink(7) manual page"
+            url: https://man7.org/linux/man-pages/man7/symlink.7.html
+          - name: "df(1) manual page"
+            url: https://man7.org/linux/man-pages/man1/df.1.html
 
   - id: module-090
     title: "LFCS Storage Domain Certification Quiz"
@@ -1035,5 +1401,5 @@ modules:
 
     content:
       - type: reading
-        title: "Final Domain Certification Quiz"
+        title: "LFCS Storage Domain Certification Quiz"
         path: sections/final-domain-quiz.md
