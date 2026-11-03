@@ -1,48 +1,46 @@
 # The Lifecycle of Local Storage
 
-<!-- astrona:playground -->
-> [!NOTE]
-> 🧪 **Hands-on playground for this module** — a clean, throwaway machine to explore on. No task, no grading. Folder: [`playground/`](https://github.com/astrona-io/ATS004/tree/main/sections/section-010/module-01/playground)
->
-> ```sh
-> astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-010/module-01/playground
-> astrona destroy section-010-module-01-playground
-> ```
+When you plug a USB stick into a laptop, a file manager window usually pops open a few seconds later. On a Linux server, nothing happens. A new disk is an empty cargo hold: the ship's core (the kernel) can see the space, but there are no shelves, no labels and no hatch to reach it through.
 
-When you plug a USB stick into a laptop, a file manager window usually pops open a few seconds later. On a Linux server, nothing happens. A newly attached disk is just a block of raw sectors that the kernel can see but has not been told what to do with. Turning that raw hardware into a directory you can write files to is a deliberate, several-step process, and doing it is a core part of a system administrator's job.
-
-This module walks through that process end to end: how Linux presents a disk before it is usable, how you put a filesystem on it, how you attach that filesystem to the directory tree, and how you deal with the common problem of a disk that refuses to detach because something is still using it.
-
-```mermaid
-flowchart LR
-    A["raw block device<br/>no UUID, no label"] -->|mkfs.ext4| B["formatted filesystem<br/>UUID + TYPE=ext4"]
-    B -->|mount| C["mounted<br/>visible in df -h"]
-    C -->|"umount (clean)"| A
-    C -->|"umount (busy)"| D["target is busy"]
-    D -->|"lsof +D / fuser -mv"| E["offending PID found"]
-    E -->|"SIGTERM, then SIGKILL if needed"| C
-```
-
-## How this module is organised
-
-1. **[Part 1 — Discovery, Formatting & Mounting](./course-01-discovery-formatting-mounting.md)** — telling a raw disk from a formatted one, what `mkfs.ext4` actually lays down (and why you can run out of inodes with free space left), and what the kernel's mount table really changes when you run `mount`.
-2. **[Part 2 — Diagnosing a Stuck Disk](./course-02-diagnosing-a-stuck-disk.md)** — why `umount` refuses with "target is busy" (a reference count, not a guess), reading `lsof`/`fuser` to find the exact holder, the `SIGTERM`-before-`SIGKILL` eviction ladder, and finding space hidden in dot-directories.
+Astronaut, in this module you turn that empty hold into a place where you can store files. You find the raw disk, build the shelves on it with a filesystem, and dock it to the ship's one corridor of directories. Then you learn what to do when a hold refuses to undock because crew members are still inside it, and how to find cargo hidden on shelves you cannot see.
 
 ## Learning objectives
 
 After this module you can:
 
-- Tell a raw, unformatted block device apart from a formatted one using `lsblk` and `blkid`.
-- Create an ext4 filesystem on a raw disk with `mkfs.ext4`, and explain what the format-time inode budget means for a filesystem that later runs out of files despite having free space.
-- Explain what `mount` changes in the kernel's active-mounts table, and why mounting and unmounting are instant regardless of filesystem size.
-- Mount a filesystem onto a directory and confirm the result with `df -h`.
-- Explain why the kernel refuses to unmount a filesystem that is in use, in terms of the reference count it tracks.
-- Identify which process is holding a mount open — and which kind of reference it holds (open file, cwd, executable, or mmap) — using `lsof` and `fuser -mv`.
-- Stop a blocking process safely by sending `SIGTERM` before escalating to `SIGKILL`.
-- Find space consumed by hidden dot-directories with `ls -la` and `du -sh`.
+- Tell a raw, unformatted disk apart from a formatted one with `lsblk` and `blkid`.
+- Create an ext4 filesystem on a raw disk with `mkfs.ext4`, and explain why a filesystem can run out of room for new files while it still has free space (its inode budget is fixed when you format it).
+- Explain what `mount` changes in the kernel's table of active mounts, and why mounting and unmounting take the same short time for any size of disk.
+- Mount a filesystem on a directory and confirm the result with `df -h`.
+- Explain why the kernel refuses to unmount a filesystem that is in use, using the count of references it keeps.
+- Find which process holds a mount open, and which kind of hold it has (an open file, its working directory, its program file or a memory-mapped file), with `lsof` and `fuser -mv`.
+- Stop a blocking process safely: send `SIGTERM` first, and `SIGKILL` only if that fails.
+- Find space used by hidden dot-directories with `ls -la` and `du -sh`.
 
 ## Before you start
 
-You should be comfortable moving around a Linux shell: `cd`, `ls`, `sudo`, and reading command output. You do not need any prior storage experience.
+Every mission starts with a pre-flight check. Make sure you know the basics below, and know what waits for you in your training ship.
 
-The linked playground gives you an Ubuntu server VM with passwordless `sudo` and one spare 2 GB disk attached raw and unformatted (commonly `/dev/vdb`). Every command block in both parts is meant to be run in that VM's shell after you have connected with `astrona ssh astro-section-010-module-01-playground`. All the tools used here — `lsblk`, `blkid`, `mkfs.ext4`, `mount`, `df`, `lsof`, `fuser` — are already installed.
+### What you should already know
+
+- How to move around a Linux shell: `cd`, `ls`, `sudo`, and reading command output.
+- You do not need any earlier storage experience.
+
+### What is in your playground
+
+Your playground is one training spaceship: an Ubuntu 24.04 virtual machine with passwordless `sudo`.
+
+- The system disk, `/dev/vda`, holds the operating system and is mounted at `/`.
+- One extra 2 GB disk is attached raw and unformatted. It is usually `/dev/vdb`, and it is also reachable as `/dev/disk/by-id/virtio-s10m01-raw`. Always confirm the name with `lsblk`. The playground wipes this disk back to raw every time it starts.
+- Every tool in this module is already installed: `lsblk`, `blkid`, `mkfs.ext4`, `mount`, `df`, `lsof` and `fuser`.
+
+Start the playground and connect to it with `astrona ssh section-010-module-01-playground`. Run every command in the parts in that shell.
+
+<!-- astrona:playground -->
+
+## The parts of this module
+
+1. [Discovery, Formatting and Mounting](./course-01-discovery-formatting-mounting.md): find the raw disk, put an ext4 filesystem on it, and mount it.
+2. [Diagnosing a Stuck Disk](./course-02-diagnosing-a-stuck-disk.md): find the process that keeps a mount busy, stop it safely, and unmount.
+3. [Finding Hidden Space](./course-03-finding-hidden-space.md): find disk space used by hidden dot-directories.
+4. [Wrap-Up: Mission Debrief](./course-04-wrap-up.md): what you learned, your missions, questions to check yourself, and cleanup.

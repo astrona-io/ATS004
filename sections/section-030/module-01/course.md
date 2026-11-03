@@ -13,23 +13,25 @@ A plain partition is welded to one disk at a fixed size. When it fills up, growi
 
 ```mermaid
 flowchart BT
-    subgraph PVs["Physical Volumes -- pvcreate"]
+    subgraph PVs["Physical Volumes"]
         direction LR
         PV1["/dev/vdc"]
         PV2["/dev/vdd"]
     end
-    PVs --> VG["Volume Group -- vgcreate<br/>data_pool: one pool of 4 MiB extents"]
-    VG --> LV1["Logical Volume -- lvcreate<br/>app_data (50G)"]
-    VG --> LV2["Logical Volume -- lvcreate<br/>logs (10G)"]
+    PVs -->|"vgcreate"| VG["Volume Group"]
+    VG -->|"lvcreate"| LV1["app_data (50G)"]
+    VG -->|"lvcreate"| LV2["logs (10G)"]
     LV1 --> FS1["mkfs + mount"]
     LV2 --> FS2["mkfs + mount"]
 ```
 
 ## How this module is organised
 
-1. **[Part 1 — Why LVM & the Three-Layer Model](./course-01-why-lvm-and-the-stack.md)** — what a partition table can't do, the PV/VG/LV stack, and the extent-list model that explains every command in this module and the next.
-2. **[Part 2 — Physical Volumes & Volume Groups](./course-02-pv-and-vg.md)** — marking disks with `pvcreate`, and pooling them into an extent pool with `vgcreate`.
-3. **[Part 3 — Logical Volumes](./course-03-logical-volumes.md)** — carving an LV with `lvcreate`, where the default allocator actually places its extents, and the module's pitfalls.
+1. **[Why LVM & the Three-Layer Model](./course-01-why-lvm-and-the-stack.md)** — what a partition table can't do, the PV/VG/LV stack, and the extent-list model that explains every LVM command.
+2. **[Physical Volumes & Volume Groups](./course-02-pv-and-vg.md)** — marking disks with `pvcreate`, and pooling them into an extent pool with `vgcreate`.
+3. **[Logical Volumes](./course-03-logical-volumes.md)** — carving an LV with `lvcreate` and where the default allocator places its extents. Two graded missions end this part.
+4. **[How an LV Becomes a Device, and Stays Mounted](./course-04-device-mapper-and-persistent-mounts.md)** — how device-mapper turns the extent list into a device, and an `/etc/fstab` line that brings the mount back after a reboot.
+5. **[Wrap-Up: Mission Debrief](./course-05-wrap-up.md)** — a recap, a self-check, and how to land the playground.
 
 ## Learning objectives
 
@@ -41,6 +43,8 @@ After this module you can:
 - Pool PVs into a VG with `vgcreate` and read its size and extent size with `vgs` / `vgdisplay`.
 - Carve an LV from a VG with `lvcreate`, then format and mount it like a normal partition.
 - State the default allocation policy and identify which physical disks an LV's extents actually live on with `lvs -o +devices`.
+- Read an LV's extent list with `lvdisplay -m`, `lvs -o +seg_pe_ranges` and `dmsetup table`.
+- Make an LV mount at boot with an `/etc/fstab` line, and test it with `findmnt --verify` and `mount -a`.
 
 ## Before you start
 
@@ -50,4 +54,4 @@ The linked playground gives you an Ubuntu server VM with passwordless `sudo`, th
 
 A quick note on the disk names before you touch anything: `/dev/vda` is the system disk with the OS on it, and `/dev/vdb` is a tiny (~366 KiB) read-only disk the platform uses for boot configuration — leave both alone. Only `vdc`, `vdd`, and `vde` are yours to experiment with. Always run `lsblk` first and match on the serial column, not on the letter.
 
-Already comfortable with Part 2's PV/VG steps and just want to read Part 3? Run `catchup part3` once you're in the playground — it does Part 2's exercise for you so you land right at Part 3's starting point. Run `catchup` with no arguments to see what it does before using it.
+Already comfortable with the PV and VG steps and want to start at logical volumes? Run `catchup part3` once you're in the playground. It does the PV and VG exercise for you, so you land at the start of the logical volume steps. Run `catchup` with no arguments to see what it does before using it.

@@ -1,0 +1,41 @@
+metadata:
+  name: "ats-004-lab-030-04-03"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab030403-a"
+      - sizeGB: 1
+        serial: "lab030403-b"
+      - sizeGB: 1
+        serial: "lab030403-c"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-030-04-03-setup"
+      description: "Builds a RAID 1 array md0 with data, plus a spare disk that still carries an old RAID label"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-raid-reassemble-and-zero"
+      description: "Confirms md0 is running again with both members and its data, and that the spare disk has no RAID label"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

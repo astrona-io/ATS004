@@ -1,129 +1,171 @@
-# Solution Guide (Offline & Exam Friendly)
+# Solution Walkthrough
 
-This step-by-step guide explains how to manage LVM (Logical Volume Manager) structures by visually identifying devices, eliminating complex scripting, and using built-in command help.
+You will move cargo out of one hold, take that hold out of the pool `vol1`, and build a new pool `vol2` from it. Then you cut a small storage area from `vol2` and put shelves in it.
 
----
+A few words first. A **physical volume** (PV) is one hold given to the pool. A **volume group** (VG) is the pool itself. A **logical volume** (LV) is a storage area cut from the pool. An **extent** is one standard-size crate slot in the pool. LVM keeps track of which crate slot sits on which hold.
 
-## Step 1: Identify the Disk to Remove
+Connect to the training ship first:
 
-You need to find which physical volume (PV) holds the logical volume (LV) `vol1/data1`.
-
-1. If you do not remember how to inspect LVM, list the available LVM commands by typing `pv` or `vg` or `lv` and pressing `TAB` twice. Or run:
-   ```bash
-   man lvm
-   ```
-2. Display all LVs along with their backing devices:
-   ```bash
-   sudo lvs -o lv_name,vg_name,devices
-   ```
-3. Look at the output row where the `LV` is `data1` and the `VG` is `vol1`. Under the `Devices` column, look at the disk path (for example, `/dev/vdb(0)`).
-   - Ignore the parenthesis and any numbers inside them.
-   - Note the base physical volume name (e.g., `/dev/vdb`).
-   - *For the rest of this guide, we assume this disk is `/dev/vdX`. Replace `/dev/vdX` with your actual device name.*
+```sh
+astrona ssh ats-004-lab-030
+```
 
 ---
 
-## Step 2: Check if the Volume Group has Free Space
+## Step 1: Find the Disk That Holds `vol1/data1`
 
-Since `vol1/data1` is on `/dev/vdX`, you must move its data to another physical disk inside `vol1` before removing `/dev/vdX`.
+If you forget the LVM commands, type `pv`, `vg` or `lv` and press `TAB` twice to list them, or read the manual page:
 
-Check if `vol1` has enough free space on its other disks:
-```bash
+```sh
+man lvm
+```
+
+Now ask LVM which disk each logical volume sits on:
+
+```sh
+sudo lvs -o lv_name,vg_name,devices
+```
+
+Find the row where `LV` is `data1` and `VG` is `vol1`. The `Devices` column shows a disk path with a number in brackets, for example `/dev/vdb(0)`. The number in brackets is the first extent; ignore it. Write down the disk path without it.
+
+In the rest of this walkthrough that disk is called `/dev/vdX`. Replace it with your real device name. The letter on your ship may be different from any example, because the order of the disks is not fixed.
+
+---
+
+## Step 2: Check That `vol1` Has Room for the Cargo
+
+Before LVM can take the hold out of the pool, the cargo on it must move to the other hold in `vol1`. Check that the pool has enough free space:
+
+```sh
 sudo vgs -o vg_name,vg_free,pv_count
 ```
-*Verify that there is enough space to receive the data currently stored on `/dev/vdX`.*
+
+Look at the `vol1` row. `VFree` must be larger than the space `data1` uses on `/dev/vdX`, and `#PV` should be `2`.
 
 ---
 
-## Step 3: Move Data off the Target Disk
+## Step 3: Move the Cargo Off the Disk
 
-1. Move all allocated extents from `/dev/vdX` to the other disk(s) in `vol1`:
-   ```bash
-   sudo pvmove /dev/vdX
-   ```
-   *This command runs online. The system moves the data block-by-block while the filesystem is still active.*
-2. Confirm the disk now has zero allocated extents:
-   ```bash
-   sudo pvs /dev/vdX
-   ```
-   *The "Attr" and free space columns should indicate that no extents are currently allocated on this PV.*
+`pvmove` moves every used extent from `/dev/vdX` to the other physical volumes in the same volume group:
+
+```sh
+sudo pvmove /dev/vdX
+```
+
+The move runs while the ship flies. `vol1/data1` stays mounted and in use the whole time; LVM copies it crate by crate underneath.
+
+Check that the disk is now empty:
+
+```sh
+sudo pvs /dev/vdX
+```
+
+Look at `PFree`: it should now equal `PSize`. That means no extents on this disk are in use.
 
 ---
 
-## Step 4: Remove the Disk from `vol1`
+## Step 4: Take the Disk Out of `vol1`
 
-Remove the empty physical volume `/dev/vdX` from the volume group `vol1`:
+`vgreduce` removes an empty physical volume from a volume group:
 
-```bash
+```sh
 sudo vgreduce vol1 /dev/vdX
 ```
 
+LVM refuses this if the disk still holds extents. If you see that error, go back to Step 3.
+
 ---
 
-## Step 5: Clean the Physical Volume Metadata (Optional but Recommended)
+## Step 5: Clean the LVM Label (Optional)
 
-Remove LVM signatures from the disk so it is completely clean and ready for reuse:
+The disk still carries its physical volume label. You can wipe it so the disk is fully clean:
 
-```bash
+```sh
 sudo pvremove /dev/vdX
 ```
 
+This step is optional. `vgcreate` in the next step makes the disk a physical volume again anyway.
+
 ---
 
-## Step 6: Create the New Volume Group `vol2`
+## Step 6: Create the Volume Group `vol2`
 
-Create a new volume group named `vol2` using the freed disk `/dev/vdX`:
+Build the new pool from the freed disk:
 
-```bash
+```sh
 sudo vgcreate vol2 /dev/vdX
 ```
+
+Look for a line that says volume group `vol2` was created.
 
 ---
 
 ## Step 7: Create the 50M Logical Volume `p1`
 
-You need to carve a 50M logical volume named `p1` out of `vol2`.
+If you forget the options of `lvcreate`, search its help text:
 
-1. If you do not remember how to specify size or name in `lvcreate`, run:
-   ```bash
-   lvcreate --help | grep -E 'size|name'
-   ```
-   *Or check `man lvcreate` to find that `-L` is used for size (e.g., `-L 50M`) and `-n` is used for name.*
-2. Create the logical volume:
-   ```bash
-   sudo lvcreate -L 50M -n p1 vol2
-   ```
-3. Verify that the logical volume was created successfully:
-   ```bash
-   sudo lvs vol2
-   ```
+```sh
+lvcreate --help | grep -E 'size|name'
+```
+
+You can also read `man lvcreate`. `-L` sets the size (for example `-L 50M`) and `-n` sets the name.
+
+Create the logical volume:
+
+```sh
+sudo lvcreate -L 50M -n p1 vol2
+```
+
+Check it:
+
+```sh
+sudo lvs vol2
+```
+
+You should see `p1` in volume group `vol2`. LVM rounds the size up to whole extents, so the size may show a little above `50.00m`. That is fine.
 
 ---
 
-## Step 8: Format the Logical Volume with `ext4`
+## Step 8: Format `p1` With ext4
 
-Format the new logical volume `/dev/vol2/p1` with the `ext4` filesystem:
+Build the ext4 shelves on the new logical volume:
 
-```bash
+```sh
 sudo mkfs.ext4 /dev/vol2/p1
 ```
-*Note: Do not format the raw device `/dev/vdX` directly. Doing so would overwrite LVM metadata and break the logical volume.*
+
+Format the logical volume `/dev/vol2/p1`, never the raw disk `/dev/vdX`. Formatting the raw disk would overwrite the LVM label and destroy `vol2` and `p1`.
 
 ---
 
-## Verification
+## Step 9: Check Your Work and Submit
 
-Confirm everything is configured correctly:
+The grader checks three things. Check them yourself first.
 
-```bash
-# 1. Check if LVM structures are correct
-sudo pvs
-sudo vgs
-sudo lvs
+1. The disk that held `data1` is no longer in `vol1`, and it is now the physical volume of `vol2`:
 
-# 2. Verify that the target disk is now part of vol2 and not vol1
-sudo pvs
+   ```sh
+   sudo pvs
+   ```
 
-# 3. Confirm the new partition has ext4 filesystem
-sudo blkid /dev/vol2/p1
+   The `VG` column for `/dev/vdX` must say `vol2`, and `vol1` must show only the other disk.
+
+2. `vol2/p1` exists and is close to 50M (the grader accepts 48 to 56 MiB):
+
+   ```sh
+   sudo lvs vol2/p1
+   ```
+
+3. `p1` has an ext4 filesystem:
+
+   ```sh
+   sudo blkid /dev/vol2/p1
+   ```
+
+   The output must contain `TYPE="ext4"`.
+
+When all three look right, leave the ship and send it for grading:
+
+```sh
+astrona submit -c sections/section-030/capstone/labs/lab-01
 ```

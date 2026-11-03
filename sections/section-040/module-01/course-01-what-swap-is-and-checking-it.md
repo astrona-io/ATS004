@@ -1,48 +1,58 @@
-# Part 1 — What Swap Is & Checking What You Have
+# What Swap Is and Checking What You Have
 
-> Prerequisite: [Module landing page](./course.md). Next: [Part 2 — Allocating, Activating & Deactivating a Swap File](./course-02-allocating-activating-deactivating.md).
-
-Before touching a single command, get the mental model right: swap is not "more RAM" and it is not optional overflow storage the kernel reaches for only in an emergency. It is a second, slower tier the kernel actively manages as part of ordinary memory housekeeping — understanding *when* and *why* it gets used explains everything the rest of this module does to it.
+Swap is not "more RAM", and the kernel does not reach for it only in an emergency. It is a second, slower tier that the kernel manages all the time as part of ordinary housekeeping. Once you see when and why the kernel uses it, every later step in this module makes sense.
 
 ## What swap is
 
-> As an analogy: RAM is your desk — fast to reach, small. Swap is the drawer under it. When the desk is full you move the folders you are not using into the drawer; retrieving them later is slower, but nothing is thrown away. The analogy breaks down because the kernel moves memory in and out of swap continuously and automatically, in 4 KiB pages, not in whole "folders" you choose.
+Think of the ship's flight deck (RAM) and a spare cargo hold (swap). The deck is fast to reach but small. When it fills up, the crew moves crates nobody is using into the hold. Getting a crate back is slower, but nothing is thrown away. The kernel moves memory in small 4 KiB pieces called pages, and it does this on its own, not in whole crates you choose.
 
-Concretely: with swap active, when free RAM gets low the kernel writes the least-recently-used pages out to the swap area and hands that RAM to whatever needs it. If those pages are touched again, they are read back in. Throughput drops while this happens, but services keep running instead of being killed.
+With swap active, the kernel writes the least recently used pages out to the swap area when free RAM runs low. It hands that RAM to whatever needs it. If a process touches a swapped page again, the kernel reads it back. Things slow down, but services keep running instead of being killed.
 
-Underneath, the kernel keeps every page of memory on one of two lists: **active** (recently touched) and **inactive** (not touched in a while). A background kernel thread, `kswapd`, wakes up when free memory crosses a low watermark and starts moving cold pages from the inactive list out to swap *before* the system is actually starved — a pre-emptive reclaim, not a last-second scramble. Only if allocation requests outrun `kswapd`'s pace does a process stall doing **direct reclaim** itself. This is why a lightly-loaded system can show a few hundred KB of swap used even with gigabytes of RAM free: `kswapd` already moved some genuinely idle pages out, and there was no reason to move them back.
+Underneath, the kernel keeps every page on one of two lists: **active** (touched recently) and **inactive** (not touched for a while). A background kernel thread called `kswapd` wakes up when free memory drops below a low mark. It moves cold pages from the inactive list out to swap before the ship is truly starved. Only when requests arrive faster than `kswapd` can work does a process have to free memory itself. That slow path is called **direct reclaim**.
 
-One tunable governs how eager that pre-emptive move is: `vm.swappiness` (0–200 on modern kernels, default 60) sets how aggressively the kernel prefers reclaiming page cache versus swapping out anonymous (process) memory. A higher value swaps sooner; `0` avoids swapping until reclaiming cache alone cannot free enough memory. This module does not change it, but it explains why two systems with identical RAM and swap can behave differently under the same load.
+This is why an idle machine with gigabytes of free RAM can still show a little swap in use. `kswapd` moved some idle pages out earlier, and nothing needed them back.
 
-Swap is not a substitute for enough RAM — a system that swaps heavily and constantly ("thrashing") is slow, because every page fault now costs a disk read instead of a memory access. It is a buffer for spikes and idle memory, and it is required for hibernation (the entire RAM image has to fit somewhere while the machine is powered off).
+Swap does not replace enough RAM. A ship that swaps heavily all the time is "thrashing": every page fault now costs a disk read instead of a memory read. Swap absorbs spikes and parks idle memory. It is also required for hibernation, because the whole memory image must be stored somewhere while the machine is off.
 
 ## Checking what you have
 
-Two commands show the current picture: `free` (with `-h` for human-readable units) summarises RAM and swap totals; `swapon --show` lists each active swap area, its type, size, used amount, and priority.
+Two commands show the picture. `free -h` summarises RAM and swap in human-readable units. `swapon --show` lists each active swap area with its type, size, used amount and priority.
 
-> [!TIP]
-> **Try it — the baseline**
->
-> ```sh
-> free -h
-> swapon --show
-> ```
->
-> Expect something like:
->
-> ```text
->                total        used        free      shared  buff/cache   available
-> Mem:           1.9Gi       180Mi       1.5Gi       1.0Mi       280Mi       1.6Gi
-> Swap:             0B          0B          0B
->
-> (swapon --show prints nothing when no swap is active)
-> ```
->
-> `Swap: 0B` and an empty `swapon --show` mean this VM has no swap yet — the OOM killer is the only thing standing between it and a memory spike. The rest of this module changes that.
+<!-- astrona:playground:renew -->
 
-> *Swap is not an emergency fallback — `kswapd` is already moving cold pages out before you run low, which is why "some swap used" on an idle system is normal, not a warning sign.*
+### See it in your playground
 
-## Reference
+Run both commands to see the baseline:
 
-- `man free` — the exact meaning of each column, including `available` versus `free`.
-- `man 5 proc`, `/proc/meminfo` — `SwapCached`, `Active(anon)`, `Inactive(anon)` are the live counters behind this section's model.
+```sh
+free -h
+swapon --show
+```
+
+Expect something like this (your numbers will differ a little):
+
+```text
+               total        used        free      shared  buff/cache   available
+Mem:           1.9Gi       180Mi       1.5Gi       1.0Mi       280Mi       1.6Gi
+Swap:             0B          0B          0B
+
+(swapon --show prints nothing when no swap is active)
+```
+
+`Swap: 0B` and an empty `swapon --show` mean this ship has no swap yet. Only the OOM killer stands between it and a memory spike. The rest of the module changes that.
+
+You can also read the live counters the model above is built on:
+
+```sh
+grep -E 'SwapTotal|SwapFree|Active\(anon\)|Inactive\(anon\)' /proc/meminfo
+```
+
+`/proc/meminfo` is the core's status screen. The kernel builds each line fresh every time you read it, and the values are in kibibytes.
+
+## Common pitfalls
+
+> [!WARNING]
+> - **Reading "some swap used" as a warning.** On an idle system it is normal. `kswapd` already moved cold pages out, and nobody needed them back.
+> - **Confusing `free` with `available`.** The `free` column leaves out memory the kernel can reclaim from the page cache. `available` is the better answer to "how much can a new program get".
+> - **Expecting `swapon --show` to print an empty table header.** With no swap active it prints nothing at all.
+> - **Treating swap as extra RAM.** Constant swapping makes the ship crawl. It is a buffer for spikes, not a fix for a chronic memory shortage.

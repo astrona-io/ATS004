@@ -1,0 +1,324 @@
+# Knowledge check for section 040.
+schema_version: 1
+kind: question_bank
+id: ats004-040
+course_id: ATS004
+exam_code: LFCS
+status: draft
+provenance: Original practice material written for this course; not official exam questions.
+scope:
+  type: section
+  id: section-040
+  title: "Swap Space Management"
+questions:
+  - id: ats004-040-q01
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Explain what the kernel does when memory is full and no swap exists"
+    source_readings:
+      - sections/section-040/module-01/course-01-what-swap-is-and-checking-it.md
+    prompt: |-
+      A small database server has no swap. Under heavy load the database process stops, and `dmesg` shows `Out of memory: Kill process 2014 (mysqld)`. Why did the kernel pick the database?
+    options:
+      - id: a
+        text: "The database crashed by itself and the kernel only logged it."
+        explanation: "The log line says the kernel killed the process."
+      - id: b
+        text: "The `/etc/fstab` file had no swap line, so the kernel refused to run the database."
+        explanation: "A missing swap line explains why memory ran out, but the score decides which process dies."
+      - id: c
+        text: "The database configuration file had a format error."
+        explanation: "A bad configuration file stops a service at start. It does not cause a kernel kill during load."
+      - id: d
+        text: "The out-of-memory killer scores every process by how much memory it uses, and the biggest user scores highest."
+        explanation: "Correct. With no swap and no free memory, the kernel must free memory fast. It gives each process a score based mostly on its memory use and ends the top scorer. A database is usually the biggest user."
+    correct_option: d
+    explanation: "With no swap and no free memory, the kernel must free memory fast. It gives each process a score based mostly on its memory use and ends the top scorer. A database is usually the biggest user."
+
+  - id: ats004-040-q02
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Create a swap file with safe permissions"
+    source_readings:
+      - sections/section-040/module-01/course-02-allocating-activating-deactivating.md
+    prompt: |-
+      You create `/swapfile`, format it with `mkswap`, and run `sudo swapon /swapfile`. The command warns about insecure permissions. What is the fix?
+    options:
+      - id: a
+        text: "Run `chown root:root /swapfile` and nothing else."
+        explanation: "A file made with `sudo` is already owned by root. The problem is the mode, not the owner."
+      - id: b
+        text: "Format the file with ext4 before `mkswap`."
+        explanation: "`mkswap` writes a swap header straight into the file. An ext4 layer inside the file is wrong."
+      - id: c
+        text: "Add the file to the LVM database."
+        explanation: "LVM does not manage plain swap files."
+      - id: d
+        text: "Set the file mode to `600` with `sudo chmod 600 /swapfile`, so only root can read it."
+        explanation: "Correct. Swap holds pieces of memory, which can include passwords and keys. Only root should read the file, so the mode must be `600`."
+    correct_option: d
+    explanation: "Swap holds pieces of memory, which can include passwords and keys. Only root should read the file, so the mode must be `600`."
+
+  - id: ats004-040-q03
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Compare swap partitions and swap files"
+    source_readings:
+      - sections/section-040/module-02/course-01-partition-vs-file-and-creating-it.md
+    prompt: |-
+      Why do some administrators prefer a swap partition over a swap file?
+    options:
+      - id: a
+        text: "A partition uses no disk space."
+        explanation: "A partition takes real space on the disk, as a file does."
+      - id: b
+        text: "A partition encrypts memory automatically."
+        explanation: "Swap is plain unless you set up encryption on top of it."
+      - id: c
+        text: "A partition is a raw area with no filesystem in between, so the kernel reaches its sectors directly."
+        explanation: "Correct. A swap file sits on a filesystem, so the kernel must map file blocks to disk blocks. A partition skips that step. A file is still fine and is easier to resize."
+      - id: d
+        text: "A partition can be copied to another server as a normal file."
+        explanation: "A partition is a block device, not a file you can attach to mail or copy like a file."
+    correct_option: c
+    explanation: "A swap file sits on a filesystem, so the kernel must map file blocks to disk blocks. A partition skips that step. A file is still fine and is easier to resize."
+
+  - id: ats004-040-q04
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Use swap priorities to control which swap area fills first"
+    source_readings:
+      - sections/section-040/module-02/course-02-formatting-activating-and-priorities.md
+    prompt: |-
+      You have a fast swap partition and a slow swap file. The kernel must use the partition first. Which `pri=` values do you use?
+    options:
+      - id: a
+        text: "Set `vm.swappiness=100`."
+        explanation: "Swappiness controls how eagerly the kernel swaps. It does not pick an area."
+      - id: b
+        text: "`pri=5` on the partition and `pri=10` on the file."
+        explanation: "This reverses the order. The slow file would fill first."
+      - id: c
+        text: "`pri=10` on the partition and `pri=5` on the file."
+        explanation: "Correct. The kernel fills the area with the higher priority number first, and only moves to the lower one when the first is full."
+      - id: d
+        text: "Put the partition first in `/etc/fstab` and set no priorities."
+        explanation: "Line order does not decide. Areas with equal priority are used round-robin."
+    correct_option: c
+    explanation: "The kernel fills the area with the higher priority number first, and only moves to the lower one when the first is full."
+
+  - id: ats004-040-q05
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "List active swap areas"
+    source_readings:
+      - sections/section-040/module-01/course-01-what-swap-is-and-checking-it.md
+    prompt: |-
+      Which command lists each active swap area with its type, size, used space and priority?
+    options:
+      - id: a
+        text: "`sudo blkid`"
+        explanation: "`blkid` shows signatures on devices. It does not say whether swap is active."
+      - id: b
+        text: "`cat /proc/meminfo`"
+        explanation: "This file has total swap numbers, not a list of areas."
+      - id: c
+        text: "`swapon --show`"
+        explanation: "Correct. `swapon --show` prints one row per active area. `cat /proc/swaps` shows similar data."
+      - id: d
+        text: "`free -h`"
+        explanation: "`free -h` shows only the total swap, not each area."
+    correct_option: c
+    explanation: "`swapon --show` prints one row per active area. `cat /proc/swaps` shows similar data."
+
+  - id: ats004-040-q06
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Write the `/etc/fstab` line for a swap file"
+    source_readings:
+      - sections/section-040/module-01/course-03-persisting-a-swap-file.md
+    prompt: |-
+      Which `/etc/fstab` line makes `/swapfile` come back as swap after a reboot?
+    options:
+      - id: a
+        text: "`swap /swapfile sw 0 0`"
+        explanation: "The fields are in the wrong order. The device or file comes first."
+      - id: b
+        text: "`/swapfile swap none sw 0 0`"
+        explanation: "The mount point field and the type field are swapped."
+      - id: c
+        text: "`/swapfile none swap sw 0 0`"
+        explanation: "Correct. A swap line has no mount point, so the second field is `none`. The type is `swap` and the option is `sw`."
+      - id: d
+        text: "`/swapfile /swap ext4 defaults 0 2`"
+        explanation: "Swap is not mounted and has no ext4 type."
+    correct_option: c
+    explanation: "A swap line has no mount point, so the second field is `none`. The type is `swap` and the option is `sw`."
+
+  - id: ats004-040-q07
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Check swap entries safely before a reboot"
+    source_readings:
+      - sections/section-040/module-01/course-03-persisting-a-swap-file.md
+    prompt: |-
+      You added a swap line to `/etc/fstab`. How do you test it without a reboot?
+    options:
+      - id: a
+        text: "Run `sudo swapon -a`, then `swapon --show`."
+        explanation: "Correct. `swapon -a` turns on every swap area in `/etc/fstab` that is not already on. Errors show up now, not at boot."
+      - id: b
+        text: "Run `sudo mount -a`."
+        explanation: "`mount -a` skips swap lines. Use `swapon -a`."
+      - id: c
+        text: "Run `sudo swapoff -a` and wait."
+        explanation: "This turns swap off and tests nothing."
+      - id: d
+        text: "Run `sudo mkswap -a`."
+        explanation: "`mkswap` has no `-a` option and would not read fstab."
+    correct_option: a
+    explanation: "`swapon -a` turns on every swap area in `/etc/fstab` that is not already on. Errors show up now, not at boot."
+
+  - id: ats004-040-q08
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Tune and persist `vm.swappiness`"
+    source_readings:
+      - sections/section-040/module-01/course-04-swappiness-tuning.md
+    prompt: |-
+      You ran `sudo sysctl vm.swappiness=10`. After a reboot the value is `60` again. How do you keep the value?
+    options:
+      - id: a
+        text: "Run `swapoff -a` and `swapon -a`."
+        explanation: "This restarts swap and leaves the setting unchanged."
+      - id: b
+        text: "Put `vm.swappiness = 10` in a file such as `/etc/sysctl.d/99-swappiness.conf`."
+        explanation: "Correct. `sysctl` with a value changes the running kernel only. Files in `/etc/sysctl.d/` are read at every boot."
+      - id: c
+        text: "Add `vm.swappiness=10` to `/etc/fstab`."
+        explanation: "`/etc/fstab` lists filesystems and swap areas, not kernel settings."
+      - id: d
+        text: "Run the command again with `sudo -p`."
+        explanation: "There is no such option, and a command cannot survive a reboot by itself."
+    correct_option: b
+    explanation: "`sysctl` with a value changes the running kernel only. Files in `/etc/sysctl.d/` are read at every boot."
+
+  - id: ats004-040-q09
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Remove a swap file safely"
+    source_readings:
+      - sections/section-040/module-01/course-02-allocating-activating-deactivating.md
+    prompt: |-
+      You want to delete `/swapfile` for good. What is the correct order?
+    options:
+      - id: a
+        text: "Delete the fstab line only. The file disappears by itself."
+        explanation: "Nothing deletes the file. It stays on disk and stays active until reboot."
+      - id: b
+        text: "Run `mkswap -d /swapfile`."
+        explanation: "`mkswap` has no delete option."
+      - id: c
+        text: "Run `sudo swapoff /swapfile`, remove its `/etc/fstab` line, then delete the file."
+        explanation: "Correct. A swap area in use holds live memory pages. `swapoff` moves them back into memory first. The fstab line must go, or the boot would look for a missing file."
+      - id: d
+        text: "Delete the file, then run `swapoff`."
+        explanation: "Deleting a file in use breaks the swap area while pages are still in it."
+    correct_option: c
+    explanation: "A swap area in use holds live memory pages. `swapoff` moves them back into memory first. The fstab line must go, or the boot would look for a missing file."
+
+  - id: ats004-040-q10
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Explain why a sparse file cannot be swap"
+    source_readings:
+      - sections/section-040/module-01/course-02-allocating-activating-deactivating.md
+    prompt: |-
+      You create a swap file with `truncate -s 1G /swapfile`, run `mkswap`, and `swapon` refuses it. Why?
+    options:
+      - id: a
+        text: "`truncate` makes a sparse file with holes, and swap needs blocks that are really allocated."
+        explanation: "Correct. A sparse file reserves no disk blocks. The kernel must know where each swap page lives, so it needs a file with no holes. Use `fallocate -l 1G /swapfile` or `dd`."
+      - id: b
+        text: "Swap files must be exactly 4 GiB."
+        explanation: "There is no such rule."
+      - id: c
+        text: "The file needs an ext4 filesystem inside."
+        explanation: "Swap files hold a swap header, not a filesystem."
+      - id: d
+        text: "`truncate` cannot make files larger than memory."
+        explanation: "File size is not tied to memory."
+    correct_option: a
+    explanation: "A sparse file reserves no disk blocks. The kernel must know where each swap page lives, so it needs a file with no holes. Use `fallocate -l 1G /swapfile` or `dd`."
+
+  - id: ats004-040-q11
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Use a UUID for a swap partition in `/etc/fstab`"
+    source_readings:
+      - sections/section-040/module-02/course-03-persistence-in-fstab.md
+    prompt: |-
+      Why does `/etc/fstab` name a swap partition by `UUID=` and not by `/dev/vdb2`?
+    options:
+      - id: a
+        text: "A UUID makes the swap area faster."
+        explanation: "The name does not change speed."
+      - id: b
+        text: "`/dev/vdb2` is not allowed in `/etc/fstab`."
+        explanation: "It is allowed, but it can point to a different disk after a reboot."
+      - id: c
+        text: "Device names can change when disks are attached in a different order, and the UUID stays the same."
+        explanation: "Correct. `mkswap` writes a UUID into the swap header. Find it with `sudo blkid /dev/vdb2` and use `UUID=<UUID>` in the fstab line."
+      - id: d
+        text: "`swapon` only accepts UUIDs."
+        explanation: "`swapon` also takes a path."
+    correct_option: c
+    explanation: "`mkswap` writes a UUID into the swap header. Find it with `sudo blkid /dev/vdb2` and use `UUID=<UUID>` in the fstab line."
+
+  - id: ats004-040-q12
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Label a swap area and use the label in fstab"
+    source_readings:
+      - sections/section-040/module-02/course-04-labels-swap-table-and-troubleshooting.md
+    prompt: |-
+      You run `sudo mkswap -L fastswap /dev/vdb2`. Which fstab line uses the label?
+    options:
+      - id: a
+        text: "`LABEL=fastswap /fastswap ext4 sw 0 0`"
+        explanation: "The type is `swap`, and there is no mount point."
+      - id: b
+        text: "`LABEL=fastswap none swap sw 0 0`"
+        explanation: "Correct. `mkswap -L` stores the label in the swap header. A `LABEL=` line finds the area by that name."
+      - id: c
+        text: "`/dev/fastswap none swap sw 0 0`"
+        explanation: "No such device path exists."
+      - id: d
+        text: "`fastswap /mnt swap sw 0 0`"
+        explanation: "Swap has no mount point and the label needs `LABEL=`."
+    correct_option: b
+    explanation: "`mkswap -L` stores the label in the swap header. A `LABEL=` line finds the area by that name."
+
+  - id: ats004-040-q13
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Predict how equal swap priorities behave"
+    source_readings:
+      - sections/section-040/module-02/course-02-formatting-activating-and-priorities.md
+    prompt: |-
+      Two swap areas both have priority `-2`, or no priority is given. How does the kernel use them?
+    options:
+      - id: a
+        text: "It uses only the larger area and keeps the other as a spare."
+        explanation: "There is no spare mode."
+      - id: b
+        text: "It refuses to enable the second area."
+        explanation: "Equal priorities are allowed."
+      - id: c
+        text: "It spreads pages across both areas in turn (round-robin)."
+        explanation: "Correct. Areas with the same priority share the load. Different priorities fill the higher number first."
+      - id: d
+        text: "It fills the first one listed, then the second."
+        explanation: "That happens only with different priorities."
+    correct_option: c
+    explanation: "Areas with the same priority share the load. Different priorities fill the higher number first."

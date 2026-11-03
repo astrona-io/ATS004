@@ -1,12 +1,10 @@
-# Part 1 — SSHFS and the FUSE Mechanism
+# SSHFS and the FUSE Mechanism
 
-> Prerequisite: [Module landing page](./course.md). Next: [Part 2 — Performance, Sharing & Unmounting](./course-02-performance-sharing-and-unmounting.md).
-
-This part settles what SSHFS actually is before you touch a mount option: not a network protocol of its own, but an ordinary program riding on top of a general kernel facility for user-space filesystems. Every later checkpoint — why it's slow for some workloads, who can see a mount, how permissions are checked — is a direct consequence of the mechanism this part covers.
+This page settles what SSHFS actually is before you touch a mount option: not a network protocol of its own, but an ordinary program riding on top of a general kernel facility for user-space filesystems. Every later checkpoint — why it's slow for some workloads, who can see a mount, how permissions are checked — is a direct consequence of the mechanism this part covers.
 
 ## What SSHFS is for
 
-> As an analogy: SSHFS is a bicycle courier. It is quick to dispatch, needs no loading dock, and uses roads that already exist. It is not a freight line — you would not move a datacentre's worth of data through it. The analogy breaks down because a courier makes one trip, while SSHFS handles every `open`, `read`, and `write` your programs make against the mount, indefinitely.
+> As an analogy: SSHFS reaches a cargo hold on another ship through your own secure channel, and a crew member (an ordinary process), not the ship's core, runs the channel. It needs no new docking port on the other ship. It is not a freight line, so you would not move a whole station's cargo through it. The analogy breaks down because the crew member handles every `open`, `read` and `write` your programs make against the mount, for as long as it stays mounted.
 
 Concretely: `sshfs alice@db-server:/var/log/app ~/app-logs` makes the remote `/var/log/app` appear at your local `~/app-logs`. Listing, reading, and (if permitted) writing all work through the existing SSH channel. Nothing is installed on `db-server` beyond the SSH server it already runs.
 
@@ -28,7 +26,7 @@ and the answer travels back the same way. Because the `sshfs` process is an ordi
 flowchart LR
     subgraph K["kernel space"]
         A["ls (VFS call)"] --> B["FUSE kernel module"]
-        B --> Q["/dev/fuse<br/>request/reply queue"]
+        B --> Q["/dev/fuse"]
     end
     subgraph U["user space, your user, no root"]
         Q --> C["sshfs process"]
@@ -39,33 +37,37 @@ flowchart LR
     F -.->|"reply travels back through /dev/fuse"| A
 ```
 
-> [!TIP]
-> **Try it — mount a remote directory and see the FUSE type**
->
-> On `client`:
->
-> ```sh
-> sshfs srv:/srv/logs ~/remote
-> mount | grep fuse.sshfs
-> ls -l ~/remote
-> cat ~/remote/app.log
-> ```
->
-> Expect something like:
->
-> ```text
-> srv:/srv/logs on /home/ubuntu/remote type fuse.sshfs (rw,nosuid,nodev,relatime,user_id=1000,group_id=1000)
-> -rw-r--r-- 1 root   root   18 Aug 29 12:00 app.log
-> -rw-r--r-- 1 root   root   21 Aug 29 12:00 access.log
-> -rw------- 1 ubuntu ubuntu 20 Aug 29 12:00 secret.txt
-> srv app.log line 1
-> ```
->
-> The filesystem type is `fuse.sshfs`, not a kernel filesystem like `ext4` or `nfs`. Every `ls` and `cat` you just ran became a message on `/dev/fuse`, answered by the local `sshfs` process — running as your login user, no `sudo` anywhere — fetching the data from `srv` over SSH. `ls -l` shows each file's owner as it is *on `srv`*: the two logs belong to `root` there, `secret.txt` to your user.
+### See it in your playground
+
+On `client`:
+
+<!-- astrona:playground:renew -->
+
+```sh
+sshfs srv:/srv/logs ~/remote
+mount | grep fuse.sshfs
+ls -l ~/remote
+cat ~/remote/app.log
+```
+
+Expect something like:
+
+```text
+srv:/srv/logs on /home/ubuntu/remote type fuse.sshfs (rw,nosuid,nodev,relatime,user_id=1000,group_id=1000)
+-rw-r--r-- 1 root   root   18 Aug 29 12:00 app.log
+-rw-r--r-- 1 root   root   21 Aug 29 12:00 access.log
+-rw------- 1 ubuntu ubuntu 20 Aug 29 12:00 secret.txt
+srv app.log line 1
+```
+
+The filesystem type is `fuse.sshfs`, not a kernel filesystem like `ext4` or `nfs`. Every `ls` and `cat` you just ran became a message on `/dev/fuse`, answered by the local `sshfs` process — running as your login user, no `sudo` anywhere — fetching the data from `srv` over SSH. `ls -l` shows each file's owner as it is *on `srv`*: the two logs belong to `root` there, `secret.txt` to your user.
 
 > *A FUSE mount has no filesystem logic in the kernel at all — the kernel module is just a message relay, which is exactly why an unprivileged, crash-safe, install-nothing-on-the-server filesystem like SSHFS is possible.*
 
-## Reference
+## Common pitfalls
 
-- `man 8 mount.fuse3` — the mount helper FUSE filesystems use, and the generic FUSE mount options it accepts.
-- `man sshfs` — the full option list; most of what matters for this module is `-o allow_other` and `-o default_permissions`, covered in Part 2.
+> [!WARNING]
+> - **Thinking SSHFS needs software on the server.** It only needs a working SSH login and the `sftp` service that `sshd` already offers. Install `sshfs` on the client only.
+> - **Looking for a kernel filesystem type.** The type is `fuse.sshfs`. `mount | grep nfs` or `-t ext4` filters will never show it.
+> - **Running `sshfs` with `sudo` by habit.** The mount then belongs to `root`, uses root's SSH keys and is private to `root`. Mount as your normal user.
+> - **Mounting on a directory that is not empty.** The old contents are hidden while the mount is there. Use an empty mount point such as `~/remote`.

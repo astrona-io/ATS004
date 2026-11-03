@@ -1,0 +1,469 @@
+# Knowledge check for section 010. Listed in astrona.yaml as a `type: quiz` entry after the section's modules.
+schema_version: 1
+kind: question_bank
+id: ats004-010
+course_id: ATS004
+exam_code: LFCS
+status: draft
+provenance: Original practice material written for this course; not official exam questions.
+scope:
+  type: section
+  id: section-010
+  title: "Local Storage Preparation & Forensics"
+questions:
+  - id: ats004-010-q01
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Read lsof output to find why a mount is busy and release it safely"
+    source_readings:
+      - sections/section-010/module-01/course-02-diagnosing-a-stuck-disk.md
+    prompt: |-
+      `umount /mnt/data` says "target is busy". `lsof` shows process 2054 with the type `cwd` inside the mount. What is the safest way to free the mount?
+    options:
+      - id: a
+        text: "Run `sudo kill -9 2054` at once, because `cwd` means the process holds a lock."
+        explanation: "`kill -9` is the last resort, not the first move. It gives the process no time to clean up."
+      - id: b
+        text: "Ask the process to finish with `kill -15 2054`, and only use `kill -9` if it does not exit. Then unmount."
+        explanation: "Correct. Try `SIGTERM` first, then `SIGKILL`, then unmount."
+      - id: c
+        text: "Run `umount -f` many times until it works."
+        explanation: "A forced unmount does not remove the crew inside the hold, and it can hide errors."
+      - id: d
+        text: "Delete the files the process uses with `rm -rf /mnt/data/*`."
+        explanation: "Deleting files does not release the working directory, and it destroys data."
+    correct_option: b
+    explanation: "`cwd` means the process has its current working directory inside the mount. A polite `SIGTERM` lets the process save its work. `SIGKILL` is the last step."
+
+  - id: ats004-010-q02
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Pick a partition table type for a disk larger than 2 TB"
+    source_readings:
+      - sections/section-010/module-02/course-01-partition-tables-mbr-vs-gpt.md
+    prompt: |-
+      A new 4 TB disk must be used in full. Which partition table do you write?
+    options:
+      - id: a
+        text: "MBR, because it works with every tool."
+        explanation: "MBR would leave most of the disk unused."
+      - id: b
+        text: "MBR with extended partitions, which lift the 2 TB limit."
+        explanation: "Extended partitions do not change the 2 TB addressing limit."
+      - id: c
+        text: "GPT, because MBR cannot address space past 2 TB."
+        explanation: "Correct. GPT handles very large disks."
+      - id: d
+        text: "GPT, but only after you format it with `mkfs.ext4`."
+        explanation: "A partition table is written before any filesystem. Formatting does not create it."
+    correct_option: c
+    explanation: "MBR stores sector numbers in 32 bits, which limits it to about 2 TB. GPT uses 64-bit sector numbers and has no such limit."
+
+  - id: ats004-010-q03
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Explain why the kernel can keep the old partition table and how to refresh it"
+    source_readings:
+      - sections/section-010/module-02/course-03-when-the-kernel-keeps-the-old-table.md
+    prompt: |-
+      You wrote a new partition with `parted`, but `lsblk` does not show `/dev/vdb2`. Another partition of the same disk is mounted. What do you run to ask the kernel to read the table again?
+    options:
+      - id: a
+        text: "`sudo partprobe /dev/vdb`"
+        explanation: "Correct. `partprobe` asks the kernel to re-read the table."
+      - id: b
+        text: "`sudo mkfs.ext4 /dev/vdb`"
+        explanation: "Formatting the whole disk would destroy the data you just partitioned."
+      - id: c
+        text: "`sudo mount -a`"
+        explanation: "`mount -a` only reads `/etc/fstab`. It does not read partition tables."
+      - id: d
+        text: "`sudo fsck /dev/vdb`"
+        explanation: "`fsck` checks a filesystem. It does not refresh the partition table."
+    correct_option: a
+    explanation: "The kernel keeps its copy of the table while a partition of the disk is in use. `partprobe` (or `partx -u`) tells it to read the table again."
+
+  - id: ats004-010-q04
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Order the steps to use a LUKS-encrypted partition"
+    source_readings:
+      - sections/section-010/module-03/course-03-opening-using-closing.md
+    prompt: |-
+      `/dev/vdb1` is already a LUKS container. You want to store files on it. What is the correct next step?
+    options:
+      - id: a
+        text: "`sudo mkfs.ext4 /dev/vdb1`"
+        explanation: "This would overwrite the LUKS header and destroy the container."
+      - id: b
+        text: "`sudo mount /dev/vdb1 /mnt/secure`"
+        explanation: "The raw partition holds encrypted data, so it cannot be mounted."
+      - id: c
+        text: "`sudo tune2fs -L SECURE /dev/vdb1`"
+        explanation: "`tune2fs` works on ext filesystems, and the raw partition holds none."
+      - id: d
+        text: "`sudo cryptsetup open /dev/vdb1 vault`, then mount `/dev/mapper/vault`."
+        explanation: "Correct. Open the container, then use the mapped device."
+    correct_option: d
+    explanation: "The vault door must be opened first. `cryptsetup open` creates a mapped device. The filesystem lives on `/dev/mapper/vault`, not on the raw partition."
+
+  - id: ats004-010-q05
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Add a second passphrase to an existing LUKS container"
+    source_readings:
+      - sections/section-010/module-03/course-02-creating-a-container-and-keyslots.md
+    prompt: |-
+      A colleague must be able to open the same LUKS container with a different passphrase. What do you use?
+    options:
+      - id: a
+        text: "`cryptsetup luksAddKey /dev/vdb1`, which fills a free keyslot."
+        explanation: "Correct. Each keyslot opens the same data."
+      - id: b
+        text: "`cryptsetup luksFormat /dev/vdb1` again with the new passphrase."
+        explanation: "`luksFormat` creates a new container and destroys the old data."
+      - id: c
+        text: "Copy the passphrase into `/etc/fstab`."
+        explanation: "`/etc/fstab` does not hold passphrases and does not unlock anything."
+      - id: d
+        text: "Create a second container on the same partition."
+        explanation: "A partition holds one container header. You cannot stack a second one beside it."
+    correct_option: a
+    explanation: "A LUKS header has several keyslots. Each slot holds one key that can open the same vault door. `luksAddKey` fills a free slot after you give an existing passphrase."
+
+  - id: ats004-010-q06
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Check and repair an ext4 filesystem safely"
+    source_readings:
+      - sections/section-010/module-04/course-01-fsck-repair-model.md
+    prompt: |-
+      `fsck -y /dev/vdb1` warns that the filesystem is mounted. What is the correct reaction?
+    options:
+      - id: a
+        text: "Add `-f` so that `fsck` ignores the warning."
+        explanation: "`-f` forces a check of a clean filesystem. It does not make a mounted check safe."
+      - id: b
+        text: "Unmount the filesystem first, then run `fsck` again."
+        explanation: "Correct. Unmount first."
+      - id: c
+        text: "Reformat the partition."
+        explanation: "Formatting throws away all data and is not needed."
+      - id: d
+        text: "Remove the `-y` flag, because it is invalid."
+        explanation: "`-y` is valid. It answers yes to every repair question."
+    correct_option: b
+    explanation: "Repairing a mounted filesystem can corrupt it, because the kernel changes it at the same time. Undock the hold, then send in the repair crew."
+
+  - id: ats004-010-q07
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Explain why fstab should use UUID or label"
+    source_readings:
+      - sections/section-010/module-05/course-01-fields-and-stable-identifiers.md
+    prompt: |-
+      Why does `/etc/fstab` list `UUID=...` instead of `/dev/vdb1`?
+    options:
+      - id: a
+        text: "UUIDs make the kernel boot faster."
+        explanation: "Speed is not the reason."
+      - id: b
+        text: "Device names such as `/dev/vdb1` depend on the order the disks are found, so they can change. A UUID stays with the filesystem."
+        explanation: "Correct. The UUID is a serial number that stays with the hold."
+      - id: c
+        text: "A device path cannot hold ext4."
+        explanation: "Device paths work with any filesystem type."
+      - id: d
+        text: "A UUID unlocks encrypted disks."
+        explanation: "A UUID is only an identifier. It never unlocks anything."
+    correct_option: b
+    explanation: "`/dev/vdb` is assigned at boot in the order the disks appear. Adding a disk can move the names. The UUID is stored in the filesystem and does not move."
+
+  - id: ats004-010-q08
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Choose the right fstab field for the boot-time check order"
+    source_readings:
+      - sections/section-010/module-05/course-01-fields-and-stable-identifiers.md
+    prompt: |-
+      You want a data filesystem checked at boot after the root filesystem. Which field and value do you set?
+    options:
+      - id: a
+        text: "Field 4 (options), `check=2`."
+        explanation: "There is no `check=` mount option."
+      - id: b
+        text: "Field 5 (dump), `2`."
+        explanation: "Field 5 controls the old `dump` backup tool."
+      - id: c
+        text: "Field 6 (pass), `2`."
+        explanation: "Correct. Root is `1`, others `2`."
+      - id: d
+        text: "Field 6 (pass), `1`."
+        explanation: "`1` is reserved for the root filesystem."
+    correct_option: c
+    explanation: "Field 6 is the `pass` number. Root uses `1`. Other filesystems that need a check use `2`. `0` means no check."
+
+  - id: ats004-010-q09
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Choose the fstab option that makes a mount wait for the network"
+    source_readings:
+      - sections/section-010/module-05/course-02-options-and-verifying.md
+    prompt: |-
+      An fstab entry mounts a disk that is reached over the network. Which option makes systemd wait for the network before it mounts?
+    options:
+      - id: a
+        text: "`noauto`"
+        explanation: "`noauto` stops the mount at boot altogether."
+      - id: b
+        text: "`nofail`"
+        explanation: "`nofail` lets the boot continue after a failure. It does not wait for the network."
+      - id: c
+        text: "`noatime`"
+        explanation: "`noatime` stops access-time updates. It has nothing to do with the network."
+      - id: d
+        text: "`_netdev`"
+        explanation: "Correct. `_netdev` means the network must be up first."
+    correct_option: d
+    explanation: "`_netdev` marks the device as needing the network. systemd orders the mount after the network is up. `nofail` only lets the boot go on if the mount fails."
+
+  - id: ats004-010-q10
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Name the unit file for a mount point"
+    source_readings:
+      - sections/section-010/module-06/course-01-fstab-generated-units-and-naming.md
+    prompt: |-
+      What is the required file name of the systemd mount unit for the mount point `/srv/data`?
+    options:
+      - id: a
+        text: "`data.mount`"
+        explanation: "The path part `srv` is missing."
+      - id: b
+        text: "`srv-data.mount`"
+        explanation: "Correct."
+      - id: c
+        text: "`srv/data.mount`"
+        explanation: "A slash cannot appear in a unit file name."
+      - id: d
+        text: "Any name, if `Where=/srv/data` is set."
+        explanation: "systemd refuses a mount unit whose name does not match `Where=`."
+    correct_option: b
+    explanation: "systemd derives the mount point from the unit name. `/srv/data` becomes `srv-data.mount`. `systemd-escape -p --suffix=mount /srv/data` prints it."
+
+  - id: ats004-010-q11
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Get on-demand mounting from one fstab line"
+    source_readings:
+      - sections/section-010/module-06/course-03-fstab-shortcut-and-pitfalls.md
+    prompt: |-
+      Which options give an fstab entry on-demand mounting with an idle timeout of 30 seconds?
+    options:
+      - id: a
+        text: "`defaults,noauto`"
+        explanation: "`noauto` stops a boot mount, but nothing mounts it on demand."
+      - id: b
+        text: "`defaults,x-systemd.automount,x-systemd.idle-timeout=30`"
+        explanation: "Correct."
+      - id: c
+        text: "`defaults,autofs,timeout=30`"
+        explanation: "`autofs` and `timeout=` are not fstab options for systemd."
+      - id: d
+        text: "`defaults,comment=systemd.automount`"
+        explanation: "`comment=` only adds a note. It does nothing."
+    correct_option: b
+    explanation: "The fstab generator reads `x-systemd.automount` and writes an automount unit. `x-systemd.idle-timeout=` unmounts the filesystem when idle."
+
+  - id: ats004-010-q12
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Create a FAT32 filesystem with a label and mount it so a normal user owns the files"
+    source_readings:
+      - sections/section-010/module-07/course-02-mounting-fat32-quirks.md
+    prompt: |-
+      FAT32 files appear owned by root after mounting, so the user `ubuntu` cannot write. What fixes this?
+    options:
+      - id: a
+        text: "`chmod 700` on every file."
+        explanation: "FAT32 stores no permissions, so `chmod` does not stick."
+      - id: b
+        text: "`chown ubuntu` on the files after mounting."
+        explanation: "`chown` fails on FAT32 for the same reason."
+      - id: c
+        text: "Mount with `-o uid=1000,gid=1000`."
+        explanation: "Correct. Ownership comes from the mount options."
+      - id: d
+        text: "Format with `mkfs.ext4` instead of FAT32 and keep the data."
+        explanation: "Reformatting destroys the data and breaks use on other systems."
+    correct_option: c
+    explanation: "FAT32 has no Unix owners. The mount options `uid=` and `gid=` set one owner for every file at mount time."
+
+  - id: ats004-010-q13
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Clone a disk and verify the copy"
+    source_readings:
+      - sections/section-010/module-08/course-01-cloning-a-disk-with-dd.md
+      - sections/section-010/module-08/course-02-tar-backups-and-verifying.md
+    prompt: |-
+      You cloned `/dev/vdb` onto `/dev/vdc` with `dd`. How do you prove the copy is exact?
+    options:
+      - id: a
+        text: "Compare file names with `ls`."
+        explanation: "Names do not show whether the bytes match."
+      - id: b
+        text: "Check that `/dev/vdc` has the same size."
+        explanation: "Size alone does not show the content matches."
+      - id: c
+        text: "Compare checksums, for example with `sha256sum`, of both devices."
+        explanation: "Correct. Equal checksums mean equal content."
+      - id: d
+        text: "Run `fsck` on the original."
+        explanation: "`fsck` checks the original filesystem. It tells you nothing about the copy."
+    correct_option: c
+    explanation: "Equal size does not prove equal bytes. Matching checksums do."
+
+  - id: ats004-010-q14
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Create an XFS filesystem with a label and read its layout"
+    source_readings:
+      - sections/section-010/module-09/course-01-creating-and-inspecting-xfs.md
+    prompt: |-
+      Which sequence formats a disk as XFS with the label `CARGO`, mounts it and shows the filesystem layout?
+    options:
+      - id: a
+        text: "`mkfs.xfs -L CARGO /dev/vdb`, `mount /dev/vdb /mnt/cargo`, `xfs_info /mnt/cargo`"
+        explanation: "Correct."
+      - id: b
+        text: "`mkfs.ext4 -L CARGO /dev/vdb`, `mount`, `xfs_info`"
+        explanation: "`mkfs.ext4` builds ext4, which `xfs_info` cannot read."
+      - id: c
+        text: "`xfs_repair -L CARGO /dev/vdb`, `mount`, `xfs_info`"
+        explanation: "`xfs_repair -L` zeroes the log. It does not label."
+      - id: d
+        text: "`mkfs.xfs -n CARGO /dev/vdb`, `mount`, `df`"
+        explanation: "`-n` is not the label option for `mkfs.xfs`."
+    correct_option: a
+    explanation: "`mkfs.xfs -L` builds XFS with a label. `xfs_info` reads the layout from a mounted filesystem."
+
+  - id: ats004-010-q15
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Grow a mounted XFS filesystem"
+    source_readings:
+      - sections/section-010/module-09/course-02-growing-and-repairing-xfs.md
+    prompt: |-
+      The device under a mounted XFS filesystem at `/srv/cargo` grew. Which command uses the new space?
+    options:
+      - id: a
+        text: "`xfs_growfs /dev/vdb`, after unmounting."
+        explanation: "It does not need an unmount, and it takes the mount point."
+      - id: b
+        text: "`xfs_repair /srv/cargo`"
+        explanation: "`xfs_repair` fixes damage. It does not grow a filesystem."
+      - id: c
+        text: "`resize2fs /srv/cargo`"
+        explanation: "`resize2fs` works on ext2, ext3 and ext4, not XFS."
+      - id: d
+        text: "`xfs_growfs /srv/cargo`"
+        explanation: "Correct."
+    correct_option: d
+    explanation: "`xfs_growfs` grows XFS while it is mounted, and it takes the mount point. `resize2fs` is for ext filesystems. XFS cannot shrink."
+
+  - id: ats004-010-q16
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Repair an XFS filesystem safely"
+    source_readings:
+      - sections/section-010/module-09/course-02-growing-and-repairing-xfs.md
+    prompt: |-
+      An XFS filesystem will not mount. What is the right order of actions?
+    options:
+      - id: a
+        text: "Run `fsck.xfs`, then `xfs_repair -L` on the mounted filesystem."
+        explanation: "`fsck.xfs` does nothing, and repair on a mounted filesystem is refused."
+      - id: b
+        text: "Run `xfs_repair -L` first, because it is the fastest."
+        explanation: "`-L` can lose recent changes. Try the milder steps first."
+      - id: c
+        text: "Make sure it is unmounted, run `xfs_repair -n` to look, then `xfs_repair`. Use `-L` only as a last resort."
+        explanation: "Correct."
+      - id: d
+        text: "Run `xfs_growfs` to rebuild the log."
+        explanation: "`xfs_growfs` adds space. It does not repair."
+    correct_option: c
+    explanation: "`xfs_repair` needs an unmounted filesystem. `-n` only reports. `-L` throws away the log and can lose recent changes, so it is the last resort."
+
+  - id: ats004-010-q17
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Create a Btrfs subvolume and mount it by name"
+    source_readings:
+      - sections/section-010/module-10/course-01-creating-btrfs-and-subvolumes.md
+    prompt: |-
+      A Btrfs filesystem has a subvolume `data`. Which fstab line mounts only that subvolume at `/srv/vault`?
+    options:
+      - id: a
+        text: "`UUID=<UUID> /srv/vault btrfs subvol=data 0 0`"
+        explanation: "Correct."
+      - id: b
+        text: "`UUID=<UUID> /srv/vault ext4 data 0 0`"
+        explanation: "The type must be `btrfs`, and `data` is not a valid option."
+      - id: c
+        text: "`/dev/vdb /srv/vault btrfs subvolume 0 0`"
+        explanation: "`subvolume` without a name is not an option."
+      - id: d
+        text: "`UUID=<UUID> data btrfs /srv/vault 0 0`"
+        explanation: "The mount point is the second field, not the first."
+    correct_option: a
+    explanation: "The `subvol=` option picks which subvolume appears at the mount point."
+
+  - id: ats004-010-q18
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Take a read-only snapshot and resize Btrfs"
+    source_readings:
+      - sections/section-010/module-10/course-02-snapshots-and-resizing.md
+    prompt: |-
+      Which command takes a read-only snapshot of `/mnt/vault/data`?
+    options:
+      - id: a
+        text: "`btrfs subvolume snapshot /mnt/vault/data /mnt/vault/snap`"
+        explanation: "This makes a writable snapshot."
+      - id: b
+        text: "`btrfs subvolume snapshot -r /mnt/vault/data /mnt/vault/snap`"
+        explanation: "Correct."
+      - id: c
+        text: "`cp -r /mnt/vault/data /mnt/vault/snap`"
+        explanation: "`cp` copies every byte and is not a snapshot."
+      - id: d
+        text: "`btrfs filesystem resize -r /mnt/vault`"
+        explanation: "`resize` changes size. It does not take snapshots."
+    correct_option: b
+    explanation: "The `-r` flag makes the snapshot read-only. Without it the snapshot is writable."
+
+  - id: ats004-010-q19
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Read free space correctly on Btrfs"
+    source_readings:
+      - sections/section-010/module-10/course-02-snapshots-and-resizing.md
+    prompt: |-
+      `df` on a Btrfs filesystem looks confusing. Which command gives the true picture of data, metadata and unallocated space?
+    options:
+      - id: a
+        text: "`du -sh /`"
+        explanation: "`du` sums file sizes, not allocation."
+      - id: b
+        text: "`btrfs filesystem usage /mnt/vault`"
+        explanation: "Correct."
+      - id: c
+        text: "`lsblk -f`"
+        explanation: "`lsblk -f` shows type and label, not usage."
+      - id: d
+        text: "`btrfs subvolume list /mnt/vault`"
+        explanation: "The list shows subvolumes, not space."
+    correct_option: b
+    explanation: "Btrfs allocates space in chunks, so `df` can mislead. `btrfs filesystem usage` shows allocation by type."

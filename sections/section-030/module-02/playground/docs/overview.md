@@ -26,7 +26,7 @@ This module's parts build on each other in the same running VM. If you already k
 
 ```sh
 catchup part3   # runs Part 2's exercise for you: extend the VG, evacuate source_disk
-catchup part4   # runs Part 2 AND Part 3's exercises: the above, plus retire/grow/shrink
+catchup part4   # runs Part 2 AND Part 3's exercises (retire the emptied disk, then grow and shrink the volume) so you land at the start of Part 4
 ```
 
 Broke something mid-exploration and want the original 2-PV, 400M starting state back, without a full `astrona destroy` + `astrona run`?

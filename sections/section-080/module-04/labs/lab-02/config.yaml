@@ -1,0 +1,34 @@
+metadata:
+  name: "ats-004-lab-080-04-02"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-080-04-02-setup"
+      description: "Creates four files in a staging directory that must be moved to their proper FHS places"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-fhs-and-links"
+      description: "Confirms the four files are in their FHS places, the hard link shares an inode, and both symbolic links resolve"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

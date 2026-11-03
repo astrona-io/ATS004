@@ -26,6 +26,8 @@ All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also
     1. [Why LVM & the Three-Layer Model](./module-01/course-01-why-lvm-and-the-stack.md)
     2. [Physical Volumes & Volume Groups](./module-01/course-02-pv-and-vg.md)
     3. [Logical Volumes](./module-01/course-03-logical-volumes.md)
+    4. [How an LV Becomes a Device, and Stays Mounted](./module-01/course-04-device-mapper-and-persistent-mounts.md)
+    5. [Wrap-Up: Mission Debrief](./module-01/course-05-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-030/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -45,6 +47,8 @@ All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also
     2. [Live Migration: pvmove](./module-02/course-02-pvmove-migration.md)
     3. [vgreduce, and Growing/Shrinking a Volume](./module-02/course-03-vgreduce-lvextend.md)
     4. [Removing Any PV, and Physical Disk Safety](./module-02/course-04-removing-any-pv-and-safety.md)
+    5. [Growing in One Command](./module-02/course-05-growing-in-one-command.md)
+    6. [Wrap-Up: Mission Debrief](./module-02/course-06-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-030/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -80,6 +84,8 @@ All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also
 *   **Module Reader:** **[Module 3: Software RAID Fundamentals](./module-03/course.md)**
     1. [RAID Levels](./module-03/course-01-raid-levels.md)
     2. [Creating & Persisting an Array](./module-03/course-02-creating-and-persisting.md)
+    3. [Reading an Array Closely](./module-03/course-03-reading-an-array.md)
+    4. [Wrap-Up: Mission Debrief](./module-03/course-04-wrap-up.md)
 *   **Hands-on Playground:** `sections/section-030/module-03/playground/` — a VM with four raw spare disks.
     ```bash
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-03/playground
@@ -95,6 +101,8 @@ All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also
 *   **Module Reader:** **[Module 4: RAID Maintenance and Recovery](./module-04/course.md)**
     1. [Reading Health and Handling a Failure](./module-04/course-01-health-and-failure.md)
     2. [Growing an Array and Getting Notified](./module-04/course-02-growth-and-monitoring.md)
+    3. [Stopping, Reassembling and Reusing Disks](./module-04/course-03-stopping-and-reassembling.md)
+    4. [Wrap-Up: Mission Debrief](./module-04/course-04-wrap-up.md)
 *   **Hands-on Playground:** `sections/section-030/module-04/playground/` — a VM with a pre-built RAID 5 and a raw spare disk.
     ```bash
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-04/playground
@@ -118,4 +126,4 @@ All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also
 
 Test your theoretical knowledge and diagnostic reasoning before tackling the lab missions:
 
-*   **[Take the Section 030 Knowledge Check Quiz](./quiz.md)**
+*   **[Take the Section 030 Knowledge Check Quiz](./quiz.yaml)**

@@ -25,6 +25,8 @@ This section is divided into two modules, both paired with hands-on practice in 
 *   **Module Reader:** **[Module 1: The Process Blueprint: Inside /proc](./module-01/course.md)**
     1. [/proc as a Live View & System-wide Files](./module-01/course-01-live-view-and-system-wide-files.md)
     2. [Per-Process Directories & Open File Descriptors](./module-01/course-02-per-process-and-file-descriptors.md)
+    3. [Limits, Status and Storage Counters](./module-01/course-03-limits-status-and-storage-counters.md)
+    4. [Wrap-Up: Mission Debrief](./module-01/course-04-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-060/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -35,7 +37,10 @@ This section is divided into two modules, both paired with hands-on practice in 
 ### 2. The Hardware Tree & Runtime Tuning: `/sys` & `sysctl`
 *   **Module Reader:** **[Module 2: The Hardware Tree & Runtime Tuning: /sys & sysctl](./module-02/course.md)**
     1. [The Hardware Tree & the Mount List](./module-02/course-01-hardware-tree-and-mount-list.md)
-    2. [sysctl: Viewing, Changing & Persisting](./module-02/course-02-sysctl-viewing-changing-persisting.md)
+    2. [Block Queue Attributes & udev Rules](./module-02/course-02-block-queue-attributes-and-udev.md)
+    3. [sysctl: Viewing and Changing Parameters](./module-02/course-03-sysctl-viewing-and-changing.md)
+    4. [sysctl: Persisting and Precedence](./module-02/course-04-sysctl-persisting-and-precedence.md)
+    5. [Wrap-Up: Mission Debrief](./module-02/course-05-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-060/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -49,4 +54,4 @@ This section is divided into two modules, both paired with hands-on practice in 
 
 Test your theoretical knowledge and diagnostic reasoning before tackling the kernel systems lab mission:
 
-*   **[Take the Section 060 Knowledge Check Quiz](./quiz.md)**
+*   **[Take the Section 060 Knowledge Check Quiz](./quiz.yaml)**

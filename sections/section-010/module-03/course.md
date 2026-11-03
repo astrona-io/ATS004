@@ -1,37 +1,44 @@
 # Under Lock and Key: Securing Data-at-Rest with LUKS
 
-<!-- astrona:playground -->
-> [!NOTE]
-> 🧪 **Hands-on playground for this module** — a clean, throwaway machine to explore on. No task, no grading. Folder: [`playground/`](https://github.com/astrona-io/ATS004/tree/main/sections/section-010/module-03/playground)
->
-> ```sh
-> astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-010/module-03/playground
-> astrona destroy section-010-module-03-playground
-> ```
+File permissions only guard your cargo while your own ship is flying. If someone pulls the disk out and reads it on another machine, nobody checks the permissions. The bytes are simply there to read. To protect data "at rest", that is, sitting on a disk that someone else holds, the disk itself must be encrypted.
 
-Filesystem permissions protect data only while the operating system that enforces them is running. Pull the disk out and read it on another machine, or clone a cloud volume offline, and the permissions are irrelevant — the bytes are right there. Protecting data **at rest**, against someone who has the storage but not your running system, needs encryption on the disk itself.
-
-On Linux the standard tool for this is **LUKS** (Linux Unified Key Setup): full-block-device encryption built into the kernel. This module covers what LUKS defends against, how its keys are arranged, and the `cryptsetup` commands to create, open, use, and close an encrypted volume.
-
-## How this module is organised
-
-1. **[Part 1 — The LUKS Model: Locking a Disk](./course-01-the-luks-model.md)** — the threat LUKS actually addresses, the locked/mapped mental model, and why disk encryption uses AES-XTS rather than a stream-cipher mode.
-2. **[Part 2 — Creating a Container & Its Keyslots](./course-02-creating-a-container-and-keyslots.md)** — `luksFormat`, and the master-key-plus-keyslots mechanism that lets multiple passphrases share one encrypted device.
-3. **[Part 3 — Opening, Using, Closing & What's Visible Outside](./course-03-opening-using-closing.md)** — the daily `open`/`mkfs`/`mount`/`umount`/`close` cycle, and what a raw byte-level look at a closed device actually shows.
+Astronaut, in this module you fit a vault door on a cargo hold. On Linux that vault door is LUKS (Linux Unified Key Setup): without the passphrase, nobody gets to the cargo. You learn what LUKS guards against, how its keys work, and the `cryptsetup` commands to lock, open, use and close an encrypted disk.
 
 ## Learning objectives
 
 After this module you can:
 
-- Describe the offline / data-at-rest threat that LUKS addresses and what it does not protect against.
-- Explain the locked/mapped device-mapper model and why AES-XTS is the cipher mode used for block storage.
-- Create a LUKS container on a block device with `cryptsetup luksFormat`.
-- Explain the roles of the master key and the keyslots, and add a second passphrase with `luksAddKey` without touching the data region.
-- Open a LUKS device to a `/dev/mapper/` name, put a filesystem on the *mapped* device, mount it, then unmount and `close` it.
-- Predict what the raw device shows to someone without the passphrase, and why.
+- Describe the threat LUKS protects against (someone holds your disk, but not your running system), and what it does not protect against.
+- Explain the two states of a LUKS disk, locked and mapped, and why disk encryption uses the AES-XTS cipher mode.
+- Create a LUKS container on a disk with `cryptsetup luksFormat`.
+- Explain what the master key and the keyslots do, and add a second passphrase with `luksAddKey` without touching the stored data.
+- Open a LUKS disk to a `/dev/mapper/` name, put a filesystem on the mapped device, mount it, and then unmount and `close` it.
+- Predict what the raw disk shows to someone without the passphrase, and explain why.
 
 ## Before you start
 
-You should know how to format and mount a filesystem (`mkfs.ext4`, `mount`, `umount`) from the earlier modules, and be comfortable with `sudo`.
+Every mission starts with a pre-flight check. Make sure you know the basics below, and know what waits for you in your training ship.
 
-The linked playground gives you an Ubuntu server VM with passwordless `sudo`, the `cryptsetup` tool, the `dm_crypt` kernel module loaded, and one spare 2 GB raw disk (commonly `/dev/vdb`) wiped clean on every boot. Run the command blocks in Parts 1–3 in that VM after connecting with `astrona ssh astro-section-010-module-03-playground`. The examples encrypt the whole disk `/dev/vdb`; on a real system you would usually encrypt a partition such as `/dev/vdb1` instead, but the commands are identical.
+### What you should already know
+
+- How to format a disk with `mkfs.ext4`, and how to mount and unmount it with `mount` and `umount`.
+- How to run commands as the captain with `sudo`, and how to read command output.
+
+### What is in your playground
+
+Your playground is one training spaceship: an Ubuntu 24.04 virtual machine with passwordless `sudo`.
+
+- The system disk, `/dev/vda`, holds the operating system.
+- One extra 2 GB disk is attached raw, with nothing on it. It is usually `/dev/vdb`, and it is also reachable as `/dev/disk/by-id/virtio-s10m03-raw`. Always confirm the name with `lsblk`. The playground wipes this disk back to raw every time it starts.
+- The tools are already installed: `cryptsetup`, the `dm_crypt` kernel module, `mkfs.ext4`, `lsblk`, `blkid` and `xxd`.
+
+Start the playground and connect to it with `astrona ssh section-010-module-03-playground`. Run every command in the parts in that shell.
+
+<!-- astrona:playground -->
+
+## The parts of this module
+
+1. [The LUKS Model: Locking a Disk](./course-01-the-luks-model.md): what LUKS protects against, and how a locked disk turns into a usable one.
+2. [Creating a Container and Its Keyslots](./course-02-creating-a-container-and-keyslots.md): lock a disk with `luksFormat`, and give it a second passphrase.
+3. [Opening, Using and Closing the Vault](./course-03-opening-using-closing.md): open the disk, put a filesystem on it, close it again, and look at the raw bytes.
+4. [Wrap-Up: Mission Debrief](./course-04-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.

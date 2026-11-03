@@ -1,0 +1,335 @@
+# Knowledge check for section 080.
+schema_version: 1
+kind: question_bank
+id: ats004-080
+course_id: ATS004
+exam_code: LFCS
+status: draft
+provenance: Original practice material written for this course; not official exam
+  questions.
+scope:
+  type: section
+  id: section-080
+  title: Capacity, Quotas and the Filesystem Hierarchy
+questions:
+- id: ats004-080-q01
+  type: single_choice
+  difficulty: beginner
+  learning_objective: Keep du on one filesystem
+  source_readings:
+  - sections/section-080/module-01/course-02-one-filesystem-and-apparent-size.md
+  prompt: "`sudo du -sh /` runs for minutes and reports far more than the root disk
+    holds. Why?"
+  options:
+  - id: a
+    text: The root disk has bad sectors.
+    explanation: Bad sectors cause read errors, not a bigger total.
+  - id: b
+    text: "`du` crossed into other mounted filesystems and added them."
+    explanation: Correct. Add `-x` to stay on one filesystem.
+  - id: c
+    text: "`du` can only count blocks."
+    explanation: "`du` counts the space that files use."
+  - id: d
+    text: "`fsck` was not run first."
+    explanation: "`fsck` does not change how `du` counts."
+  correct_option: b
+  explanation: Without `-x`, `du` walks through every hatch it finds.
+- id: ats004-080-q02
+  type: single_choice
+  difficulty: beginner
+  learning_objective: Build a sorted top-level report
+  source_readings:
+  - sections/section-080/module-01/course-01-df-vs-du-depth-and-units.md
+  prompt: Which command lists the direct subdirectories of `/`, in human units, on
+    one filesystem?
+  options:
+  - id: a
+    text: "`sudo du -sh /`"
+    explanation: "`-s` prints one total line only."
+  - id: b
+    text: "`sudo du -xh --max-depth=1 /`"
+    explanation: Correct. `--max-depth=1` limits depth, `-h` gives units and `-x`
+      stays on one filesystem.
+  - id: c
+    text: "`sudo du -h -d 2 /`"
+    explanation: Depth 2 shows too much and crosses filesystems.
+  - id: d
+    text: "`sudo du --max-depth=1 /etc`"
+    explanation: That reports `/etc`, not `/`.
+  correct_option: b
+  explanation: Depth, units and one filesystem are three separate switches.
+- id: ats004-080-q03
+  type: single_choice
+  difficulty: beginner
+  learning_objective: Sort human-readable sizes
+  source_readings:
+  - sections/section-080/module-01/course-01-df-vs-du-depth-and-units.md
+  prompt: With `sort -n`, `15M` lands above `2G`. How do you fix this?
+  options:
+  - id: a
+    text: Use `sort -r`.
+    explanation: "`-r` only reverses the order."
+  - id: b
+    text: Reformat the disk.
+    explanation: Disk formats do not affect `sort`.
+  - id: c
+    text: Use `sort -h`.
+    explanation: Correct. `-h` understands K, M and G suffixes.
+  - id: d
+    text: Convert every size by hand.
+    explanation: That is slow and not needed.
+  correct_option: c
+  explanation: "`-h` teaches `sort` to read size suffixes."
+- id: ats004-080-q04
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Explain why df and du disagree
+  source_readings:
+  - sections/section-080/module-01/course-03-when-df-and-du-disagree.md
+  prompt: "`df` says a filesystem is full, but `du` adds up to much less. Which cause
+    fits?"
+  options:
+  - id: a
+    text: A deleted file that a running process still holds open.
+    explanation: Correct. The space stays used until the process closes the file.
+      `lsof +L1` finds it.
+  - id: b
+    text: "`du` is always wrong."
+    explanation: "`du` is right about files it can see."
+  - id: c
+    text: "`df` counts only symbolic links."
+    explanation: "`df` reports space used on the filesystem."
+  - id: d
+    text: The kernel hides some inodes from root.
+    explanation: That is not how it works.
+  correct_option: a
+  explanation: Space belongs to the file until the last open line closes.
+- id: ats004-080-q05
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Turn on ext4 user quotas
+  source_readings:
+  - sections/section-080/module-02/course-01-turning-on-and-setting-limits.md
+  prompt: Which mount option turns on user quota accounting on an ext4 filesystem?
+  options:
+  - id: a
+    text: "`quota`"
+    explanation: Not a mount option.
+  - id: b
+    text: "`usrquota`"
+    explanation: Correct. Use `grpquota` for groups.
+  - id: c
+    text: "`noquota`"
+    explanation: That is not the option that enables quotas.
+  - id: d
+    text: "`uquota`"
+    explanation: "`uquota` is the XFS spelling."
+  correct_option: b
+  explanation: On ext4 the options are `usrquota` and `grpquota`.
+- id: ats004-080-q06
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Order the steps to enforce ext4 quotas
+  source_readings:
+  - sections/section-080/module-02/course-01-turning-on-and-setting-limits.md
+  prompt: After mounting an ext4 filesystem with `usrquota`, what is the next step
+    before limits count?
+  options:
+  - id: a
+    text: Run `quotacheck` to create the quota file and `quotaon` to start enforcement.
+    explanation: Correct. Then set limits with `edquota` or `setquota`.
+  - id: b
+    text: Run `repquota` only.
+    explanation: "`repquota` only reports."
+  - id: c
+    text: Reboot the machine.
+    explanation: A reboot is not needed.
+  - id: d
+    text: Run `xfs_quota`.
+    explanation: That is for XFS.
+  correct_option: a
+  explanation: Make the ledger first, then open the gate.
+- id: ats004-080-q07
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Read soft, hard and grace
+  source_readings:
+  - sections/section-080/module-02/course-03-hitting-the-limit-and-grace-period.md
+  prompt: A user is over the soft limit but under the hard limit. What happens?
+  options:
+  - id: a
+    text: Writes fail at once.
+    explanation: That happens at the hard limit.
+  - id: b
+    text: Nothing, forever.
+    explanation: The grace period still runs.
+  - id: c
+    text: The user may keep writing until the grace period ends, then writes are refused.
+    explanation: Correct. The soft limit is the warning line.
+  - id: d
+    text: The account is deleted.
+    explanation: Quotas never delete accounts.
+  correct_option: c
+  explanation: Soft is the warning line, hard is the wall.
+- id: ats004-080-q08
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Report group quotas
+  source_readings:
+  - sections/section-080/module-02/course-02-group-quotas-and-reports.md
+  prompt: Which command prints a table of usage and limits for all groups on a mounted
+    ext4 filesystem?
+  options:
+  - id: a
+    text: "`repquota -g /mountpoint`"
+    explanation: Correct. `-g` selects groups.
+  - id: b
+    text: "`quota -u`"
+    explanation: That shows one user's quota.
+  - id: c
+    text: "`df -g`"
+    explanation: "`df` does not show quotas."
+  - id: d
+    text: "`edquota -t`"
+    explanation: That edits grace times.
+  correct_option: a
+  explanation: "`repquota` is the roll call for allowances."
+- id: ats004-080-q09
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Enable XFS quotas
+  source_readings:
+  - sections/section-080/module-03/course-01-xfs-quotas-and-user-limits.md
+  prompt: XFS quotas are not active after you ran `mount -o remount,uquota /data`.
+    What is the correct way?
+  options:
+  - id: a
+    text: Run `quotacheck -cug`.
+    explanation: XFS does not use `quotacheck`.
+  - id: b
+    text: Unmount the filesystem and mount it again with `uquota`.
+    explanation: Correct. XFS reads quota mount options at the first mount, not at
+      remount.
+  - id: c
+    text: Edit `/etc/quota.conf`.
+    explanation: No such file controls this.
+  - id: d
+    text: Run `fsck.xfs`.
+    explanation: That does nothing for quotas.
+  correct_option: b
+  explanation: XFS needs the option at mount time.
+- id: ats004-080-q10
+  type: single_choice
+  difficulty: advanced
+  learning_objective: Set up an XFS project quota
+  source_readings:
+  - sections/section-080/module-03/course-02-project-quotas.md
+  prompt: You need a size limit on one directory tree on XFS, no matter who owns the
+    files. What do you use?
+  options:
+  - id: a
+    text: A user quota.
+    explanation: User quotas follow owners, not trees.
+  - id: b
+    text: A group quota.
+    explanation: Group quotas follow group ownership.
+  - id: c
+    text: A project quota with `pquota`, entries in `/etc/projects` and `/etc/projid`,
+      and `xfs_quota -x`.
+    explanation: Correct. A project is a mission label placed on a directory tree.
+  - id: d
+    text: "`du` with `--max-depth`."
+    explanation: "`du` reports and does not limit."
+  correct_option: c
+  explanation: A project quota is an allowance per mission, not per crew member.
+- id: ats004-080-q11
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Tell a symbolic link from a hard link
+  source_readings:
+  - sections/section-080/module-04/course-02-creating-links-hard-links-and-dangling.md
+  prompt: What happens to a symbolic link when its target is deleted?
+  options:
+  - id: a
+    text: It becomes a dangling link that points to nothing.
+    explanation: Correct. A hard link would still keep the data.
+  - id: b
+    text: It is deleted too.
+    explanation: The link stays.
+  - id: c
+    text: It turns into a copy.
+    explanation: Links never copy.
+  - id: d
+    text: The kernel repairs it.
+    explanation: It does not.
+  correct_option: a
+  explanation: A symbolic link is a sign on a hatch. If the hatch is gone, the sign
+    points to nothing.
+- id: ats004-080-q12
+  type: single_choice
+  difficulty: advanced
+  learning_objective: Remove a symlink safely
+  source_readings:
+  - sections/section-080/module-04/course-03-resolving-du-and-removing-safely.md
+  prompt: "`/opt/active` is a link to a directory. Which command removes only the
+    link?"
+  options:
+  - id: a
+    text: "`rm -rf /opt/active/`"
+    explanation: The trailing slash follows the link into the target.
+  - id: b
+    text: "`rm /opt/active`"
+    explanation: Correct. No trailing slash removes the link only.
+  - id: c
+    text: "`rmdir /opt/active/`"
+    explanation: "`rmdir` does not fit a link."
+  - id: d
+    text: "`unlink /var/lib/prod`"
+    explanation: That removes the target path.
+  correct_option: b
+  explanation: The trailing slash makes the shell walk through the sign.
+- id: ats004-080-q13
+  type: single_choice
+  difficulty: beginner
+  learning_objective: Know where things live in the FHS
+  source_readings:
+  - sections/section-080/module-04/course-04-the-filesystem-hierarchy.md
+  prompt: Where do the host-specific configuration files normally live?
+  options:
+  - id: a
+    text: "`/etc`"
+    explanation: Correct. `/etc` is the ship's settings drawer.
+  - id: b
+    text: "`/tmp`"
+    explanation: "`/tmp` holds temporary files."
+  - id: c
+    text: "`/proc`"
+    explanation: "`/proc` shows live kernel data."
+  - id: d
+    text: "`/srv`"
+    explanation: "`/srv` holds data a service offers."
+  correct_option: a
+  explanation: "`/etc` holds configuration, `/var` changing data, `/home` user files."
+- id: ats004-080-q14
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Follow a link to its final target
+  source_readings:
+  - sections/section-080/module-04/course-01-what-a-symlink-is-and-finding-them.md
+  prompt: Which command prints the final real path of a link chain?
+  options:
+  - id: a
+    text: "`readlink -f`"
+    explanation: Correct. It follows every link.
+  - id: b
+    text: "`ls -i`"
+    explanation: That shows inode numbers.
+  - id: c
+    text: "`stat -f`"
+    explanation: That shows filesystem data.
+  - id: d
+    text: "`du -L`"
+    explanation: That follows links when counting size.
+  correct_option: a
+  explanation: "`readlink -f` follows every sign to the real hatch."

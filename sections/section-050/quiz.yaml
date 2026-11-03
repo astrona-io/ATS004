@@ -1,0 +1,324 @@
+# Knowledge check for section 050.
+schema_version: 1
+kind: question_bank
+id: ats004-050
+course_id: ATS004
+exam_code: LFCS
+status: draft
+provenance: Original practice material written for this course; not official exam questions.
+scope:
+  type: section
+  id: section-050
+  title: "On-Demand Mounting (autofs)"
+questions:
+  - id: ats004-050-q01
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Explain why network mounts in `/etc/fstab` can slow boot"
+    source_readings:
+      - sections/section-050/module-01/course-01-mechanism-and-enabling.md
+    prompt: |-
+      An application server lists several NFS mounts in `/etc/fstab`. The NFS host is offline when the server reboots, and boot stalls for a long time. Why?
+    options:
+      - id: a
+        text: "The root filesystem was damaged by the NFS crash."
+        explanation: "Local filesystems do not depend on the remote host."
+      - id: b
+        text: "The network card was damaged."
+        explanation: "The card is not the cause. The mount wait is."
+      - id: c
+        text: "NFS mounts need a desktop session."
+        explanation: "Servers boot fine without one."
+      - id: d
+        text: "systemd mounts every fstab entry during boot and waits for the unreachable server to answer or give up."
+        explanation: "Correct. A normal fstab mount happens at boot, whether anyone needs it or not. With the server gone, the wait slows the whole launch. autofs mounts only when someone opens the path."
+    correct_option: d
+    explanation: "A normal fstab mount happens at boot, whether anyone needs it or not. With the server gone, the wait slows the whole launch. autofs mounts only when someone opens the path."
+
+  - id: ats004-050-q02
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Write a master map line"
+    source_readings:
+      - sections/section-050/module-01/course-02-master-map-and-triggering.md
+    prompt: |-
+      `/etc/auto.master` must watch `/mnt/secure_vault`, read its entries from `/etc/auto.vault`, and unmount after 120 idle seconds. Which line is right?
+    options:
+      - id: a
+        text: "`/etc/auto.vault  /mnt/secure_vault  --timeout=120`"
+        explanation: "The mount point and the map file are swapped."
+      - id: b
+        text: "`/mnt/secure_vault  /etc/auto.vault  --timeout=120`"
+        explanation: "Correct. A master line has the mount point first, the map file second, then options. The timeout option uses `=`."
+      - id: c
+        text: "`mount -t autofs /mnt/secure_vault /etc/auto.vault`"
+        explanation: "This is a shell command, not a map line."
+      - id: d
+        text: "`/mnt/secure_vault  /etc/auto.vault  --timeout 120`"
+        explanation: "The option needs an equals sign."
+    correct_option: b
+    explanation: "A master line has the mount point first, the map file second, then options. The timeout option uses `=`."
+
+  - id: ats004-050-q03
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Write an indirect map entry"
+    source_readings:
+      - sections/section-050/module-02/course-01-discovering-and-submap.md
+    prompt: |-
+      The master map watches `/mnt/auto` with `/etc/auto.custom`. Which line in `/etc/auto.custom` mounts `data-srv:/export/docs` read-only at `/mnt/auto/documents`?
+    options:
+      - id: a
+        text: "`documents  -fstype=nfs,ro  data-srv:/export/docs`"
+        explanation: "Correct. In an indirect map the first field is only the name under the watched folder. Options start with a dash, and the server and path come last."
+      - id: b
+        text: "`/mnt/auto/documents  -fstype=nfs,ro  data-srv:/export/docs`"
+        explanation: "A full path is the key of a direct map, not an indirect one."
+      - id: c
+        text: "`documents  mount -t nfs -o ro  data-srv:/export/docs`"
+        explanation: "A map holds options, not a shell command."
+      - id: d
+        text: "`data-srv:/export/docs  -fstype=nfs,ro  documents`"
+        explanation: "The key and the server are in the wrong places."
+    correct_option: a
+    explanation: "In an indirect map the first field is only the name under the watched folder. Options start with a dash, and the server and path come last."
+
+  - id: ats004-050-q04
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Describe what an automount point looks like before use"
+    source_readings:
+      - sections/section-050/module-01/course-02-master-map-and-triggering.md
+    prompt: |-
+      You run `ls /mnt/auto` on an autofs indirect mount point. It looks empty, but `ls /mnt/auto/documents` shows the share. Why?
+    options:
+      - id: a
+        text: "The map is broken and only the second command works by chance."
+        explanation: "A working map behaves this way by design."
+      - id: b
+        text: "The share was lost and mounted again."
+        explanation: "Nothing was lost. The entry appears on demand."
+      - id: c
+        text: "autofs creates each entry only when someone asks for that name, so nothing is listed before first use."
+        explanation: "Correct. The kernel hands every first access to the automount daemon, which then mounts the share. Until then no `documents` entry exists to list."
+      - id: d
+        text: "`ls` never shows network folders."
+        explanation: "It does show them once they are mounted."
+    correct_option: c
+    explanation: "The kernel hands every first access to the automount daemon, which then mounts the share. Until then no `documents` entry exists to list."
+
+  - id: ats004-050-q05
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Find why an idle mount stays mounted"
+    source_readings:
+      - sections/section-050/module-02/course-02-idle-unmount-and-server-loss.md
+    prompt: |-
+      A 5-minute idle timeout is set. Ten minutes after you last read a file, `df -h` still shows the share. What is the most likely reason?
+    options:
+      - id: a
+        text: "A shell has its working directory inside the share, or a process still has a file open there."
+        explanation: "Correct. autofs unmounts only a mount that nobody uses. An open file or a current directory counts as use."
+      - id: b
+        text: "autofs cannot unmount NFS."
+        explanation: "It can, when the mount is idle."
+      - id: c
+        text: "The remote server locked the connection."
+        explanation: "The client kernel decides when to unmount."
+      - id: d
+        text: "You must run `systemctl trigger autofs`."
+        explanation: "The timer runs by itself."
+    correct_option: a
+    explanation: "autofs unmounts only a mount that nobody uses. An open file or a current directory counts as use."
+
+  - id: ats004-050-q06
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Write a direct map"
+    source_readings:
+      - sections/section-050/module-01/course-03-direct-maps.md
+    prompt: |-
+      Which pair of lines sets up a direct map for `/data/reports`?
+    options:
+      - id: a
+        text: "In `/etc/auto.master`: `/data  /etc/auto.direct`. In the map: `reports  srv:/export/reports`."
+        explanation: "This is an indirect map for `/data`, not a direct one."
+      - id: b
+        text: "In `/etc/auto.master`: `/-  /etc/auto.direct`. In the map: `reports  srv:/export/reports`."
+        explanation: "A direct map needs the full path as the key."
+      - id: c
+        text: "Only one line in `/etc/fstab`."
+        explanation: "That is not autofs."
+      - id: d
+        text: "In `/etc/auto.master`: `/-  /etc/auto.direct`. In `/etc/auto.direct`: `/data/reports  -fstype=nfs  srv:/export/reports`."
+        explanation: "Correct. The special key `/-` in the master map says the map holds full paths. Each line of a direct map starts with that full path."
+    correct_option: d
+    explanation: "The special key `/-` in the master map says the map holds full paths. Each line of a direct map starts with that full path."
+
+  - id: ats004-050-q07
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Use a wildcard map"
+    source_readings:
+      - sections/section-050/module-02/course-03-wildcards.md
+    prompt: |-
+      Every folder under `/export` on `nfs` should appear under `/mnt/home/<name>`. Which map line does it with one rule?
+    options:
+      - id: a
+        text: "`*  -fstype=nfs,rw  nfs:/export/&`"
+        explanation: "Correct. `*` matches any name that is asked for, and `&` puts that same name back in the remote path."
+      - id: b
+        text: "`&  -fstype=nfs,rw  nfs:/export/*`"
+        explanation: "`*` and `&` are swapped."
+      - id: c
+        text: "`*  -fstype=nfs,rw  nfs:/export`"
+        explanation: "Every name would mount the same directory."
+      - id: d
+        text: "`%  -fstype=nfs,rw  nfs:/export/%`"
+        explanation: "`%` has no special meaning here."
+    correct_option: a
+    explanation: "`*` matches any name that is asked for, and `&` puts that same name back in the remote path."
+
+  - id: ats004-050-q08
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Apply master map changes"
+    source_readings:
+      - sections/section-050/module-01/course-04-drop-ins-and-debugging.md
+    prompt: |-
+      You added a new line to `/etc/auto.master`. Which command makes autofs read it?
+    options:
+      - id: a
+        text: "Nothing. The line is live at once."
+        explanation: "The master map is read only at start or reload."
+      - id: b
+        text: "`sudo systemctl reload autofs`"
+        explanation: "Correct. The daemon reads the master map when it starts or reloads. Changed lines in a map file are picked up when a name is next used."
+      - id: c
+        text: "`sudo mount -a`"
+        explanation: "`mount -a` reads `/etc/fstab`, not autofs maps."
+      - id: d
+        text: "`sudo mkdir /mnt/new`"
+        explanation: "autofs makes the mount point itself."
+    correct_option: b
+    explanation: "The daemon reads the master map when it starts or reloads. Changed lines in a map file are picked up when a name is next used."
+
+  - id: ats004-050-q09
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Debug autofs"
+    source_readings:
+      - sections/section-050/module-01/course-04-drop-ins-and-debugging.md
+    prompt: |-
+      A mount does not appear. Which command shows what the autofs service said while it tried?
+    options:
+      - id: a
+        text: "`cat /etc/fstab`"
+        explanation: "autofs does not use this file."
+      - id: b
+        text: "`swapon --show`"
+        explanation: "This lists swap, not mounts."
+      - id: c
+        text: "`journalctl -u autofs`"
+        explanation: "Correct. The autofs unit logs to the journal. You can also run the daemon in the foreground with verbose output while the service is stopped."
+      - id: d
+        text: "`journalctl -u sshd`"
+        explanation: "This shows the SSH service."
+    correct_option: c
+    explanation: "The autofs unit logs to the journal. You can also run the daemon in the foreground with verbose output while the service is stopped."
+
+  - id: ats004-050-q10
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Check how autofs shows up in the mount table"
+    source_readings:
+      - sections/section-050/module-01/course-01-mechanism-and-enabling.md
+    prompt: |-
+      Before anyone opens a path, which `findmnt /mnt/auto` result tells you autofs is watching it?
+    options:
+      - id: a
+        text: "The type is `nfs4`."
+        explanation: "That appears only after the share is mounted."
+      - id: b
+        text: "`findmnt` prints nothing."
+        explanation: "A watched folder is a mount, so it shows."
+      - id: c
+        text: "The type is `tmpfs`."
+        explanation: "autofs does not use tmpfs."
+      - id: d
+        text: "The filesystem type is `autofs`."
+        explanation: "Correct. autofs puts a trigger mount on the watched folder. After use, the real NFS mount shows up below it."
+    correct_option: d
+    explanation: "autofs puts a trigger mount on the watched folder. After use, the real NFS mount shows up below it."
+
+  - id: ats004-050-q11
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Explain what happens to files in a folder autofs takes over"
+    source_readings:
+      - sections/section-050/module-01/course-02-master-map-and-triggering.md
+    prompt: |-
+      You keep notes in `/mnt/auto` and then enable autofs for that folder. The notes seem gone. What happened?
+    options:
+      - id: a
+        text: "autofs mounted its own filesystem on top, so the old files are hidden until it is stopped."
+        explanation: "Correct. A mount covers what was in the folder. Never use a folder with real files as a watched folder."
+      - id: b
+        text: "autofs deleted the files."
+        explanation: "They are still on disk, only covered."
+      - id: c
+        text: "The files moved to the NFS server."
+        explanation: "No data moves."
+      - id: d
+        text: "`ls` caches the old list."
+        explanation: "The list is real. The covered folder is not visible."
+    correct_option: a
+    explanation: "A mount covers what was in the folder. Never use a folder with real files as a watched folder."
+
+  - id: ats004-050-q12
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Pick the right place for a server down case"
+    source_readings:
+      - sections/section-050/module-02/course-02-idle-unmount-and-server-loss.md
+    prompt: |-
+      The NFS server is offline. A user opens `/mnt/auto/documents` and the command waits. What stays unaffected?
+    options:
+      - id: a
+        text: "The server comes back automatically."
+        explanation: "autofs cannot repair the server."
+      - id: b
+        text: "Boot, and other autofs names that point to working servers."
+        explanation: "Correct. autofs mounts only on access, so the wait stays with the one path that needs the dead server."
+      - id: c
+        text: "Nothing. The whole machine freezes."
+        explanation: "Only the access to that path waits."
+      - id: d
+        text: "Only local disks stay mounted, all else drops."
+        explanation: "Other names are mounted separately."
+    correct_option: b
+    explanation: "autofs mounts only on access, so the wait stays with the one path that needs the dead server."
+
+  - id: ats004-050-q13
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Choose an entry when a name has an exception"
+    source_readings:
+      - sections/section-050/module-02/course-04-exceptions-and-precedence.md
+    prompt: |-
+      A wildcard map covers every name, but one name needs special options. How do you handle it?
+    options:
+      - id: a
+        text: "Use two master map lines for the same folder."
+        explanation: "This does not work."
+      - id: b
+        text: "Disable the wildcard."
+        explanation: "It is not needed."
+      - id: c
+        text: "Add a line for that name above the `*` line."
+        explanation: "Correct. autofs uses the first matching entry. A specific line before `*` wins for its name."
+      - id: d
+        text: "Add the line after `*`."
+        explanation: "The wildcard would match first."
+    correct_option: c
+    explanation: "autofs uses the first matching entry. A specific line before `*` wins for its name."

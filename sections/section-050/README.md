@@ -25,6 +25,9 @@ This section is divided into two modules, both paired with hands-on practice in 
 *   **Module Reader:** **[Module 1: On-Demand Mounting Fundamentals](./module-01/course.md)**
     1. [How On-Demand Mounting Works, and Enabling autofs](./module-01/course-01-mechanism-and-enabling.md)
     2. [The Master Map, Triggering & Idle Unmount](./module-01/course-02-master-map-and-triggering.md)
+    3. [Direct Maps & a Fixed Mount Point](./module-01/course-03-direct-maps.md)
+    4. [Drop-In Master Files & Debugging autofs](./module-01/course-04-drop-ins-and-debugging.md)
+    5. [Wrap-Up: Mission Debrief](./module-01/course-05-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-050/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -34,8 +37,11 @@ This section is divided into two modules, both paired with hands-on practice in 
 
 ### 2. Network Automount Maps & Tuning
 *   **Module Reader:** **[Module 2: Network Automount Maps & Tuning](./module-02/course.md)**
-    1. [Discovering Exports & Writing a Sub-map](./module-02/course-01-discovering-and-submap.md)
-    2. [Idle Unmount & Wildcards](./module-02/course-02-wildcards-and-idle-unmount.md)
+    1. [Discovering Exports & Writing a Map](./module-02/course-01-discovering-and-submap.md)
+    2. [Idle Unmount & a Server That Stops Answering](./module-02/course-02-idle-unmount-and-server-loss.md)
+    3. [Wildcards: One Line for Many Exports](./module-02/course-03-wildcards.md)
+    4. [Exceptions: One Key With Its Own Options](./module-02/course-04-exceptions-and-precedence.md)
+    5. [Wrap-Up: Mission Debrief](./module-02/course-05-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-050/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -49,4 +55,4 @@ This section is divided into two modules, both paired with hands-on practice in 
 
 Test your theoretical knowledge and diagnostic reasoning before tackling the automounting lab mission:
 
-*   **[Take the Section 050 Knowledge Check Quiz](./quiz.md)**
+*   **[Take the Section 050 Knowledge Check Quiz](./quiz.yaml)**

@@ -15,8 +15,11 @@ This module covers the two halves of an NFS setup — declaring a share on the s
 
 ## How this module is organised
 
-1. **[Part 1 — Client-Server Model & Exports](./course-01-client-server-and-exports.md)** — the RPC machinery (`rpcbind`, `nfsd`, `rpc.mountd`) behind NFS, writing `/etc/exports`, and applying it with `exportfs`.
-2. **[Part 2 — Mounting, Read-Only & a Down Server](./course-02-mounting-readonly-and-server-down.md)** — discovering and mounting an export, what `ro` actually enforces and where, and the `hard`/`soft` choice for a server that stops responding.
+1. **[Client-Server Model & Exports](./course-01-client-server-and-exports.md)** — the RPC machinery (`rpcbind`, `nfsd`, `rpc.mountd`) behind NFS, writing `/etc/exports`, and applying it with `exportfs`.
+2. **[Mounting, Read-Only & a Down Server](./course-02-mounting-readonly-and-server-down.md)** — discovering and mounting an export, what `ro` actually enforces and where, and the `hard`/`soft` choice for a server that stops responding. A graded mission ends this part.
+3. **[Persistent NFS Mounts](./course-03-persistent-nfs-mounts.md)** — an `/etc/fstab` line for NFS, the `_netdev`, `nofail` and `x-systemd.automount` options, and how to test before a reboot.
+4. **[Troubleshooting NFS](./course-04-troubleshooting-nfs.md)** — one command for each place a mount can fail: the export table, the RPC signals, and the options in use. A graded mission ends this part.
+5. **[Wrap-Up: Mission Debrief](./course-05-wrap-up.md)** — a recap, a self-check, and how to land the playground.
 
 ## Learning objectives
 
@@ -28,9 +31,11 @@ After this module you can:
 - Query a server's available exports with `showmount -e` and mount one with `mount -t nfs`.
 - Explain the difference between a `hard` and a `soft` NFS mount, why `soft` is only safe for read-only mounts, and when each is appropriate.
 - Describe why `intr` is obsolete and what to use instead for responsiveness.
+- Write an `/etc/fstab` entry for an NFS mount with `_netdev` and `nofail`, and test it with `findmnt --verify` and `mount -a`.
+- Find why an NFS mount fails with `exportfs -v`, `rpcinfo -p` and `nfsstat -m`, and explain `root_squash`.
 
 ## Before you start
 
-You should know how to mount and unmount a filesystem and read command output; the previous SSHFS module is helpful background but not required.
+You should know how to mount and unmount a filesystem and read command output.
 
-The linked playground gives you two VMs on a private `10.10.20.0/24` network: `server` (10.10.20.10), where `nfs-kernel-server` is already running and `/nfs/share` holds `report.txt` and `notes.txt`, and `client` (10.10.20.5), where `nfs-common` and `showmount` are installed and `/mnt/nfs` exists. `/etc/exports` on `server` starts **empty** — you write the export line in Part 1's checkpoint. Each VM resolves the other's name from `/etc/hosts`. Reach the environment with `astrona ssh astro-section-020-module-02-playground` and choose `server` or `client` when prompted; run each command block on the VM named in its heading.
+The linked playground gives you two VMs on a private `10.10.20.0/24` network: `server` (10.10.20.10), where `nfs-kernel-server` is already running and `/nfs/share` holds `report.txt` and `notes.txt`, and `client` (10.10.20.5), where `nfs-common` and `showmount` are installed and `/mnt/nfs` exists. `/etc/exports` on `server` starts **empty** — you write the export line yourself in the first hands-on step. Each VM resolves the other's name from `/etc/hosts`. Reach the environment with `astrona ssh astro-section-020-module-02-playground` and choose `server` or `client` when prompted; run each command block on the VM named in its heading.

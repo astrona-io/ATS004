@@ -1,0 +1,327 @@
+# Knowledge check for section 030. Listed in astrona.yaml as a `type: quiz` entry after the section's modules.
+schema_version: 1
+kind: question_bank
+id: ats004-030
+course_id: ATS004
+exam_code: LFCS
+status: draft
+provenance: Original practice material written for this course; not official exam questions.
+scope:
+  type: section
+  id: section-030
+  title: "Dynamic & Redundant Volumes (LVM and RAID)"
+questions:
+  - id: ats004-030-q01
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Build an LV from raw disks in the right order"
+    source_readings:
+      - sections/section-030/module-01/course-01-why-lvm-and-the-stack.md
+      - sections/section-030/module-01/course-03-logical-volumes.md
+    prompt: |-
+      You want a logical volume `user_data` in a pool `db_pool` built from `/dev/vdb` and `/dev/vdc`. What is the correct order?
+    options:
+      - id: a
+        text: "`pvcreate`, then `vgcreate db_pool /dev/vdb /dev/vdc`, then `lvcreate -L 20G -n user_data db_pool`"
+        explanation: "Correct."
+      - id: b
+        text: "`lvcreate`, then `vgcreate`, then `pvcreate`"
+        explanation: "A logical volume cannot exist before the group, and the group needs physical volumes."
+      - id: c
+        text: "`vgcreate`, then `lvcreate`, then `mkfs` on the disks"
+        explanation: "Disks are not formatted. The logical volume is."
+      - id: d
+        text: "`mkfs.ext4 /dev/vdb`, then `lvcreate`"
+        explanation: "Formatting the disk first would hide it from LVM."
+    correct_option: a
+    explanation: "The stack builds from the bottom: physical volumes, then the volume group, then logical volumes."
+
+  - id: ats004-030-q02
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Explain physical extents"
+    source_readings:
+      - sections/section-030/module-01/course-02-pv-and-vg.md
+    prompt: |-
+      What is a physical extent (PE) in LVM?
+    options:
+      - id: a
+        text: "A sector on an SSD that cannot be changed."
+        explanation: "Extents are LVM units, not hardware sectors."
+      - id: b
+        text: "The smallest block LVM hands out when it builds logical volumes, 4 MiB by default."
+        explanation: "Correct."
+      - id: c
+        text: "A copy of a file kept for safety."
+        explanation: "Extents hold no copies unless a mirror exists."
+      - id: d
+        text: "A kind of filesystem."
+        explanation: "Extents are not a filesystem."
+    correct_option: b
+    explanation: "Space in a volume group is cut into equal extents. Logical volumes are made of whole extents."
+
+  - id: ats004-030-q03
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Grow a logical volume and its filesystem"
+    source_readings:
+      - sections/section-030/module-02/course-05-growing-in-one-command.md
+      - sections/section-030/module-02/course-03-vgreduce-lvextend.md
+    prompt: |-
+      You ran `lvextend -L 30G` on a mounted volume, yet `df -h` still shows 20G. What is missing?
+    options:
+      - id: a
+        text: "A reboot."
+        explanation: "The kernel sees the new size at once."
+      - id: b
+        text: "The filesystem inside the volume has not grown yet. Use `resize2fs`, `xfs_growfs`, or `lvextend -r`."
+        explanation: "Correct."
+      - id: c
+        text: "`pvcreate` on the volume."
+        explanation: "`pvcreate` is for disks, not volumes."
+      - id: d
+        text: "`vgreduce`."
+        explanation: "`vgreduce` removes disks from a group."
+    correct_option: b
+    explanation: "The volume and the filesystem are two layers. `lvextend -r` grows both in one step."
+
+  - id: ats004-030-q04
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Migrate extents before removing a disk"
+    source_readings:
+      - sections/section-030/module-02/course-02-pvmove-migration.md
+      - sections/section-030/module-02/course-04-removing-any-pv-and-safety.md
+    prompt: |-
+      `/dev/vdb` holds extents in use and must leave the volume group `vol1`. What do you run first?
+    options:
+      - id: a
+        text: "`vgreduce vol1 /dev/vdb`"
+        explanation: "`vgreduce` refuses while extents are in use."
+      - id: b
+        text: "`pvmove /dev/vdb`"
+        explanation: "Correct."
+      - id: c
+        text: "`pvremove /dev/vdb`"
+        explanation: "`pvremove` refuses while the disk is in a group."
+      - id: d
+        text: "`lvremove` on every volume"
+        explanation: "That would destroy data you want to keep."
+    correct_option: b
+    explanation: "`pvmove` moves the used extents to other disks in the group while the ship flies. Only then do `vgreduce` and `pvremove` work."
+
+  - id: ats004-030-q05
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Pick the compact LVM report"
+    source_readings:
+      - sections/section-030/module-01/course-02-pv-and-vg.md
+    prompt: |-
+      Which command prints one short line per volume group?
+    options:
+      - id: a
+        text: "`vgdisplay`"
+        explanation: "That prints a long block per group."
+      - id: b
+        text: "`vgs`"
+        explanation: "Correct."
+      - id: c
+        text: "`lvdisplay`"
+        explanation: "That is about logical volumes."
+      - id: d
+        text: "`pvdisplay -m`"
+        explanation: "That lists disk details, not groups."
+    correct_option: b
+    explanation: "The short reports `pvs`, `vgs` and `lvs` print one line per item. The `display` commands print long blocks."
+
+  - id: ats004-030-q06
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Make an LVM mount survive a reboot"
+    source_readings:
+      - sections/section-030/module-01/course-04-device-mapper-and-persistent-mounts.md
+    prompt: |-
+      Which `/etc/fstab` device name is stable for a logical volume?
+    options:
+      - id: a
+        text: "`/dev/dm-0`"
+        explanation: "The `dm-N` numbers can move between boots."
+      - id: b
+        text: "`/dev/vdb`"
+        explanation: "That is a physical disk, not the volume."
+      - id: c
+        text: "`/dev/vg_data/lv_data` or `UUID=`"
+        explanation: "Correct."
+      - id: d
+        text: "`/dev/mapper` followed by a random number"
+        explanation: "There is no such random name."
+    correct_option: c
+    explanation: "`/dev/dm-N` numbers can change. The group and volume name path, or the filesystem UUID, stays the same."
+
+  - id: ats004-030-q07
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Choose a RAID level"
+    source_readings:
+      - sections/section-030/module-03/course-01-raid-levels.md
+    prompt: |-
+      A server has four disks. It must survive one disk failure and give the most usable space. Which level fits?
+    options:
+      - id: a
+        text: "RAID 0"
+        explanation: "RAID 0 loses everything when one disk fails."
+      - id: b
+        text: "RAID 1 over all four"
+        explanation: "Mirroring four times wastes three quarters of the space."
+      - id: c
+        text: "RAID 5, with the space of three disks"
+        explanation: "Correct."
+      - id: d
+        text: "RAID 0 plus a backup disk"
+        explanation: "This is not RAID, and the backup disk is not live."
+    correct_option: c
+    explanation: "RAID 5 spreads parity, so any one disk can fail. RAID 0 has no copies at all."
+
+  - id: ats004-030-q08
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Create a mirror and record it"
+    source_readings:
+      - sections/section-030/module-03/course-02-creating-and-persisting.md
+    prompt: |-
+      Which command creates a two-disk mirror named `/dev/md0`?
+    options:
+      - id: a
+        text: "`mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/vdb /dev/vdc`"
+        explanation: "Correct."
+      - id: b
+        text: "`mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/vdb /dev/vdc`"
+        explanation: "Level 0 is striping, with no copy."
+      - id: c
+        text: "`mdadm --assemble /dev/md0 --level=1`"
+        explanation: "Assemble needs an existing array."
+      - id: d
+        text: "`mkraid /dev/md0`"
+        explanation: "`mkraid` is not an `mdadm` command on Ubuntu."
+    correct_option: a
+    explanation: "Level 1 is a mirror. `--create` builds a new array. `--assemble` only starts an existing one."
+
+  - id: ats004-030-q09
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Keep the array name across reboots"
+    source_readings:
+      - sections/section-030/module-03/course-02-creating-and-persisting.md
+    prompt: |-
+      After a reboot the array came back as `/dev/md127`, and the fstab line for `/dev/md0` fails. What was skipped?
+    options:
+      - id: a
+        text: "Formatting each member disk."
+        explanation: "Members are not formatted one by one."
+      - id: b
+        text: "Saving the array in `/etc/mdadm/mdadm.conf`, for example with `mdadm --detail --scan`, and refreshing the initramfs."
+        explanation: "Correct."
+      - id: c
+        text: "Setting `pass` to 0."
+        explanation: "`pass` has no effect on the name."
+      - id: d
+        text: "Running `mdadm --stop`."
+        explanation: "Stopping would take the array offline."
+    correct_option: b
+    explanation: "Without a recorded array line, the array gets an automatic name. The fix is to save the scan output and update the initramfs."
+
+  - id: ats004-030-q10
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Read the state of an array"
+    source_readings:
+      - sections/section-030/module-03/course-03-reading-an-array.md
+    prompt: |-
+      `/proc/mdstat` shows `[3/2] [U_U]` for a three-disk RAID 5. What does it mean?
+    options:
+      - id: a
+        text: "The array is healthy."
+        explanation: "A healthy array shows `[UUU]`."
+      - id: b
+        text: "The array is degraded: one member is missing but it still serves data."
+        explanation: "Correct."
+      - id: c
+        text: "The array has stopped."
+        explanation: "A stopped array does not show in this form."
+      - id: d
+        text: "A spare is syncing and nothing is missing."
+        explanation: "A missing member is the reason for the underscore."
+    correct_option: b
+    explanation: "`[3/2]` means three expected, two working. The underscore marks the missing member."
+
+  - id: ats004-030-q11
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Replace a failed RAID member"
+    source_readings:
+      - sections/section-030/module-04/course-01-health-and-failure.md
+    prompt: |-
+      A member `/dev/vdc` of `/dev/md0` died. Which sequence replaces it?
+    options:
+      - id: a
+        text: "`--remove` the failed disk, `--add` the new disk, and watch the rebuild in `/proc/mdstat`."
+        explanation: "Correct."
+      - id: b
+        text: "Run `mkfs` on `/dev/md0`."
+        explanation: "`mkfs` would wipe the data on the array."
+      - id: c
+        text: "Stop the array, delete it and restore from nothing."
+        explanation: "Deleting loses data the surviving disks still hold."
+      - id: d
+        text: "`--add` the new disk and never remove the failed one."
+        explanation: "The failed slot must be freed first."
+    correct_option: a
+    explanation: "Mark the member failed if needed, remove it, add the new disk and wait for the rebuild to end."
+
+  - id: ats004-030-q12
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Grow an array and monitor it"
+    source_readings:
+      - sections/section-030/module-04/course-02-growth-and-monitoring.md
+    prompt: |-
+      You added a fourth disk to a three-disk RAID 5 as a spare. Which command makes it an active member and grows the array?
+    options:
+      - id: a
+        text: "`mdadm --grow /dev/md0 --raid-devices=4`"
+        explanation: "Correct."
+      - id: b
+        text: "`mdadm --stop /dev/md0`"
+        explanation: "Stopping does not add the member."
+      - id: c
+        text: "`pvmove /dev/vdb`"
+        explanation: "`pvmove` belongs to LVM."
+      - id: d
+        text: "`lvextend -r /dev/md0`"
+        explanation: "`lvextend` works on logical volumes, not on arrays."
+    correct_option: a
+    explanation: "`--grow` with a new `--raid-devices` count reshapes the array. Afterwards, the filesystem on top must grow as well."
+
+  - id: ats004-030-q13
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Stop and start an array again"
+    source_readings:
+      - sections/section-030/module-04/course-03-stopping-and-reassembling.md
+    prompt: |-
+      You stopped an array with `mdadm --stop /dev/md0`. How do you bring it back from its member disks?
+    options:
+      - id: a
+        text: "`mdadm --create` again with the same disks."
+        explanation: "`--create` risks overwriting the existing data."
+      - id: b
+        text: "`mdadm --assemble --scan`"
+        explanation: "Correct."
+      - id: c
+        text: "`mkfs.ext4 /dev/md0`"
+        explanation: "A new filesystem would erase the data."
+      - id: d
+        text: "Reboot only."
+        explanation: "A reboot does not assemble an array that is not listed or discoverable."
+    correct_option: b
+    explanation: "The members carry their own metadata. `--assemble` reads it and starts the array. `--create` would write new metadata over the old."

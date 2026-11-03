@@ -13,16 +13,16 @@ Storage represents **20% of the total LFCS exam weight**. This repository bridge
 To make learning intuitive, digestible, and robust, this curriculum is built around a symmetrical **1:1:1 educational architecture**:
 
 1.  **The Textbook Lesson (`sections/section-XXX/module-YY/course.md`):** Narrative, book-style chapters written in a warm, expert "teacher's voice" that explain *why* the operating system functions the way it does using real-world metaphors, inline command option breakdowns, and clear diagrams.
-2.  **The Interactive Quiz (`sections/section-XXX/quiz.md`):** A scenario-based theoretical knowledge check testing diagnostic reasoning, complete with collapsible answers and technical explanation keys.
+2.  **The Interactive Quiz (`sections/section-XXX/quiz.yaml`):** A scenario-based theoretical knowledge check testing diagnostic reasoning, complete with collapsible answers and technical explanation keys.
 3.  **The Dedicated Laboratory (`sections/section-XXX/module-YY/`, plus a `sections/section-XXX/capstone/` per section):** A virtual machine sandbox environment launched instantly via the `astrona` CLI where you must solve practical storage objectives and validate your system states using automated testing scripts.
 
-A handful of newer modules ship with an **ungraded hands-on playground** (`sections/section-XXX/module-YY/playground/`) instead of a graded lab — a clean throwaway machine you run *while reading* the chapter, with no task and no scoring. Launch these with `astrona run ... -c sections/section-XXX/module-YY/playground`.
+Every module ships with an **ungraded hands-on playground** (`sections/section-XXX/module-YY/playground/`) next to its graded lab — a clean throwaway machine you run *while reading* the chapter, with no task and no scoring. Launch these with `astrona run ... -c sections/section-XXX/module-YY/playground`.
 
 ---
 
 ## Complete Curriculum & Lab Mapping
 
-The training series is divided into **8 main sections** containing **24 focused modules**, **18 graded lab sandboxes**, **6 ungraded hands-on playgrounds**, and **8 comprehensive Section Capstone Challenges**:
+The training series is divided into **8 main sections** containing **29 focused modules**, **43 graded lab sandboxes**, **29 ungraded hands-on playgrounds**, and **8 comprehensive Section Capstone Challenges**:
 
 | Section & Domain | Module & Chapter Reader | Practice Lab / Playground | astrona CLI Run Command |
 | :--- | :--- | :--- | :--- |
@@ -34,9 +34,12 @@ The training series is divided into **8 main sections** containing **24 focused 
 | | [M6: systemd Mount & Automount Units](sections/section-010/module-06/course.md) | playground | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-06/playground` |
 | | [M7: Removable Media & FAT32](sections/section-010/module-07/course.md) | [lab](sections/section-010/module-07/labs/lab-01) | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-07/labs/lab-01` |
 | | [M8: Backup & Cloning](sections/section-010/module-08/course.md) | [lab](sections/section-010/module-08/labs/lab-01) | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-08/labs/lab-01` |
+| | [M9: XFS: Create, Grow & Repair](sections/section-010/module-09/course.md) | [lab](sections/section-010/module-09/labs/lab-01) | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-09/labs/lab-01` |
+| | [M10: Btrfs Basics](sections/section-010/module-10/course.md) | [lab](sections/section-010/module-10/labs/lab-01) | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-10/labs/lab-01` |
 | | **Section Capstone Challenge** | **[capstone](sections/section-010/capstone/labs/lab-01)** | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/capstone/labs/lab-01` |
 | **020: Remote Filesystems** | [M1: SSHFS Mounting](sections/section-020/module-01/course.md) | [lab](sections/section-020/module-01/labs/lab-01) | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-020/module-01/labs/lab-01` |
 | | [M2: Enterprise NFS sharing](sections/section-020/module-02/course.md) | [lab](sections/section-020/module-02/labs/lab-01) | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-020/module-02/labs/lab-01` |
+| | [M3: Network Block Devices (NBD & iSCSI)](sections/section-020/module-03/course.md) | [lab](sections/section-020/module-03/labs/lab-01) | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-020/module-03/labs/lab-01` |
 | | **Section Capstone Challenge** | **[capstone](sections/section-020/capstone/labs/lab-01)** | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-020/capstone/labs/lab-01` |
 | **030: Dynamic & Redundant Volumes** | [M1: LVM Fundamentals](sections/section-030/module-01/course.md) | [lab](sections/section-030/module-01/labs/lab-01) | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-01/labs/lab-01` |
 | | [M2: Advanced LVM](sections/section-030/module-02/course.md) | [lab](sections/section-030/module-02/labs/lab-01) | `astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-01` |
@@ -70,10 +73,10 @@ To get the most value out of this curriculum, follow this step-by-step roadmap:
 1.  **Enter a Domain Portal:** Navigate into a domain directory, such as `sections/section-010/`, and open its `README.md` to review the section's core philosophy and administrative master competencies.
 2.  **Read the Chapters:** Open and read the narrative chapters in order (`module-01/course.md`, `module-02/course.md`, …). Focus on the metaphors, diagrams, and inline command breakdowns. Where a chapter has a linked playground, run it and work the "Try it" checkpoints as you read.
 3.  **Take the Chapter Self-Check:** Challenge yourself with the conceptual questions at the bottom of the course modules.
-4.  **Test Your Diagnostics:** Open `quiz.md` inside that section and answer its scenario questions (5–10 per section). Expand the HTML details tags to read the deep-dive teacher's explanations.
+4.  **Test Your Diagnostics:** Open `quiz.yaml` inside that section and answer its scenario questions (at least 10 per section). Expand the HTML details tags to read the deep-dive teacher's explanations.
 5.  **Practice the Sandboxes:** Run the targeted module labs (e.g., `sections/section-010/module-02/labs/lab-01`, `sections/section-010/module-03/labs/lab-01`, …) to build muscle memory on atomic configurations.
 6.  **Conquer the Capstone Challenges:** Ready for high-stakes practice? Boot up the section's comprehensive **Capstone Challenge Lab** (e.g., `sections/section-010/capstone/labs/lab-01`, `sections/section-020/capstone/labs/lab-01`, etc.), solve the integration prompts, and run the automated test validation suites to confirm your passing state.
-7.  **Simulate the Exam:** Once you have completed all 24 modules, open **`sections/final-domain-quiz.md`** and complete the final closed-book domain exam simulator under a 30-minute time cap to audit your readiness.
+7.  **Simulate the Exam:** Once you have completed all 29 modules, open **`sections/final-domain-quiz.yaml`** and complete the final closed-book domain exam simulator under a 30-minute time cap to audit your readiness.
 
 ---
 

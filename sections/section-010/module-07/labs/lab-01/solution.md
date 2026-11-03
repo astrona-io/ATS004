@@ -1,47 +1,63 @@
-# Solution Guide: Removable Media & the FAT32 Filesystem
+# Solution Walkthrough
 
-This guide shows you how to format, label, and mount a FAT32 filesystem with correct user ownership.
+You format the disk as FAT32 with its label, mount it with your own user and group IDs, and prove that you can write without `sudo`. FAT32 stores no owner on the disk, so the mount options do all the ownership work.
 
----
+## Step 1: Find the disk
 
-## Step 1: Format the Disk as FAT32
-
-Identify the disk, then format it, explicitly forcing the FAT32 variant and setting the label in one step:
+List the block devices and find the blank 1 GB disk:
 
 ```bash
 lsblk
+```
+
+The task gives the disk's stable path, `/dev/disk/by-id/virtio-lab017-media`. It points at the same disk as its short name (often `/dev/vdb`), so you can use the stable path in every command and never format the wrong disk.
+
+## Step 2: Format the disk as FAT32 with the label
+
+Force the FAT32 variant and set the label in one command:
+
+```bash
 sudo mkfs.vfat -F 32 -n USBDATA /dev/disk/by-id/virtio-lab017-media
 ```
 
-`-F 32` matters here: on a small disk, `mkfs.vfat` may otherwise default to FAT16, which is not what the task asks for.
+`-F 32` matters here. On a small disk, `mkfs.vfat` may otherwise choose FAT16, which is not what the task asks for. `-n USBDATA` writes the volume label.
 
----
-
-## Step 2: Create the Mount Point
+## Step 3: Create the mount point
 
 ```bash
 sudo mkdir -p /mnt/usbdata
 ```
 
----
+## Step 4: Mount with your own ownership
 
-## Step 3: Mount with Your Own Ownership
-
-FAT32 stores no Unix ownership on disk, so it has to be supplied as mount options — `uid=`/`gid=` for who owns every file, `umask=` for the permission bits to clear:
+FAT32 stores no Unix owner on the disk, so you supply it as mount options. `uid=` and `gid=` say who owns every file, and `umask=` says which permission bits to remove:
 
 ```bash
 sudo mount -o uid=$(id -u),gid=$(id -g),umask=022 /dev/disk/by-id/virtio-lab017-media /mnt/usbdata
 ```
 
-`$(id -u)` / `$(id -g)` substitute your own numeric user and group IDs, so the mount reports every file as owned by you.
+Run this as the `ubuntu` user. `$(id -u)` and `$(id -g)` then put your own numeric user and group IDs into the options, so the kernel reports every file as yours.
 
----
-
-## Step 4: Prove It's Writable Without sudo
+## Step 5: Prove you can write without sudo
 
 ```bash
 touch /mnt/usbdata/proof.txt
 ls -l /mnt/usbdata/proof.txt
 ```
 
-No `sudo` needed — the file is created successfully and shows up owned by your own user, confirming the mount options took effect.
+There is no `sudo` here. The file is created, and `ls -l` shows it owned by `ubuntu`. That proves the mount options took effect.
+
+## Step 6: Check what the grader checks
+
+Read the filesystem type and label, and the mount options:
+
+```bash
+sudo blkid /dev/disk/by-id/virtio-lab017-media
+findmnt /mnt/usbdata
+```
+
+Look for `LABEL="USBDATA"` and `TYPE="vfat"` in the `blkid` line, and for `uid=` followed by your user ID in the `findmnt` options. Then send the mission for grading from your own computer:
+
+```bash
+astrona submit -c sections/section-010/module-07/labs/lab-01
+```

@@ -1,62 +1,67 @@
-# Solution Guide: systemd Mount and Automount Units
+# Solution Walkthrough
 
-Follow these steps to mount a disk on demand using native systemd `.mount` and `.automount` units.
+Five moves, in this order: format the disk, check the unit name, write the `.mount` unit, write the `.automount` unit, then enable the automount and trigger it. The last step checks the machine the same way the grader does.
 
 ---
 
-## Step 1: Format the Disk
+## Step 1: Format the disk
 
-```bash
+Build the ext4 shelves on the new hold:
+
+```sh
 sudo mkfs.ext4 /dev/disk/by-id/virtio-lab016-data1
 ```
 
+`mkfs.ext4` prints a few lines about blocks, inodes and the journal, and ends with `done`.
+
 ---
 
-## Step 2: Confirm the Unit Filename
+## Step 2: Confirm the unit filename
 
-A `.mount` unit's filename must match its mount path, run through systemd's path-escaping:
+A `.mount` unit's filename must match its mount path, run through systemd's path escaping:
 
-```bash
+```sh
 systemd-escape -p --suffix=mount /srv/appdata
 ```
 
-This prints `srv-appdata.mount` — the `.automount` unit shares the same base name.
+This prints `srv-appdata.mount`. The `.automount` unit uses the same base name: `srv-appdata.automount`.
 
 ---
 
-## Step 3: Write the `.mount` Unit
+## Step 3: Write the `.mount` unit
 
-Get the disk's UUID and create the mount point:
+Print the disk's UUID and create the mount point:
 
-```bash
-UUID=$(sudo blkid -s UUID -o value /dev/disk/by-id/virtio-lab016-data1)
+```sh
+sudo blkid -s UUID -o value /dev/disk/by-id/virtio-lab016-data1
 sudo mkdir -p /srv/appdata
 ```
 
-Write `/etc/systemd/system/srv-appdata.mount`:
+Save this as `/etc/systemd/system/srv-appdata.mount`. Replace `<UUID>` with the value `blkid` printed. Files under `/etc` are saved with `sudo`, for example `sudo nano /etc/systemd/system/srv-appdata.mount`:
 
-```bash
-sudo tee /etc/systemd/system/srv-appdata.mount >/dev/null <<EOF
+```ini
 [Unit]
 Description=Application data filesystem at /srv/appdata
 
 [Mount]
-What=UUID=$UUID
+What=UUID=<UUID>
 Where=/srv/appdata
 Type=ext4
 Options=defaults,nofail
 
 [Install]
 WantedBy=multi-user.target
-EOF
 ```
+
+`What=UUID=` keeps the unit working even if the device name moves, and `nofail` stops a missing disk from failing the boot. The grader does not check these two lines, but they are good habits for the exam.
 
 ---
 
-## Step 4: Write the Paired `.automount` Unit
+## Step 4: Write the paired `.automount` unit
 
-```bash
-sudo tee /etc/systemd/system/srv-appdata.automount >/dev/null <<EOF
+Save this as `/etc/systemd/system/srv-appdata.automount`:
+
+```ini
 [Unit]
 Description=Automount for /srv/appdata
 
@@ -66,26 +71,49 @@ TimeoutIdleSec=30
 
 [Install]
 WantedBy=multi-user.target
-EOF
 ```
+
+`TimeoutIdleSec=30` tells systemd to unmount the filesystem after 30 seconds with nobody using it.
 
 ---
 
-## Step 5: Activate and Trigger
+## Step 5: Activate and trigger
 
-Reload unit files, then enable and start the `.automount` unit — never the `.mount` unit directly for on-demand behaviour:
+Make systemd read the new files, then enable and start the `.automount` unit. Do not enable the `.mount` unit directly for on-demand mounting:
 
-```bash
+```sh
 sudo systemctl daemon-reload
 sudo systemctl enable --now srv-appdata.automount
 ```
 
-Trigger the mount by accessing the path, then confirm it is active:
+Trigger the mount by accessing the path, then check that it is active:
 
-```bash
+```sh
 ls /srv/appdata
 systemctl is-active srv-appdata.mount
 findmnt /srv/appdata
 ```
 
-`srv-appdata.mount` should now report `active`, and `findmnt` should show `/srv/appdata` mounted `ext4`.
+`srv-appdata.mount` should now report `active`, and `findmnt` should show `/srv/appdata` mounted as `ext4`. If you wait longer than 30 seconds, the idle timeout unmounts it again; run `ls /srv/appdata` once more and it comes back.
+
+---
+
+## Step 6: Check like the grader, then submit
+
+Run the same checks the grader runs:
+
+```sh
+grep -E '^(Where|Type)=' /etc/systemd/system/srv-appdata.mount
+grep -E '^(Where|TimeoutIdleSec)=' /etc/systemd/system/srv-appdata.automount
+systemctl is-enabled srv-appdata.automount
+ls /srv/appdata >/dev/null && systemctl is-active srv-appdata.mount
+findmnt -no FSTYPE /srv/appdata
+```
+
+Look for `Where=/srv/appdata` and `Type=ext4` in the mount unit, `Where=/srv/appdata` and a `TimeoutIdleSec=` line in the automount unit, `enabled` for the automount, `active` for the mount, and `ext4` as the filesystem type.
+
+When everything matches, send the mission for grading:
+
+```sh
+astrona submit -c sections/section-010/module-06/labs/lab-01
+```

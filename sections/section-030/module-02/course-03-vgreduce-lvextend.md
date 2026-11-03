@@ -1,23 +1,23 @@
-# Part 3 — vgreduce, and Growing/Shrinking a Volume
+# vgreduce, and Growing/Shrinking a Volume
 
-> Prerequisite: [Part 2 — Live Migration: pvmove](./course-02-pvmove-migration.md). Next: [Part 4 — Removing Any PV, and Physical Disk Safety](./course-04-removing-any-pv-and-safety.md).
-
-Part 2 emptied a PV's extent list. This part covers the two directions you take the stack from here: retiring that now-empty disk (`vgreduce`, `pvremove`), and the opposite move — growing a volume and its filesystem while both stay live.
+Once `pvmove` has emptied a PV's extent list, the disk can be retired. This part covers the two directions you take the stack from here: retiring that now-empty disk (`vgreduce`, `pvremove`), and the opposite move — growing a volume and its filesystem while both stay live.
 
 ## Removing the emptied disk
 
-With zero extents left assigned to it, `source_disk` can leave the pool. This is "tear down from the top", undoing the two build steps from Part 2 in reverse:
+With zero extents left assigned to it, `source_disk` can leave the pool. This is "tear down from the top", undoing the two build steps (`pvcreate`, `vgextend`) in reverse:
 
 - `vgreduce <vg> <source>` detaches the PV from the volume group — the inverse of `vgextend`. It checks the VG metadata for any extent-list entry still pointing at this PV; if it finds one, it refuses. That check is the entire safety mechanism — `vgreduce` is not "smart" about data loss, it simply will not remove a PV that any LV's extent list still references, which is exactly why `pvmove` had to run first.
 - `pvremove <source>` erases the LVM label `pvcreate` wrote, returning the disk to a plain, unclaimed state safe to physically unplug or repurpose.
 
 Order matters for the same reason: `pvremove` refuses to run on a disk that is still a VG member, so `vgreduce` has to come first.
 
-### Hands-on: retire the source disk
+### See it in your playground
 
-(If your shell session from Part 2 is still open, `$source_disk` is already set — skip straight to step 2.)
+(If the shell session from the migration is still open, `$source_disk` is already set — skip straight to step 2.)
 
 **1. Reload the disk-name variables if needed:**
+<!-- astrona:playground:renew -->
+
 ```sh
 . /etc/playground-disks
 ```
@@ -33,7 +33,7 @@ sudo vgreduce company_storage "$source_disk"
 ```text
   Removed "/dev/vdc" from volume group "company_storage"
 ```
-This is the check described above passing: `vgreduce` looked for any LV extent still pointing at `source_disk`, found none (Part 2's `pvmove` moved them all), and let it go.
+This is the check described above passing: `vgreduce` looked for any LV extent still pointing at `source_disk`, found none (the earlier `pvmove` moved them all), and let it go.
 
 **3. Wipe the LVM label, returning the disk to a plain, unclaimed state:**
 ```sh
@@ -63,11 +63,13 @@ sudo vgs
   VG               #PV #LV #SN Attr   VSize VFree
   company_storage   2   1   0 wz--n- 1.99g 1.60g
 ```
-`#PV 2`, down from Part 2's `3` — the sick disk is fully removed, and the whole operation ran with `shared_documents` mounted and serving reads and writes the entire time.
+`#PV 2`, down from `3` before the removal — the sick disk is fully removed, and the whole operation ran with `shared_documents` mounted and serving reads and writes the entire time.
 
 ## Growing a volume live: lvextend then the filesystem
 
-Enlarging a mounted volume is two independent steps, and the order is not optional: **grow the block device, then grow the filesystem inside it.** They are independent because they edit two different structures — `lvextend` appends entries to the LV's extent list (Part 1's model, same mechanism as everything else in this module); the filesystem has its own superblock fields recording its own size, written when it was created, and nothing about extending the LV touches that superblock. Until something rewrites it, the filesystem behaves exactly as if the extra space does not exist — `df` will not move a single byte after `lvextend` alone.
+> As an analogy: giving a crew a bigger storage bay takes two steps. First the bay is cut bigger in the pool (`lvextend`). Then the crew updates its own inventory sheet so that it knows about the extra room (`resize2fs`). Until the sheet is updated, the crew still counts only the old space. The analogy breaks down because the sheet update needs no empty bay and no downtime on ext4.
+
+Enlarging a mounted volume is two independent steps, and the order is not optional: **grow the block device, then grow the filesystem inside it.** They are independent because they edit two different structures — `lvextend` appends entries to the LV's extent list (the extent model, same mechanism as everything else in this module); the filesystem has its own superblock fields recording its own size, written when it was created, and nothing about extending the LV touches that superblock. Until something rewrites it, the filesystem behaves exactly as if the extra space does not exist — `df` will not move a single byte after `lvextend` alone.
 
 `lvextend` is the LV-layer counterpart of `vgextend`, one level up the stack: `vgextend` hands a disk's extents to the *pool*; `lvextend` hands some of the pool's free extents to a *volume*.
 
@@ -78,7 +80,7 @@ Enlarging a mounted volume is two independent steps, and the order is not option
 
 Once the LV is bigger, rewrite the filesystem's own size fields to match: `resize2fs <lv-path>` for ext4, or `xfs_growfs <mountpoint>` for XFS (XFS's tool takes the *mount point*, not the device — and can only grow, never shrink; there is no supported XFS shrink path). `lvextend -r` runs both steps for you in one command, calling whichever resize tool matches the filesystem it detects.
 
-### Hands-on: add space and extend the ext4 filesystem
+### See it in your playground
 
 Block counts in your own output will depend on the filesystem's block size — don't worry if the exact numbers differ.
 
@@ -100,7 +102,7 @@ sudo lvextend -L +200M /dev/company_storage/shared_documents
   Size of logical volume company_storage/shared_documents changed from 400.00 MiB (100 extents) to 600.00 MiB (150 extents).
   Logical volume company_storage/shared_documents successfully resized.
 ```
-Reported in both MiB and extents — 50 more 4 MiB extents is 200 MiB, appended to Part 1's extent list.
+Reported in both MiB and extents — 50 more 4 MiB extents is 200 MiB, appended to the extent list.
 
 **3. Check `df` again — this is the step that surprises people:**
 ```sh
@@ -146,7 +148,7 @@ So the rule inverts: **shrink the filesystem first, then shrink the LV.** Three 
 
 XFS still cannot shrink at all, by either tool — this is not a gap in `xfs_growfs`, it is a design choice in the XFS on-disk format (free space and allocation-group boundaries are not built to move inward). Reducing an XFS volume's *usable* space means creating a smaller LV and copying data across; there is no in-place path.
 
-### Hands-on: shrink `shared_documents` back down
+### See it in your playground
 
 **1. Unmount it — ext4 cannot shrink while mounted:**
 ```sh
@@ -204,20 +206,136 @@ Filesystem                                    Size Used Avail Use% Mounted on
 ```
 Down from the `553M` you saw at the end of the growing walkthrough, matching the 350 MiB you asked for (minus the filesystem's own metadata overhead, same as every size in this module).
 
+> *`vgreduce` refuses an occupied PV, `lvextend`/`lvreduce` leave the filesystem oblivious until you resize it — both are consequences of the same rule: the extent list and the filesystem's own superblock are two separate records, and only you keep them in sync, in the right order for the direction you're going.*
+
+## Common pitfalls
+
 > [!WARNING]
-> **Common pitfalls**
 >
 > - **`lvextend -L 20G` without the `+`.** Sets the absolute size. On a volume already larger than 20G it shrinks and truncates, destroying data with no prompt. Always write `-L +20G` to add.
 > - **Forgetting the filesystem step when growing.** `lvextend` alone leaves the extra space unusable — the filesystem's superblock still records the old size. Follow with `resize2fs` / `xfs_growfs`, or use `lvextend -r`.
 > - **Reversing the order when shrinking.** `lvreduce` before `resize2fs` truncates extents the filesystem still has data on — silent corruption, no confirmation, no undo. Filesystem first, always, for a shrink.
 > - **Shrinking a mounted ext4 filesystem.** `resize2fs` refuses to shrink online. Unmount first (growing has no such restriction).
-> - **`pvmove` with nowhere to move to.** It needs enough free extents on the *other* PVs in the VG (Part 2). Run `vgextend` with a fresh disk first if the pool is nearly full.
+> - **`pvmove` with nowhere to move to.** It needs enough free extents on the *other* PVs in the VG. Run `vgextend` with a fresh disk first if the pool is nearly full.
 > - **`pvremove` before `vgreduce`.** A PV still referenced by any LV's extent list will not `pvremove` cleanly. Detach it with `vgreduce` first, and only after `pvmove` has emptied it.
 > - **Assuming XFS can shrink.** Neither `resize2fs` nor `xfs_growfs` shrinks XFS — it is not implemented in the on-disk format, not just missing from the tool. There is no supported XFS shrink path; plan capacity accordingly, or migrate data to a smaller LV.
 
-> *`vgreduce` refuses an occupied PV, `lvextend`/`lvreduce` leave the filesystem oblivious until you resize it — both are consequences of the same rule: the extent list and the filesystem's own superblock are two separate records, and only you keep them in sync, in the right order for the direction you're going.*
+## Your mission: Advanced LVM: Live Extent Migration & VG Reduction Lab
 
-## Reference
+You can now move extents off a live disk with `pvmove`, pull the empty disk out with `vgreduce`, and wipe its label with `pvremove`. The mission asks you to migrate the volume group `vg_migration` off one disk, reduce it, and remove the disk's PV label.
 
-- `man vgreduce` — `--removemissing` for the case where the PV is already gone (a real disk failure) rather than gracefully evacuated.
-- `man resize2fs` / `man xfs_growfs` — the ext4 and XFS online-resize tools referenced above; check exact size syntax before use on a real filesystem.
+The mission runs on its own training ship. A playground cannot be paused, so remove it first to free memory; it always starts clean again:
+
+```sh
+astrona destroy section-030-module-02-playground
+```
+
+Then start the mission and connect to it:
+
+```sh
+astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-01
+astrona ssh ats-004-lab-032
+```
+
+Read the task in [`question.md`](./labs/lab-01/question.md) and solve it on your own first. When you think you are done, send it for grading:
+
+```sh
+astrona submit -c sections/section-030/module-02/labs/lab-01
+```
+
+When the mission is done, remove it and start a fresh playground:
+
+```sh
+astrona destroy ats-004-lab-032
+astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-030/module-02/playground
+```
+
+## Your mission: LVM Live Grow & Safe Shrink Lab
+
+You can now grow a mounted volume and shrink an ext4 volume in the safe order. The mission asks you to grow `lv_data` to 500M, shrink it to 350M, and prove that `marker.txt` is still intact.
+
+The mission runs on its own training ship. A playground cannot be paused, so remove it first to free memory; it always starts clean again:
+
+```sh
+astrona destroy section-030-module-02-playground
+```
+
+Then start the mission and connect to it:
+
+```sh
+astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-02
+astrona ssh ats-004-lab-035
+```
+
+Read the task in [`question.md`](./labs/lab-02/question.md) and solve it on your own first. When you think you are done, send it for grading:
+
+```sh
+astrona submit -c sections/section-030/module-02/labs/lab-02
+```
+
+When the mission is done, remove it and start a fresh playground:
+
+```sh
+astrona destroy ats-004-lab-035
+astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-030/module-02/playground
+```
+
+## Your mission: LVM: vgextend a Live Pool, Then Evacuate a Disk Lab
+
+You can now put the three steps together on a live pool. The mission asks you to add a disk to the pool `vg_live` with `vgextend`, move the data with `pvmove`, then run `vgreduce` and `pvremove` on the emptied disk.
+
+The mission runs on its own training ship. A playground cannot be paused, so remove it first to free memory; it always starts clean again:
+
+```sh
+astrona destroy section-030-module-02-playground
+```
+
+Then start the mission and connect to it:
+
+```sh
+astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-03
+astrona ssh ats-004-lab-038
+```
+
+Read the task in [`question.md`](./labs/lab-03/question.md) and solve it on your own first. When you think you are done, send it for grading:
+
+```sh
+astrona submit -c sections/section-030/module-02/labs/lab-03
+```
+
+When the mission is done, remove it and start a fresh playground:
+
+```sh
+astrona destroy ats-004-lab-038
+astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-030/module-02/playground
+```
+
+## Your mission: LVM: Growing an XFS Volume Lab
+
+You also know that XFS can only grow, and that it grows with `xfs_growfs` on the mount point. The mission asks you to add 400M to the volume `lv_xfs` with `lvextend` and grow the XFS filesystem with `xfs_growfs`.
+
+The mission runs on its own training ship. A playground cannot be paused, so remove it first to free memory; it always starts clean again:
+
+```sh
+astrona destroy section-030-module-02-playground
+```
+
+Then start the mission and connect to it:
+
+```sh
+astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-05
+astrona ssh ats-004-lab-086
+```
+
+Read the task in [`question.md`](./labs/lab-05/question.md) and solve it on your own first. When you think you are done, send it for grading:
+
+```sh
+astrona submit -c sections/section-030/module-02/labs/lab-05
+```
+
+When the mission is done, remove it and start a fresh playground:
+
+```sh
+astrona destroy ats-004-lab-086
+astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-030/module-02/playground
+```

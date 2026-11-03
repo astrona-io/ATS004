@@ -15,17 +15,19 @@ This module covers the common RAID levels and what each trades away, creating an
 
 ```mermaid
 flowchart LR
-    A["mdadm --create /dev/md0"] --> B["initial resync<br/>array usable, just slower"]
-    B --> C["mkfs + mount /dev/md0<br/>never a member disk"]
-    C --> D["mdadm --detail --scan<br/>>> /etc/mdadm/mdadm.conf"]
+    A["mdadm --create /dev/md0"] --> B["Resync"]
+    B --> C["mkfs and mount /dev/md0"]
+    C --> D["mdadm.conf"]
     D --> E["update-initramfs -u"]
-    E --> F["array auto-assembles<br/>as /dev/md0 on reboot"]
+    E --> F["Array assembles at reboot"]
 ```
 
 ## How this module is organised
 
-1. **[Part 1 — RAID Levels](./course-01-raid-levels.md)** — the capacity/redundancy/minimum-disk bargain each level makes, and why those minimums are what they are.
-2. **[Part 2 — Creating & Persisting an Array](./course-02-creating-and-persisting.md)** — `mdadm --create`, what a RAID superblock actually records, putting a filesystem on the array, and making it survive a reboot.
+1. **[RAID Levels](./course-01-raid-levels.md)** — the capacity, redundancy and minimum-disk bargain each level makes, and why those minimums are what they are.
+2. **[Creating & Persisting an Array](./course-02-creating-and-persisting.md)** — `mdadm --create`, what a RAID superblock records, a filesystem on the array, and making it survive a reboot. A graded mission ends this part.
+3. **[Reading an Array Closely](./course-03-reading-an-array.md)** — `/proc/mdstat`, `mdadm --detail` and `mdadm --examine`, and the capacity check for RAID 5.
+4. **[Wrap-Up: Mission Debrief](./course-04-wrap-up.md)** — a recap, a self-check, and how to land the playground.
 
 ## Learning objectives
 
@@ -36,6 +38,8 @@ After this module you can:
 - Explain what a RAID superblock stores per member disk, and why that lets `mdadm` detect a stale disk.
 - Put a filesystem on the array device and mount it.
 - Persist an array with `/etc/mdadm/mdadm.conf` and an initramfs update, and explain why both are needed.
+- Read an array with `/proc/mdstat`, `mdadm --detail` and `mdadm --examine`, and spot a stale member by its `Events` counter.
+- Work out the usable capacity of a RAID 5 array and set its chunk size.
 
 ## Before you start
 

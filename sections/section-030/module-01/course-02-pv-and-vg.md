@@ -1,8 +1,6 @@
-# Part 2 — Physical Volumes & Volume Groups
+# Physical Volumes & Volume Groups
 
-> Prerequisite: [Part 1 — Why LVM & the Three-Layer Model](./course-01-why-lvm-and-the-stack.md). Next: [Part 3 — Logical Volumes](./course-03-logical-volumes.md).
-
-Part 1 named the three layers and the extent-list model that ties them together. This part builds the bottom two: marking disks as usable by LVM, then pooling them into the extent pool an LV will draw from.
+The three layers are held together by one extent-list model. This part builds the bottom two: marking disks as usable by LVM, then pooling them into the extent pool an LV will draw from.
 
 ## Physical volumes
 
@@ -10,11 +8,13 @@ Part 1 named the three layers and the extent-list model that ties them together.
 
 `pvs` gives a one-line-per-PV summary; `pvdisplay` gives the full detail, including the metadata area's own size and location.
 
-### Hands-on: see the raw disks, then initialise two as PVs
+### See it in your playground
 
 Run each line one at a time and compare your output to what follows it — that's the only way to tell which line produced which result.
 
 **1. Look at every disk attached to the machine, before touching LVM at all:**
+<!-- astrona:playground:renew -->
+
 ```sh
 lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,SERIAL
 ```
@@ -63,13 +63,13 @@ Compare this to step 2's empty result — that's the whole effect of `pvcreate`.
 
 ## Volume groups and physical extents
 
-`vgcreate <name> <pv>...` welds PVs into one named pool. `<name>` is not a keyword — it's whatever you type there, invented on the spot (Part 1's note on names). Below, `company_storage` is that invented name; `/dev/vdc`/`/dev/vdd` are the real PVs from the previous section. `vgs` shows each VG's total and free size; `vgdisplay <name>` adds detail.
+`vgcreate <name> <pv>...` welds PVs into one named pool. `<name>` is not a keyword — it's whatever you type there, invented on the spot. Below, `company_storage` is that invented name; `/dev/vdc`/`/dev/vdd` are the real PVs from the previous section. `vgs` shows each VG's total and free size; `vgdisplay <name>` adds detail.
 
-This is the step where the extent model from Part 1 becomes real: joining a VG is what divides a PV into **physical extents (PEs)**, 4 MiB blocks by default. Every allocation LVM makes from this point on — every `lvcreate`, every `lvextend` — is a whole number of these PEs, drawn from whichever PVs in the VG currently have free ones. A PV outside any VG has no extents yet; it's just a labeled disk waiting to be pooled.
+This is the step where the extent model becomes real: joining a VG is what divides a PV into **physical extents (PEs)**, 4 MiB blocks by default. Every allocation LVM makes from this point on — every `lvcreate`, every `lvextend` — is a whole number of these PEs, drawn from whichever PVs in the VG currently have free ones. A PV outside any VG has no extents yet; it's just a labeled disk waiting to be pooled.
 
-> As an analogy: physical extents are Lego bricks of one size. The volume group is a bin of them; building a logical volume is snapping some bricks together. The analogy breaks down because LVM can also relocate individual "bricks" to a different disk later while the structure built from them stays assembled — `pvmove`, covered in the next module.
+> As an analogy: a physical extent is one standard-size crate slot in the cargo pool. The volume group is the whole pool of slots. Building a logical volume means reserving some slots. The analogy breaks down because LVM can also move a crate to a slot on another disk later, while the volume stays in use (`pvmove`).
 
-### Hands-on: pool the PVs and read the extent size
+### See it in your playground
 
 **1. Create the volume group, naming it and listing the PVs it should pool:**
 ```sh
@@ -88,7 +88,7 @@ sudo vgs
   VG               #PV #LV #SN Attr   VSize    VFree
   company_storage   2   0   0 wz--n-    1.99g    1.99g
 ```
-`#PV 2` — the two disks you named are now pooled under this one VG. `#LV 0` — nothing has claimed any space from the pool yet; that's Part 3. `VSize`/`VFree` are equal because the pool is still entirely unused, and read as roughly the sum of the two 1 GB disks (a little under 2 GiB after LVM's own bookkeeping overhead).
+`#PV 2` — the two disks you named are now pooled under this one VG. `#LV 0` — nothing has claimed any space from the pool yet; that comes next. `VSize`/`VFree` are equal because the pool is still entirely unused, and read as roughly the sum of the two 1 GB disks (a little under 2 GiB after LVM's own bookkeeping overhead).
 
 **3. Ask for the extent-size detail, filtered to the four lines that matter:**
 ```sh
@@ -100,11 +100,14 @@ sudo vgdisplay company_storage | grep -E 'VG Size|PE Size|Total PE|Free  PE'
   Total PE              510
   Free  PE / Size       510 / 1.99 GiB
 ```
-`PE Size` is the default 4 MiB chunk size introduced in Part 1. `Total PE` (510 here) is how many of those 4 MiB chunks the whole pool contains — the currency every later allocation is measured in. `Free PE` still equals `Total PE`, confirming (from a different angle than step 2's `VFree`) that nothing has been carved out yet.
+`PE Size` is the default 4 MiB chunk size introduced in this module. `Total PE` (510 here) is how many of those 4 MiB chunks the whole pool contains — the currency every later allocation is measured in. `Free PE` still equals `Total PE`, confirming (from a different angle than step 2's `VFree`) that nothing has been carved out yet.
 
-> *`pvcreate` only ever touches the start of a device — a label and a metadata area. The extent pool doesn't exist until `vgcreate` divides the joined PVs into fixed-size PEs; that division is what Part 3's `lvcreate` draws from.*
+> *`pvcreate` only ever touches the start of a device — a label and a metadata area. The extent pool doesn't exist until `vgcreate` divides the joined PVs into fixed-size PEs; that division is what `lvcreate` draws from.*
 
-## Reference
+## Common pitfalls
 
-- `man pvcreate` — the `--metadatasize` and `--dataalignment` options, relevant when a PV sits on hardware with a specific I/O alignment requirement.
-- `man vgcreate` — `-s`/`--physicalextentsize` to change the 4 MiB default; rarely needed, but worth knowing it's not fixed.
+> [!WARNING]
+> - **Running `pvcreate` on a disk that holds data.** It does not ask. Check `lsblk -o NAME,SIZE,SERIAL,MOUNTPOINT` first and match on the serial, not on the `vdX` letter.
+> - **Expecting `pvcreate` to put a disk in a pool.** It only writes a label. The disk is in no volume group until `vgcreate` (or `vgextend`) names it.
+> - **Typing a VG name that already exists.** `vgcreate` stops with an error. Check `sudo vgs` before you pick a name.
+> - **Reading `VSize` as the exact sum of the disks.** LVM keeps a little room for its own metadata, so two 1 GB disks give a bit under 2 GiB.

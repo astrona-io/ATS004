@@ -1,0 +1,39 @@
+metadata:
+  name: "ats-004-lab-080-03-02"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab080302-ext"
+      - sizeGB: 1
+        serial: "lab080302-xfs"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-080-03-02-setup"
+      description: "Builds an ext4 filesystem with quotas on and a model user, and an XFS filesystem mounted with gquota"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-copied-and-group-quotas"
+      description: "Confirms the copied ext4 user limits, the XFS group block limits, and the group block grace timer"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

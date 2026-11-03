@@ -82,7 +82,7 @@ Targets:
   part4   Run Part 2 AND Part 3's exercises (part3, above, plus retiring
           source_disk with vgreduce/pvremove, then growing shared_documents
           by 200M and shrinking it back to 350M) so you land exactly where
-          Part 4 begins: company_storage has 2 PVs (second_disk,
+          Part 4 ("Removing Any PV, and Physical Disk Safety") begins: company_storage has 2 PVs (second_disk,
           spare_disk), shared_documents is 350M, source_disk is raw and
           unclaimed again.
 
@@ -127,7 +127,7 @@ case "${1:-}" in
   part4)
     run_part3
     run_part4_rest
-    echo "[catchup] Continue from 'Try it — build a three-way spread' in Part 4."
+    echo "[catchup] Continue from the 'See it in your playground' steps in Part 4 (Removing Any PV, and Physical Disk Safety)."
     ;;
   reset)
     echo "[catchup] Re-running this playground's own boot setup..."

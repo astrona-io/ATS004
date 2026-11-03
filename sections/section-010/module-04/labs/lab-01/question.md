@@ -2,10 +2,10 @@
 
 Solve this question on: `terminal`
 
-An extra 2GB disk (`/dev/disk/by-id/virtio-lab013-corrupt`) contains a corrupted ext4 filesystem that cannot be mounted cleanly.
+Astronaut, a cargo hold came back from a rough flight damaged. The extra 2 GB disk `/dev/disk/by-id/virtio-lab013-corrupt` holds an ext4 filesystem that is corrupted and cannot be mounted cleanly. Repair it, give it a name, and make sure it docks at the same hatch after every launch.
 
-1. Repair the corrupted filesystem using the appropriate offline repair utility.
-2. Assign the volume label `RECOVERED_VOL` to the repaired filesystem.
-3. Retrieve the unique UUID of this filesystem.
-4. Add an entry to `/etc/fstab` to persistently mount this filesystem at `/mnt/recovered` using its **UUID**.
-5. Create the mount directory `/mnt/recovered` and mount the filesystem using the persistent configuration.
+1. Repair the corrupted filesystem with the right offline repair tool. The filesystem must not be mounted while you repair it.
+2. Give the repaired filesystem the label `RECOVERED_VOL`.
+3. Find the UUID of this filesystem.
+4. Add a line to `/etc/fstab` that mounts this filesystem at `/mnt/recovered` by its **UUID**. The line must start with `UUID=` followed directly by the UUID, with no quotes.
+5. Create the directory `/mnt/recovered` and mount the filesystem there using the `/etc/fstab` line.

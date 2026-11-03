@@ -11,10 +11,12 @@
 
 `df -h` tells you a filesystem is full. It does not tell you *what* filled it. To find the oversized log, backup, or cache directory, you measure consumption from the top down with `du` — and you have to keep `du` from wandering into other filesystems and pseudo-filesystems while it works, and know which of its several possible answers you're actually looking at.
 
-## How this module is organised
+## The parts of this module
 
-1. **[Part 1 — df vs du, and Reading du at a Sensible Depth](./course-01-df-vs-du-depth-and-units.md)** — what each command actually reads, the "unlinked but open" mechanism behind their most common disagreement, and getting `du`'s output down to a sorted, human-readable depth.
-2. **[Part 2 — Staying on One Filesystem & Allocated vs Apparent Size](./course-02-one-filesystem-and-apparent-size.md)** — the device-ID boundary `-x` refuses to cross, sparse files and why `du` can report near-zero for a file `ls` shows as huge, and a consolidated pitfall list.
+1. [df vs du, and Reading du at a Sensible Depth](./course-01-df-vs-du-depth-and-units.md): what each command reads, and getting `du` down to a sorted, readable depth.
+2. [Staying on One Filesystem & Allocated vs Apparent Size](./course-02-one-filesystem-and-apparent-size.md): the device-ID boundary that `-x` will not cross, and sparse files.
+3. [When df and du Disagree](./course-03-when-df-and-du-disagree.md): deleted files that are still open, reserved blocks and hidden mounts.
+4. [Wrap-Up: Mission Debrief](./course-04-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
 
 ## Learning objectives
 
@@ -25,9 +27,10 @@ After this module you can:
 - Use `du -x` to keep the scan on a single filesystem, explain the device-ID mechanism behind it, and say why that matters at `/`.
 - Explain why `du` (allocated blocks) can differ from `--apparent-size` and from `df`, and identify a sparse file as the cause.
 - Use `lsof +L1` to find a deleted-but-still-open file inflating `df` without showing up in `du`.
+- Name the other reasons `df` and `du` differ: reserved blocks, metadata and files hidden under a mount.
 
 ## Before you start
 
 You should be comfortable with pipes and reading sizes like `256M` / `1.4G`.
 
-The linked playground gives you an Ubuntu server VM with a second filesystem mounted at `/data` (so `du -x` has a boundary to hit), and seeded files on the root filesystem: `/opt/reports/big-real.bin` (256 MiB of real blocks), `/opt/archive/sparse.img` (512 MiB apparent, near-zero on disk), and `/opt/logs/` (200 tiny files). Run the command blocks in Parts 1–2 in that VM after `astrona ssh section-080-module-01-playground`.
+Your playground is one training spaceship: an Ubuntu 24.04 virtual machine with passwordless `sudo`. It has a second filesystem mounted at `/data` (so `du -x` has a boundary to hit). It also has seeded files on the root filesystem: `/opt/reports/big-real.bin` (256 MiB of real blocks), `/opt/archive/sparse.img` (512 MiB apparent, near-zero on disk), and `/opt/logs/` (200 tiny files). Start the playground and connect to it with `astrona ssh section-080-module-01-playground`. Run every command in the parts in that shell.

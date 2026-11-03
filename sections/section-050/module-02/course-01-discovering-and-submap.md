@@ -1,76 +1,84 @@
-# Part 1 — Discovering Exports & Writing a Sub-map
+# Discovering Exports and Writing a Map
 
-> Prerequisite: [Module landing page](./course.md). Next: [Part 2 — Idle Unmount & Wildcards](./course-02-wildcards-and-idle-unmount.md).
-
-Module 1 covered the master map — *which* directory `autofs` watches. This part is the sub-map it points at — *what* to mount when a request lands on a key underneath — pointed at a real NFS server instead of the previous module's local bind mount.
+The master map says which directory `autofs` guards. The map file it points at says what to dock when a request lands on a key under that directory. Here the hold sits on another ship, an NFS server, instead of on your own.
 
 ## Discovering the exports
 
-Before mapping anything, confirm what the server offers and that your client is allowed. `showmount -e <server>` asks the server's `mountd` for its export list and the networks each is available to — the same query an NFS client makes internally before the first mount, just run by hand.
+Before you map anything, ask what the server offers and whether your ship may dock it. `showmount -e <server>` asks the server's `mountd` for its export list and the networks that may use each export. An NFS client makes the same query internally before its first mount.
 
-> [!TIP]
-> **Try it — list the server's exports**
->
-> ```sh
-> showmount -e nfs
-> ```
->
-> Expect something like:
->
-> ```text
-> Export list for nfs:
-> /export/eng 10.10.50.0/24
-> /export/mkt 10.10.50.0/24
-> ```
->
-> Both directories are exported to `10.10.50.0/24`, which includes `client` (10.10.50.5). These are the targets the sub-map will connect to.
+<!-- astrona:playground:renew -->
 
-## Writing a sub-map with explicit keys
+### See it in your playground
 
-A sub-map file has one line per key:
+On `client`, list the exports of the server called `nfs`:
+
+```sh
+showmount -e nfs
+```
+
+Expect something like this:
+
+```text
+Export list for nfs:
+/export/eng 10.10.50.0/24
+/export/mkt 10.10.50.0/24
+```
+
+Both directories are exported to `10.10.50.0/24`, which includes `client` (10.10.50.5). These are the targets the map will point to.
+
+## Writing a map with explicit keys
+
+A map file has one line per key:
 
 ```text
 eng   -fstype=nfs,ro,soft   nfs:/export/eng
 ```
 
-- **key** — `eng`. The subdirectory name under the managed directory. A request for `/mnt/dep/eng` matches this line.
-- **options** — `-fstype=nfs,ro,soft`. The filesystem type and mount options, comma-joined, no spaces. Here: an NFS mount, read-only, `soft` (give up with an I/O error rather than hang forever if the server vanishes — safe on a read-only mount, since there is no pending write to lose).
-- **target** — `nfs:/export/eng`. `host:/path` for the NFS export.
+- **key**: `eng`. The name under the managed directory. A request for `/mnt/dep/eng` matches this line.
+- **options**: `-fstype=nfs,ro,soft`. The filesystem type and the mount options, joined with commas and no spaces. This one is NFS, read-only, and `soft`. A `soft` mount gives up with an error if the server vanishes, instead of waiting forever. That is safe on a read-only mount, because no write is waiting.
+- **target**: `nfs:/export/eng`, written as `host:/path`.
 
-Older examples add `intr` to the options. It has been a no-op since Linux 2.6.25 — the kernel already lets fatal signals interrupt NFS waits — so leave it out.
+Older examples add `intr` to the options. It has done nothing since Linux 2.6.25, so leave it out.
 
-With the master map watching `/mnt/dep` and pointing at `/etc/auto.dep`, you create `/etc/auto.dep` with the keys, reload, and then a plain `ls` on a key triggers the NFS mount through the exact same trap-and-resume path Module 1's Part 1 walked through — only the thing the daemon runs at the end differs (`mount -t nfs` instead of a bind mount).
+Save this as `/etc/auto.dep` (a file under `/etc` is saved with `sudo`, for example `sudo nano /etc/auto.dep`):
 
-> [!TIP]
-> **Try it — map two exports and trigger one**
->
-> ```sh
-> echo '/mnt/dep  /etc/auto.dep  --timeout=15' | sudo tee -a /etc/auto.master
-> sudo tee /etc/auto.dep <<'EOF'
-> eng  -fstype=nfs,ro,soft  nfs:/export/eng
-> mkt  -fstype=nfs,ro,soft  nfs:/export/mkt
-> EOF
-> sudo systemctl reload autofs
-> ls /mnt/dep/eng
-> cat /mnt/dep/eng/eng-readme.txt
-> mount | grep /mnt/dep
-> ```
->
-> Expect something like:
->
-> ```text
-> eng-readme.txt
-> engineering shared file
->
-> /etc/auto.dep on /mnt/dep type autofs (...)
-> nfs:/export/eng on /mnt/dep/eng type nfs4 (ro,relatime,...,soft,...)
-> ```
->
-> The `ls` on the `eng` key triggered `autofs`, which ran the NFS mount defined on that line. `mount` shows both the `autofs` trigger zone and the live `nfs4` mount. `mkt` is mapped too but stays unmounted until something asks for `/mnt/dep/mkt` — each key is looked up and mounted independently, not as a batch.
+```text
+eng  -fstype=nfs,ro,soft  nfs:/export/eng
+mkt  -fstype=nfs,ro,soft  nfs:/export/mkt
+```
 
-> *A sub-map key only costs a mount the moment something asks for it by name — listing ten keys in the file mounts nothing until ten separate requests arrive.*
+Apply it. The master line puts `/mnt/dep` under `autofs` control with a 15 second timeout, and the reload makes the daemon read both files:
 
-## Reference
+```sh
+echo '/mnt/dep  /etc/auto.dep  --timeout=15' | sudo tee -a /etc/auto.master
+sudo systemctl reload autofs
+```
 
-- `man showmount` — the export-query tool used above; `-a` also lists who currently has what mounted.
-- `man 5 nfs` — the full NFS mount-option reference, including `soft`/`hard`, `timeo`, and `retrans`, only briefly introduced here.
+Then check the result:
+
+```sh
+ls /mnt/dep/eng
+cat /mnt/dep/eng/eng-readme.txt
+mount | grep /mnt/dep
+```
+
+Expect something like this:
+
+```text
+eng-readme.txt
+engineering shared file
+
+/etc/auto.dep on /mnt/dep type autofs (...)
+nfs:/export/eng on /mnt/dep/eng type nfs4 (ro,relatime,...,soft,...)
+```
+
+The `ls` knocked on the hatch. The daemon ran the NFS mount from that line. `mount` shows the `autofs` trigger and the live `nfs4` mount. The `mkt` key stays undocked until something asks for `/mnt/dep/mkt`. Each key is looked up and mounted on its own.
+
+## Common pitfalls
+
+> [!WARNING]
+> - **Spaces in the options field.** `-fstype=nfs, ro, soft` breaks the line. Join the options with commas only.
+> - **Forgetting the reload.** The daemon does not watch files. Run `sudo systemctl reload autofs` after every edit.
+> - **Creating the key directory by hand.** `mkdir /mnt/dep/eng` stops the trap from firing, and the NFS mount never happens.
+> - **Adding `intr`.** It has been a no-op since Linux 2.6.25. Leave it out.
+> - **Expecting every key to mount at once.** A key costs a mount only when something asks for it by name.

@@ -1,6 +1,4 @@
-# Part 1 — RAID Levels
-
-> Prerequisite: [Module landing page](./course.md). Next: [Part 2 — Creating & Persisting an Array](./course-02-creating-and-persisting.md).
+# RAID Levels
 
 Before creating anything, this part covers the bargain each RAID level makes between usable space, disk-failure tolerance, and minimum disk count — because that choice, made once at `mdadm --create` time, is expensive to change later.
 
@@ -15,7 +13,9 @@ Each level is a different bargain between usable space, how many disk failures i
 | **5** | striping + one parity block | 3 | (N−1) disks | 1 disk (any) | Good capacity/safety balance. Rebuilds are slow and stress the survivors. |
 | **10** | mirrored pairs, then striped | 4 | 50% | 1 disk per mirror pair | Fast and redundant; costs half the raw capacity. |
 
-"Survives 1 disk" means the array keeps serving data in a **degraded** state until you replace the failed disk and it rebuilds — covered in the next module, *RAID Maintenance and Recovery*. RAID is not a backup — it protects against a disk dying, not against deletion, corruption, or a fire.
+"Survives 1 disk" means the array keeps serving data in a **degraded** state until you replace the failed disk and the array rebuilds onto it. RAID is not a backup — it protects against a disk dying, not against deletion, corruption, or a fire.
+
+> As an analogy: RAID 1 is a ship that carries two identical copies of its cargo manifest in two separate holds. If one hold floods, the other copy still tells the crew where everything is. RAID 5 spreads the manifest over three holds and adds a checksum page, so any one lost hold can be rebuilt from the other two. The analogy breaks down because RAID cannot undo a mistake: if the crew writes a wrong line, every copy gets the wrong line.
 
 ## Why the minimum disk counts are what they are
 
@@ -46,32 +46,36 @@ flowchart LR
     end
 ```
 
-> [!TIP]
-> **Try it — the empty state**
->
-> ```sh
-> cat /proc/mdstat
-> lsblk -dn -o NAME,SIZE
-> ```
->
-> Expect something like:
->
-> ```text
-> Personalities : [raid1] [raid6] [raid5] [raid10]
-> unused devices: <none>
->
-> vda   15G
-> vdb    1G
-> vdc    1G
-> vdd    1G
-> vde    1G
-> ```
->
-> `/proc/mdstat` lists the RAID levels the kernel can do and shows no arrays yet. The four 1 GB disks are the raw material Part 2 builds an array from.
+### See it in your playground
+
+<!-- astrona:playground:renew -->
+
+```sh
+cat /proc/mdstat
+lsblk -dn -o NAME,SIZE
+```
+
+Expect something like:
+
+```text
+Personalities : [raid1] [raid6] [raid5] [raid10]
+unused devices: <none>
+
+vda   15G
+vdb    1G
+vdc    1G
+vdd    1G
+vde    1G
+```
+
+`/proc/mdstat` lists the RAID levels the kernel can do and shows no arrays yet. The four 1 GB disks are the raw material an array is built from.
 
 > *Every RAID level's minimum disk count and usable-capacity fraction falls out of the same question: how many disks does this layout need before the redundancy math actually works?*
 
-## Reference
+## Common pitfalls
 
-- `man mdadm` — the `--level` values this module uses (`0`, `1`, `5`) plus `6` and others not covered here.
-- `cat /proc/mdstat` — always available, no man page; the fastest way to check what levels a running kernel supports and what arrays currently exist.
+> [!WARNING]
+> - **Mixing up capacity and safety.** RAID 0 gives all the space and no safety. RAID 1 and RAID 10 give half the space. RAID 5 gives N minus 1 disks of space.
+> - **Picking RAID 5 with only two disks.** It needs at least three. Parity needs a third disk to live on.
+> - **Treating RAID as a backup.** It survives a failed disk. It does not survive a deleted file.
+> - **Choosing the level late.** The level is fixed when you run `mdadm --create`. Changing it later means a slow reshape or a rebuild from backup.

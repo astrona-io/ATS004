@@ -8,7 +8,7 @@ As an administrator, you are responsible for the entire lifecycle of a local dis
 
 ## What You Will Master
 
-By completing this section, you will acquire eight core administrative capabilities:
+By completing this section, you will acquire ten core administrative capabilities:
 *   **Disk Discovery & Analysis:** How to query the kernel to identify newly attached, unformatted physical drives and trace filesystem signatures without risking data loss.
 *   **Partition Design:** How to structure disks using standard MBR and modern GPT partition tables to balance compatibility, redundancy, and performance.
 *   **Data-at-Rest Security:** How to encrypt storage sectors using enterprise LUKS encryption to protect sensitive data from offline cloning or hardware theft.
@@ -17,17 +17,21 @@ By completing this section, you will acquire eight core administrative capabilit
 *   **systemd Mount Management:** How every mount is a systemd unit, how to write a native `.mount` unit and pair it with an `.automount`, and how `x-systemd.*` fstab options achieve the same with no unit files.
 *   **Removable Media:** How to format and mount cross-platform FAT32 media correctly, including the ownership options it needs that other filesystems don't.
 *   **Backup & Cloning:** How to clone a whole disk byte-for-byte with `dd`, back up and restore individual files with `tar`, and verify either actually worked with a checksum.
+*   **XFS Filesystems:** How to create an XFS filesystem, mount it persistently, grow it while it is mounted, and check and repair it with `xfs_repair`.
+*   **Btrfs Basics:** How to create a Btrfs filesystem, work with subvolumes and snapshots, and resize it while mounted.
 
 ---
 
 ## The Learning & Lab Path
 
-This section is divided into sequential modules. Modules 1–4 and 7–8 are each paired with a dedicated graded sandbox lab; modules 5–6 come with an ungraded hands-on playground you run while you read. The section concludes with a comprehensive Capstone Integration Challenge:
+This section is divided into sequential modules. Every module has an ungraded hands-on playground you run while you read, and a graded sandbox lab. The section concludes with a comprehensive Capstone Integration Challenge:
 
 ### 1. Filesystem Creation, Mounting, & Forensics
 *   **Module Reader:** **[Module 1: Filesystem Creation, Mounting, & Forensics](./module-01/course.md)**
-    1. [Discovery, Formatting & Mounting](./module-01/course-01-discovery-formatting-mounting.md)
+    1. [Discovery, Formatting and Mounting](./module-01/course-01-discovery-formatting-mounting.md)
     2. [Diagnosing a Stuck Disk](./module-01/course-02-diagnosing-a-stuck-disk.md)
+    3. [Finding Hidden Space](./module-01/course-03-finding-hidden-space.md)
+    4. [Wrap-Up: Mission Debrief](./module-01/course-04-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-010/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -43,7 +47,9 @@ This section is divided into sequential modules. Modules 1–4 and 7–8 are eac
 ### 2. Partitioning Raw Storage
 *   **Module Reader:** **[Module 2: Partitioning Raw Storage](./module-02/course.md)**
     1. [Partition Tables: MBR vs GPT](./module-02/course-01-partition-tables-mbr-vs-gpt.md)
-    2. [Tools, Alignment & the Kernel Re-read Problem](./module-02/course-02-tools-alignment-and-kernel-rescan.md)
+    2. [Write an Aligned GPT Partition](./module-02/course-02-write-an-aligned-gpt-partition.md)
+    3. [When the Kernel Keeps the Old Table](./module-02/course-03-when-the-kernel-keeps-the-old-table.md)
+    4. [Wrap-Up: Mission Debrief](./module-02/course-04-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-010/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -54,8 +60,9 @@ This section is divided into sequential modules. Modules 1–4 and 7–8 are eac
 ### 3. Securing Data-at-Rest
 *   **Module Reader:** **[Module 3: Securing Data-at-Rest with LUKS](./module-03/course.md)**
     1. [The LUKS Model: Locking a Disk](./module-03/course-01-the-luks-model.md)
-    2. [Creating a Container & Its Keyslots](./module-03/course-02-creating-a-container-and-keyslots.md)
-    3. [Opening, Using, Closing & What's Visible Outside](./module-03/course-03-opening-using-closing.md)
+    2. [Creating a Container and Its Keyslots](./module-03/course-02-creating-a-container-and-keyslots.md)
+    3. [Opening, Using and Closing the Vault](./module-03/course-03-opening-using-closing.md)
+    4. [Wrap-Up: Mission Debrief](./module-03/course-04-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-010/module-03/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -65,8 +72,9 @@ This section is divided into sequential modules. Modules 1–4 and 7–8 are eac
 
 ### 4. Filesystem Maintenance, Labeling, & Tuning
 *   **Module Reader:** **[Module 4: Filesystem Maintenance, Labeling, & Tuning](./module-04/course.md)**
-    1. [Filesystem Corruption & the fsck Repair Model](./module-04/course-01-fsck-repair-model.md)
-    2. [Labels, UUIDs & Tuning Check Intervals](./module-04/course-02-labels-uuids-and-tuning.md)
+    1. [Filesystem Corruption and the fsck Repair Model](./module-04/course-01-fsck-repair-model.md)
+    2. [Labels, UUIDs and Tuning Check Intervals](./module-04/course-02-labels-uuids-and-tuning.md)
+    3. [Wrap-Up: Mission Debrief](./module-04/course-03-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-010/module-04/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -76,8 +84,9 @@ This section is divided into sequential modules. Modules 1–4 and 7–8 are eac
 
 ### 5. /etc/fstab in Depth
 *   **Module Reader:** **[Module 5: /etc/fstab in Depth](./module-05/course.md)**
-    1. [fstab Fields & Stable Identifiers](./module-05/course-01-fields-and-stable-identifiers.md)
-    2. [Options & Verifying Before You Trust It](./module-05/course-02-options-and-verifying.md)
+    1. [fstab Fields and Stable Identifiers](./module-05/course-01-fields-and-stable-identifiers.md)
+    2. [Options and Verifying Before You Trust It](./module-05/course-02-options-and-verifying.md)
+    3. [Wrap-Up: Mission Debrief](./module-05/course-03-wrap-up.md)
 *   **Hands-on Playground:** `sections/section-010/module-05/playground/`
     ```bash
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-05/playground
@@ -94,6 +103,7 @@ This section is divided into sequential modules. Modules 1–4 and 7–8 are eac
     1. [How /etc/fstab Becomes systemd Units](./module-06/course-01-fstab-generated-units-and-naming.md)
     2. [Writing Native .mount and .automount Units](./module-06/course-02-native-mount-and-automount-units.md)
     3. [The fstab Shortcut and Common Pitfalls](./module-06/course-03-fstab-shortcut-and-pitfalls.md)
+    4. [Wrap-Up: Mission Debrief](./module-06/course-04-wrap-up.md)
 *   **Hands-on Playground:** `sections/section-010/module-06/playground/`
     ```bash
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-06/playground
@@ -109,6 +119,11 @@ This section is divided into sequential modules. Modules 1–4 and 7–8 are eac
 *   **Module Reader:** **[Module 7: Removable Media & the FAT32 Filesystem](./module-07/course.md)**
     1. [What FAT32 Is & Creating One](./module-07/course-01-what-fat32-is-and-creating-one.md)
     2. [Mounting FAT32 & Its Unix-less Quirks](./module-07/course-02-mounting-fat32-quirks.md)
+    3. [Wrap-Up: Mission Debrief](./module-07/course-03-wrap-up.md)
+*   **Hands-on Playground:** `sections/section-010/module-07/playground/`
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-07/playground
+    ```
 *   **Practice Lab Sandbox:** **`sections/section-010/module-07/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -120,6 +135,11 @@ This section is divided into sequential modules. Modules 1–4 and 7–8 are eac
 *   **Module Reader:** **[Module 8: Backing Up & Cloning Storage Devices](./module-08/course.md)**
     1. [Cloning a Disk with dd](./module-08/course-01-cloning-a-disk-with-dd.md)
     2. [File-Level Backups with tar, and Verifying Them](./module-08/course-02-tar-backups-and-verifying.md)
+    3. [Wrap-Up: Mission Debrief](./module-08/course-03-wrap-up.md)
+*   **Hands-on Playground:** `sections/section-010/module-08/playground/`
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-08/playground
+    ```
 *   **Practice Lab Sandbox:** **`sections/section-010/module-08/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -127,7 +147,39 @@ This section is divided into sequential modules. Modules 1–4 and 7–8 are eac
     ```
 *   **Hands-on Objective:** Clone a raw disk byte-for-byte with `dd`, then verify the clone is an exact match of its source with a checksum comparison.
 
-### 9. Section Capstone Challenge
+### 9. XFS: Creating, Growing and Repairing
+*   **Module Reader:** **[Module 9: XFS: Creating, Growing and Repairing](./module-09/course.md)**
+    1. [Creating and Inspecting XFS](./module-09/course-01-creating-and-inspecting-xfs.md)
+    2. [Growing and Repairing XFS](./module-09/course-02-growing-and-repairing-xfs.md)
+    3. [Wrap-Up: Mission Debrief](./module-09/course-03-wrap-up.md)
+*   **Hands-on Playground:** `sections/section-010/module-09/playground/`
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-09/playground
+    ```
+*   **Practice Lab Sandbox:** **`sections/section-010/module-09/labs/lab-01`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-09/labs/lab-01
+    ```
+*   **Hands-on Objective:** Create an XFS filesystem with a label, mount it persistently by UUID, and run a read-only `xfs_repair -n` check on an unmounted XFS disk.
+
+### 10. Btrfs Basics
+*   **Module Reader:** **[Module 10: Btrfs Basics](./module-10/course.md)**
+    1. [Creating Btrfs and Subvolumes](./module-10/course-01-creating-btrfs-and-subvolumes.md)
+    2. [Snapshots and Resizing](./module-10/course-02-snapshots-and-resizing.md)
+    3. [Wrap-Up: Mission Debrief](./module-10/course-03-wrap-up.md)
+*   **Hands-on Playground:** `sections/section-010/module-10/playground/`
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-10/playground
+    ```
+*   **Practice Lab Sandbox:** **`sections/section-010/module-10/labs/lab-01`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-10/labs/lab-01
+    ```
+*   **Hands-on Objective:** Format a disk as Btrfs with a label, create a subvolume, mount it persistently with `subvol=`, and take a read-only snapshot.
+
+### 11. Section Capstone Challenge
 *   **Comprehensive Challenge:** **`sections/section-010/capstone/labs/lab-01` (Local Storage Integration)**
 *   **Lab Run Command:**
     ```bash
@@ -141,4 +193,4 @@ This section is divided into sequential modules. Modules 1–4 and 7–8 are eac
 
 Test your theoretical knowledge and diagnostic reasoning before tackling the practical lab missions:
 
-*   **[Take the Section 010 Knowledge Check Quiz](./quiz.md)**
+*   **[Take the Section 010 Knowledge Check Quiz](./quiz.yaml)**

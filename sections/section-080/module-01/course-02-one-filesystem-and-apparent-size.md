@@ -1,85 +1,104 @@
-# Part 2 — Staying on One Filesystem & Allocated vs Apparent Size
+# Staying on One Filesystem & Allocated vs Apparent Size
 
-> Prerequisite: [Part 1 — df vs du, and Reading du at a Sensible Depth](./course-01-df-vs-du-depth-and-units.md). Next: [Module landing page](./course.md).
-
-Part 1 got `du`'s output readable. This part covers the two remaining ways its numbers can mislead you: wandering across mount boundaries it should not cross, and reporting a file's on-disk footprint when you wanted its logical length (or the reverse).
+A readable `du` can still mislead you in two ways. It can wander across mount points that it should not enter. And it can report the space a file really uses when you wanted its length, or the other way round. This part covers both.
 
 ## Staying on one filesystem: `-x`
 
-At `/`, a plain `du` is dangerous. The root of a server is a mosaic of mounted filesystems: the local root disk, network shares under `/mnt`, and pseudo-filesystems like `/proc` and `/sys` that are kernel interfaces, not storage — `/proc/kcore`, for instance, presents itself as a file the size of your address space. A `du -h -d 1 /` walks into all of them: it tries to size a remote NFS share over the wire, and it churns through `/proc` producing meaningless numbers and permission errors.
+At `/`, a plain `du` is dangerous. The root of a server is a mosaic of mounted filesystems: the local root disk, network shares and pseudo-filesystems such as `/proc` and `/sys`. The pseudo-filesystems are views into the ship's core, not storage. For example, `/proc/kcore` looks like a file the size of the address space. A `du -h -d 1 /` walks into all of them. It tries to size a network share over the wire and it produces meaningless numbers and permission errors.
 
-`du -x` (`--one-file-system`) stops at every mount point. The mechanism is a device-ID check: every file `du` `stat`s carries the device ID of the filesystem it lives on, and `du -x` compares each entry's device ID to the one it started on. The moment the walk would cross onto `/data`, `/proc`, or an NFS mount — a different device ID — it does not descend, and that path contributes nothing to the total. This is the same device-ID boundary a mount point itself represents; `-x` simply refuses to follow it downward, in either direction (into a real filesystem or into a pseudo one).
+The option `-x` (`--one-file-system`) stops `du` at every mount point. The mechanism is a device-ID check. Each entry that `du` looks at carries the ID of the filesystem it lives on. The command `du -x` compares that ID with the one where it started. When the walk would step onto `/data`, `/proc` or a network mount, the ID is different, so `du` does not go in. Think of it as an airlock door between two holds: `-x` refuses to open it.
 
 ```mermaid
-flowchart TD
-    ROOT["du -x -d 1 /"] --> SAME["/usr, /var, /opt<br/>(same filesystem as /)"]
-    ROOT -.->|"mount point: stop"| DATA["/data<br/>(separate filesystem)"]
-    ROOT -.->|"mount point: stop"| PROC["/proc, /sys<br/>(pseudo-filesystems)"]
-    ROOT -.->|"mount point: stop"| NFS["network mounts<br/>(e.g. NFS)"]
-
-    SAME --> SUM["sizes summed into the total"]
-    DATA --> SKIP["reported as 0 -- not descended"]
-    PROC --> SKIP
-    NFS --> SKIP
+flowchart TB
+    ROOT["du -x -d 1 /"] -->|"same device"| SAME["/usr, /var, /opt"]
+    ROOT -.->|"other device: stop"| DATA["/data"]
+    ROOT -.->|"other device: stop"| PROC["/proc, /sys"]
+    SAME -->|"summed"| SUM["total"]
 ```
 
-> [!TIP]
-> **Try it — audit just the root filesystem**
->
-> ```sh
-> du -hx -d 1 / | sort -hr
-> ```
->
-> Expect something like:
->
-> ```text
-> 3.1G    /
-> 1.9G    /usr
-> 480M    /var
-> 257M    /opt
-> 0       /data
-> 0       /proc
-> ```
->
-> `/data` and `/proc` show `0` — `-x` refused to cross into them by device ID, so they contribute nothing. Drop the `x` and rerun: `/data` jumps to ~400 MiB and `/proc` spews errors. Only the `-x` form is a safe, accurate answer to "what is filling the root disk?".
+The diagram shows that `-x` sums only the directories on the starting filesystem and stops at every other mount point.
+
+<!-- astrona:playground:renew -->
+
+### See it in your playground
+
+Audit only the root filesystem:
+
+```sh
+du -hx -d 1 / | sort -hr
+```
+
+Expect something like this (the sizes on your machine will differ):
+
+```text
+3.1G    /
+1.9G    /usr
+480M    /var
+257M    /opt
+0       /data
+0       /proc
+```
+
+`/data` and `/proc` show `0`, because `-x` refused to cross into them. Drop the `x` and run it again. `/data` jumps to about 400 MiB and `/proc` prints errors. Only the `-x` form answers "what fills the root disk?".
 
 ## Allocated blocks versus apparent size
 
-By default `du` reports **disk space actually allocated**, in filesystem blocks — not the file's logical length. The two differ for **sparse files**: a file created at 512 MiB but never fully written (a VM image, a preallocated database file) has a large apparent size but only a few blocks actually assigned to it on disk. A sparse file's unwritten regions are not zero-filled blocks sitting on the platter — they are gaps the filesystem's own block map records as absent, and the filesystem synthesizes zeroes on read for any offset that has no block assigned. `du --apparent-size` reports the logical length — the number `ls -l` also shows — instead of counting real blocks.
+By default `du` reports the space that is **allocated**: the blocks the filesystem really assigned. That is not always the length of the file. A **sparse file** is a file created at a large length but never fully written. The filesystem records the unwritten stretches as gaps. It gives out zeros when someone reads a gap, and it spends no blocks on it. The option `--apparent-size` makes `du` print the length stored in the inode instead. That is the number `ls -l` shows.
 
-This mechanism is also one more reason `du` and `df` disagree, alongside Part 1's unlinked-but-open case: `df` includes filesystem metadata overhead (journal, inode tables) that belongs to no single file `du` could charge it to.
+### See it in your playground
 
-> [!TIP]
-> **Try it — the sparse file two ways**
->
-> ```sh
-> du -h /opt/archive/sparse.img
-> du -h --apparent-size /opt/archive/sparse.img
-> ls -lh /opt/archive/sparse.img
-> ```
->
-> Expect something like:
->
-> ```text
-> 0       /opt/archive/sparse.img
-> 512M    /opt/archive/sparse.img
-> -rw-r--r-- 1 root root 512M ... /opt/archive/sparse.img
-> ```
->
-> Default `du` says ~0 — that is how much disk the file really occupies, because almost none of its block range has ever been written. `--apparent-size` and `ls -lh` both say 512M — the logical length recorded in the inode, independent of which blocks behind it are real. When a capacity audit and a directory listing disagree wildly, a sparse file is a common cause.
+Look at the sparse file in three ways:
+
+```sh
+du -h /opt/archive/sparse.img
+du -h --apparent-size /opt/archive/sparse.img
+ls -lh /opt/archive/sparse.img
+```
+
+Expect something like this:
+
+```text
+0       /opt/archive/sparse.img
+512M    /opt/archive/sparse.img
+-rw-r--r-- 1 root root 512M ... /opt/archive/sparse.img
+```
+
+The default `du` says about zero, because almost no block was ever written. The other two commands say 512M, the length in the inode. When an audit and a directory listing disagree wildly, a sparse file is a common cause.
+
+## Common pitfalls
 
 > [!WARNING]
-> **Common pitfalls**
->
-> - **`du` at `/` without `-x`.** It descends into `/proc`, `/sys`, `/dev`, and every network mount — slow, noisy, and inaccurate. Always `du -x` when auditing a filesystem from its root.
-> - **Reading `du` without enough privilege.** As a normal user, `du` cannot enter directories you lack permission for and undercounts, printing "Permission denied" lines. Run capacity audits with `sudo`.
-> - **`sort` without `-h`.** `sort -r` alone sorts `9M` above `10G` because it compares text. Use `sort -hr` so the units are understood.
-> - **Assuming `du` and `df` must match.** Deleted-but-open files (Part 1), sparse files, reserved blocks, and metadata all make them differ legitimately. A large gap with no sparse files in sight often means a deleted file is still held open — check `lsof +L1`.
-> - **Expecting `du` to follow symlinks.** It does not, by default — a symlinked directory counts as the tiny link, not its target. That is usually what you want for a capacity audit.
+> - **`du` at `/` without `-x`.** It descends into `/proc`, `/sys` and every network mount. That is slow, noisy and wrong. Always add `-x` when you audit a filesystem from its root.
+> - **Expecting `du` to follow symbolic links.** By default it does not. A linked directory counts as the tiny link, not its target.
+> - **Comparing apparent size with `df`.** A sparse file has a large apparent size and almost no real size. Only the allocated number matches what `df` counts.
+> - **Mixing up `-x` and `-d`.** The option `-x` limits the walk to one filesystem. The option `-d` limits how deep the output goes. You usually need both.
 
-> *A mount point is a device-ID boundary `-x` refuses to cross; a sparse file is a block-map gap the filesystem fills with synthesized zeroes on read — two different mechanisms, both hiding behind a `du` number that looks smaller than you expected.*
+## Your mission: Directory Capacity Profiling (du -xh) Lab
 
-## Reference
+You can now rank directories by size and keep the scan on one filesystem. The mission asks you to find the largest local subdirectory under `/var/log` and write its path to a file.
 
-- `man du` — `--one-file-system` / `-x` and `--apparent-size` in full, including how they interact with `--exclude`.
-- `man 5 proc` — what `/proc/kcore` and similar pseudo-files claim to be, and why `-x` matters most at `/`.
+The mission runs on its own training ship. A playground cannot be paused, so remove it first to free memory. It always starts clean again:
+
+```sh
+astrona destroy section-080-module-01-playground
+```
+
+Then start the mission and connect to it:
+
+```sh
+astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-080/module-01/labs/lab-01
+astrona ssh ats-004-lab-081
+```
+
+Read the task in [`question.md`](./labs/lab-01/question.md) and solve it on your own first. When you think you are done, send it for grading:
+
+```sh
+astrona submit -c sections/section-080/module-01/labs/lab-01
+```
+
+When the mission is done, remove it and start a fresh playground:
+
+```sh
+astrona destroy ats-004-lab-081
+astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-080/module-01/playground
+```

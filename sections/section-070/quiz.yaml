@@ -1,0 +1,351 @@
+# Knowledge check for section 070.
+schema_version: 1
+kind: question_bank
+id: ats004-070
+course_id: ATS004
+exam_code: LFCS
+status: draft
+provenance: Original practice material written for this course; not official exam
+  questions.
+scope:
+  type: section
+  id: section-070
+  title: Storage Performance Monitoring
+questions:
+- id: ats004-070-q01
+  type: single_choice
+  difficulty: beginner
+  learning_objective: Explain what I/O wait means and when it points to a storage
+    bottleneck
+  source_readings:
+  - sections/section-070/module-01/course-01-io-wait-iops-throughput.md
+  prompt: "`top` shows 60% idle CPU and 35% `%wa`. What does this tell you?"
+  options:
+  - id: a
+    text: The CPU is busy running too many programs and needs more cores.
+    explanation: High `%wa` means the CPU is idle, not busy.
+  - id: b
+    text: The CPU is idle but its processes are stuck waiting for storage requests
+      to finish.
+    explanation: Correct. I/O wait is time when the CPU has nothing to run because
+      processes wait for the disk.
+  - id: c
+    text: The network card is dropping packets.
+    explanation: Network delay is not counted as I/O wait in this way.
+  - id: d
+    text: The disk is broken and must be replaced.
+    explanation: High wait shows load or slowness, not a broken disk.
+  correct_option: b
+  explanation: I/O wait is idle CPU time while processes wait for storage. The crew
+    stands still waiting for the cargo lift.
+- id: ats004-070-q02
+  type: single_choice
+  difficulty: beginner
+  learning_objective: Tell IOPS from throughput
+  source_readings:
+  - sections/section-070/module-01/course-01-io-wait-iops-throughput.md
+  prompt: A disk handles 20000 tiny reads per second but moves only 80 MB/s. Which
+    statement is right?
+  options:
+  - id: a
+    text: IOPS is the number of requests per second and throughput is the data moved
+      per second.
+    explanation: Correct. Many small requests give high IOPS but modest throughput.
+  - id: b
+    text: IOPS and throughput are two names for the same number.
+    explanation: 'They differ: one counts trips, the other counts cargo.'
+  - id: c
+    text: IOPS is measured in milliseconds.
+    explanation: Milliseconds measure latency, not IOPS.
+  - id: d
+    text: Throughput counts only write requests.
+    explanation: Throughput covers reads and writes.
+  correct_option: a
+  explanation: IOPS counts how many trips the lift makes. Throughput counts how much
+    cargo it moves.
+- id: ats004-070-q03
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Say where iostat gets its numbers
+  source_readings:
+  - sections/section-070/module-01/course-02-where-iostat-gets-its-numbers.md
+  prompt: Where does `iostat -x` read the counters that it turns into rates?
+  options:
+  - id: a
+    text: From a log file that `iostat` writes in `/var/log`.
+    explanation: "`iostat` keeps no log file of its own."
+  - id: b
+    text: From the SMART data on the disk.
+    explanation: SMART is not the source of these counters.
+  - id: c
+    text: From counters that the kernel keeps for each device, such as `/proc/diskstats`.
+    explanation: Correct. `iostat` reads the counters twice and divides the change
+      by the time between reads.
+  - id: d
+    text: From the `df` command.
+    explanation: "`df` reports space, not request counters."
+  correct_option: c
+  explanation: The kernel counts the requests. `iostat` only reads the counters and
+    does the arithmetic.
+- id: ats004-070-q04
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Explain why the first iostat report is different
+  source_readings:
+  - sections/section-070/module-01/course-02-where-iostat-gets-its-numbers.md
+  prompt: You run `iostat -xz 1`. Why does the first report look different from the
+    ones after it?
+  options:
+  - id: a
+    text: The first report shows averages since boot, and later reports show the last
+      interval.
+    explanation: Correct. Counters start at boot, so the first report has no earlier
+      reading to compare with.
+  - id: b
+    text: The first report is always wrong and must be ignored by the kernel.
+    explanation: It is correct, but it covers a different period.
+  - id: c
+    text: The first report shows only reads.
+    explanation: It shows reads and writes.
+  - id: d
+    text: The first report is cached from the previous run.
+    explanation: "`iostat` keeps no cache between runs."
+  correct_option: a
+  explanation: The first report covers the time since boot. Each later report covers
+    one interval.
+- id: ats004-070-q05
+  type: single_choice
+  difficulty: beginner
+  learning_objective: Read the await column
+  source_readings:
+  - sections/section-070/module-01/course-03-reading-iostat-columns.md
+  prompt: Which `iostat -x` column shows the average time in milliseconds that a request
+    takes, including time in the queue?
+  options:
+  - id: a
+    text: "`r/s`"
+    explanation: "`r/s` is reads per second."
+  - id: b
+    text: "`%util`"
+    explanation: "`%util` is how busy the device was."
+  - id: c
+    text: "`await`"
+    explanation: Correct. `await` is the average time per request, queue included.
+  - id: d
+    text: "`wkB/s`"
+    explanation: "`wkB/s` is write throughput."
+  correct_option: c
+  explanation: "`await` is the wait time per request in milliseconds."
+- id: ats004-070-q06
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Read the aqu-sz and utilization columns
+  source_readings:
+  - sections/section-070/module-01/course-03-reading-iostat-columns.md
+  prompt: A device shows `%util` of 100 and `aqu-sz` of 0.9, and `await` is low. What
+    is the best reading?
+  options:
+  - id: a
+    text: The device is always dying.
+    explanation: Nothing here shows a failing disk.
+  - id: b
+    text: The device is busy all the time but requests do not pile up, so it is not
+      yet a long queue.
+    explanation: Correct. A short queue and low wait mean requests are served fast,
+      even if the device is never idle.
+  - id: c
+    text: The queue holds 100 requests.
+    explanation: "`%util` is not a queue length."
+  - id: d
+    text: The CPU has no work.
+    explanation: These columns describe the device, not the CPU.
+  correct_option: b
+  explanation: "`%util` says how often the device had work. `aqu-sz` and `await` say
+    whether requests wait."
+- id: ats004-070-q07
+  type: single_choice
+  difficulty: advanced
+  learning_objective: Explain why %util can mislead on devices that work in parallel
+  source_readings:
+  - sections/section-070/module-01/course-03-reading-iostat-columns.md
+  prompt: Why can `%util` at 100 still hide spare capacity on a fast flash device?
+  options:
+  - id: a
+    text: Because `%util` only counts reads.
+    explanation: It counts any time with a request in flight.
+  - id: b
+    text: Because `%util` measures time with at least one request in flight, and the
+      device can serve many requests at once.
+    explanation: Correct. One request in flight at all times shows 100 even if the
+      device could take more.
+  - id: c
+    text: Because `%util` is measured in megabytes.
+    explanation: It is a percentage of time.
+  - id: d
+    text: Because `%util` is reset every second by the kernel.
+    explanation: Reset is not the reason it misleads.
+  correct_option: b
+  explanation: A busy flag is not a full lift. Parallel devices can be busy and still
+    have room.
+- id: ats004-070-q08
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Spot a saturated device from several columns
+  source_readings:
+  - sections/section-070/module-01/course-04-watching-a-device-saturate.md
+  prompt: While a heavy write job runs, `wkB/s` stops rising, `aqu-sz` keeps growing
+    and `await` climbs. What is happening?
+  options:
+  - id: a
+    text: 'The device is saturated: it cannot go faster and requests queue up.'
+    explanation: Correct. Throughput flat, queue and wait growing is the signature
+      of saturation.
+  - id: b
+    text: The job has finished.
+    explanation: A finished job would make the numbers fall.
+  - id: c
+    text: The filesystem is full.
+    explanation: A full filesystem returns errors, it does not grow the queue.
+  - id: d
+    text: The network is slow.
+    explanation: This is a local device reading.
+  correct_option: a
+  explanation: A flat rate with a growing queue means the lift is at its limit.
+- id: ats004-070-q09
+  type: single_choice
+  difficulty: beginner
+  learning_objective: Find the process behind disk writes with iotop
+  source_readings:
+  - sections/section-070/module-02/course-01-iotop-and-pidstat.md
+  prompt: Which command shows a live list of only the processes doing I/O right now?
+  options:
+  - id: a
+    text: "`sudo top`"
+    explanation: "`top` shows CPU and memory, not I/O per process."
+  - id: b
+    text: "`iostat -xz 1`"
+    explanation: "`iostat` reports per device, not per process."
+  - id: c
+    text: "`sudo iotop -o`"
+    explanation: Correct. `-o` hides processes that do no I/O, and `iotop` needs root.
+  - id: d
+    text: "`lsof -i`"
+    explanation: "`lsof -i` lists network files."
+  correct_option: c
+  explanation: "`iotop -o` is the live crew list for the cargo lift."
+- id: ats004-070-q10
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Use pidstat for per-process I/O over time
+  source_readings:
+  - sections/section-070/module-02/course-01-iotop-and-pidstat.md
+  prompt: You want a plain-text line every 2 seconds with each process's disk read
+    and write rates, so you can save it to a file. Which tool fits?
+  options:
+  - id: a
+    text: "`pidstat -d 2`"
+    explanation: Correct. `-d` reports disk I/O per process and `2` is the interval
+      in seconds.
+  - id: b
+    text: "`df -h 2`"
+    explanation: "`df` has no interval and shows space."
+  - id: c
+    text: "`free -m`"
+    explanation: "`free` shows memory."
+  - id: d
+    text: "`uptime`"
+    explanation: "`uptime` shows load averages only."
+  correct_option: a
+  explanation: "`pidstat -d` gives per-process I/O lines that are easy to log."
+- id: ats004-070-q11
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Read per-process I/O counters
+  source_readings:
+  - sections/section-070/module-02/course-02-per-process-io-counters.md
+  prompt: Which file holds the cumulative bytes that process 1234 has read and written?
+  options:
+  - id: a
+    text: "`/proc/1234/io`"
+    explanation: Correct. It holds counters such as `read_bytes` and `write_bytes`.
+  - id: b
+    text: "`/proc/diskstats`"
+    explanation: That file counts per device, not per process.
+  - id: c
+    text: "`/etc/mtab`"
+    explanation: That file lists mounts.
+  - id: d
+    text: "`/sys/block/vda/stat`"
+    explanation: That file counts per device.
+  correct_option: a
+  explanation: Each crew member has a personal I/O badge file in `/proc/<PID>/io`.
+- id: ats004-070-q12
+  type: single_choice
+  difficulty: beginner
+  learning_objective: List the files a process holds open
+  source_readings:
+  - sections/section-070/module-02/course-03-lsof-files-and-processes.md
+  prompt: Process 5012 is writing heavily. Which command lists the files it has open?
+  options:
+  - id: a
+    text: "`sudo lsof -p 5012`"
+    explanation: Correct. `-p` selects a process ID.
+  - id: b
+    text: "`df -h | grep 5012`"
+    explanation: "`df` knows nothing about process IDs."
+  - id: c
+    text: "`cat /proc/sys/fs/file-max`"
+    explanation: That is a system-wide limit.
+  - id: d
+    text: "`iostat -p 5012`"
+    explanation: "`iostat -p` selects a partition, not a process."
+  correct_option: a
+  explanation: "`lsof` lists every open line a crew member holds."
+- id: ats004-070-q13
+  type: single_choice
+  difficulty: advanced
+  learning_objective: Find a deleted file that still takes space
+  source_readings:
+  - sections/section-070/module-02/course-03-lsof-files-and-processes.md
+  - sections/section-070/module-02/course-04-closing-the-loop.md
+  prompt: You deleted a large log, but `df` shows the space is still used. Which command
+    finds the process that holds the deleted file open?
+  options:
+  - id: a
+    text: "`sudo lsof +L1`"
+    explanation: Correct. It lists open files with a link count below one, which are
+      deleted files still held open.
+  - id: b
+    text: "`sudo fsck /`"
+    explanation: "`fsck` checks structure and does not find open files."
+  - id: c
+    text: "`du -sh /`"
+    explanation: "`du` cannot see a deleted file."
+  - id: d
+    text: "`sudo mount -a`"
+    explanation: "`mount -a` reads fstab and mounts, which is unrelated."
+  correct_option: a
+  explanation: The space comes back when that process closes the file or stops.
+- id: ats004-070-q14
+  type: single_choice
+  difficulty: intermediate
+  learning_objective: Close the loop from device to file
+  source_readings:
+  - sections/section-070/module-02/course-04-closing-the-loop.md
+  prompt: What is the usual order to trace a slow disk to a file?
+  options:
+  - id: a
+    text: "`lsof` first, then `iotop`, then `iostat`."
+    explanation: That starts from the smallest detail.
+  - id: b
+    text: "`iostat` to see which device, `iotop` or `pidstat` to see which process,
+      then `lsof -p` to see which file."
+    explanation: Correct. Go from device to process to file.
+  - id: c
+    text: Reboot, then run `df`.
+    explanation: A reboot erases the evidence.
+  - id: d
+    text: "`fsck`, then `mount`, then `top`."
+    explanation: These do not trace load.
+  correct_option: b
+  explanation: 'Narrow it down: lift, then crew member, then cargo.'

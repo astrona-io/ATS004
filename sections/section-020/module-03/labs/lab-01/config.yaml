@@ -1,0 +1,60 @@
+metadata:
+  name: "ats-004-lab-100"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  # lab-net is this scenario's private subnet: server runs the iSCSI target,
+  # client is where the task is done and graded. Network and per-VM
+  # bootstrap/validation fields follow the section-020 capstone lab config.
+  networks:
+    - name: "lab-net"
+      cidr: "10.10.60.0/24"
+
+  qemu:
+    - name: "client"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      networks:
+        - name: "lab-net"
+          ipv4: "10.10.60.5"
+      bootstrap:
+        init:
+          - name: "client-lab-setup"
+            description: "Installs open-iscsi, creates /mnt/cargo and seeds /etc/hosts with the server address"
+            type: "folder"
+            source: "bootstrap/client/"
+      validation:
+        scripts:
+          - name: "verify-iscsi-persistent-mount"
+            description: "Confirms an iSCSI session, an ext4 filesystem on the iSCSI disk mounted at /mnt/cargo, and a UUID= fstab line with _netdev"
+            type: "file"
+            source: "validation/validate-completed.sh"
+
+    - name: "server"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      networks:
+        - name: "lab-net"
+          ipv4: "10.10.60.10"
+      bootstrap:
+        init:
+          - name: "server-lab-setup"
+            description: "Installs tgt and publishes one iSCSI target with one empty 1 GB disk"
+            type: "folder"
+            source: "bootstrap/server/"
+
+teardown:
+  keepCluster: false

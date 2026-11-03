@@ -24,6 +24,8 @@ This section has four modules, each with an ungraded hands-on playground you run
 *   **Module Reader:** **[Module 1: Directory Capacity Auditing](./module-01/course.md)**
     1. [df vs du, and Reading du at a Sensible Depth](./module-01/course-01-df-vs-du-depth-and-units.md)
     2. [Staying on One Filesystem & Allocated vs Apparent Size](./module-01/course-02-one-filesystem-and-apparent-size.md)
+    3. [When df and du Disagree](./module-01/course-03-when-df-and-du-disagree.md)
+    4. [Wrap-Up: Mission Debrief](./module-01/course-04-wrap-up.md)
 *   **Hands-on Playground:** `sections/section-080/module-01/playground/` — a VM with a second mounted filesystem plus large and sparse seed files.
     ```bash
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-080/module-01/playground
@@ -38,7 +40,9 @@ This section has four modules, each with an ungraded hands-on playground you run
 ### 2. User and Group Disk Quotas
 *   **Module Reader:** **[Module 2: User and Group Disk Quotas](./module-02/course.md)**
     1. [Turning Quotas On & Setting Limits](./module-02/course-01-turning-on-and-setting-limits.md)
-    2. [Hitting the Limit & the Grace Period](./module-02/course-02-hitting-the-limit-and-grace-period.md)
+    2. [Group Quotas, Copying Limits & Reading Reports](./module-02/course-02-group-quotas-and-reports.md)
+    3. [Hitting the Limit & the Grace Period](./module-02/course-03-hitting-the-limit-and-grace-period.md)
+    4. [Wrap-Up: Mission Debrief](./module-02/course-04-wrap-up.md)
 *   **Hands-on Playground:** `sections/section-080/module-02/playground/` — an ext4 filesystem at `/quota` (quota options set, not yet enabled) with test users.
     ```bash
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-080/module-02/playground
@@ -60,6 +64,8 @@ This section has four modules, each with an ungraded hands-on playground you run
 *   **Module Reader:** **[Module 3: XFS Quotas and Project Quotas](./module-03/course.md)**
     1. [XFS Quotas & User Limits](./module-03/course-01-xfs-quotas-and-user-limits.md)
     2. [Defining & Enforcing a Project Quota](./module-03/course-02-project-quotas.md)
+    3. [Group Limits, Grace Timers & Switching Quotas Off](./module-03/course-03-group-quotas-timers-and-switching-off.md)
+    4. [Wrap-Up: Mission Debrief](./module-03/course-04-wrap-up.md)
 *   **Hands-on Playground:** `sections/section-080/module-03/playground/` — an XFS filesystem at `/srv/xfs` with `uquota,pquota` and a `webdata` directory.
     ```bash
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-080/module-03/playground
@@ -74,7 +80,10 @@ This section has four modules, each with an ungraded hands-on playground you run
 ### 4. Navigating Shortcuts: Symbolic Links & FHS
 *   **Module Reader:** **[Module 4: Navigating Shortcuts: Symbolic Links & FHS](./module-04/course.md)**
     1. [What a Symlink Is & Finding Them](./module-04/course-01-what-a-symlink-is-and-finding-them.md)
-    2. [Resolving, du's Blind Spot & Removing Safely](./module-04/course-02-resolving-du-and-removing-safely.md)
+    2. [Creating Links, Hard Links & Dangling Links](./module-04/course-02-creating-links-hard-links-and-dangling.md)
+    3. [Resolving, du's Blind Spot & Removing Safely](./module-04/course-03-resolving-du-and-removing-safely.md)
+    4. [The Filesystem Hierarchy](./module-04/course-04-the-filesystem-hierarchy.md)
+    5. [Wrap-Up: Mission Debrief](./module-04/course-05-wrap-up.md)
 *   **Hands-on Playground:** `sections/section-080/module-04/playground/` — real usrmerge symlinks plus a disposable demo with a reset helper.
     ```bash
     astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-080/module-04/playground
@@ -92,4 +101,4 @@ This section has four modules, each with an ungraded hands-on playground you run
 
 Test your theoretical knowledge and diagnostic reasoning before moving on:
 
-*   **[Take the Section 080 Knowledge Check Quiz](./quiz.md)**
+*   **[Take the Section 080 Knowledge Check Quiz](./quiz.yaml)**

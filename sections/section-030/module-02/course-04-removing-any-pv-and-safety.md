@@ -1,8 +1,6 @@
-# Part 4 — Removing Any PV, and Physical Disk Safety
+# Removing Any PV, and Physical Disk Safety
 
-> Prerequisite: [Part 3 — vgreduce, and Growing/Shrinking a Volume](./course-03-vgreduce-lvextend.md). Next: [Module landing page](./course.md).
-
-Parts 2–3 walked through one specific scenario: a single disk holding 100% of an LV's data, evacuated onto one freshly-added spare. Real volume groups are often built from three, four, or more disks, and an LV's extents can already be spread across several of them long before you ever need to pull one. This part covers two things the earlier, narrower scenario left out: how `pvmove`/`vgreduce`/`pvremove` generalize to a VG of any size with data spread any way, and what "safe to unplug" actually requires once LVM's own bookkeeping is done.
+So far the scenario was simple: a single disk holding 100% of an LV's data, evacuated onto one freshly-added spare. Real volume groups are often built from three, four, or more disks, and an LV's extents can already be spread across several of them long before you ever need to pull one. This part covers two things the earlier, narrower scenario left out: how `pvmove`/`vgreduce`/`pvremove` generalize to a VG of any size with data spread any way, and what "safe to unplug" actually requires once LVM's own bookkeeping is done.
 
 ## The same three commands, regardless of how many PVs there are
 
@@ -12,17 +10,19 @@ Nothing about `pvmove`, `vgreduce`, or `pvremove` cares whether a VG has two PVs
 2. `vgreduce <vg> <that-PV>` — detaches it, once step 1 leaves it with zero extents.
 3. `pvremove <that-PV>` — wipes its LVM label.
 
-The one thing worth checking *before* step 1, that Part 2's single-spare scenario didn't need to: does the rest of the VG actually have room? `pvmove` needs free extents on the VG's *other* PVs at least equal to however much the PV you're draining currently holds. A quick way to check both sides at once:
+The one thing worth checking *before* step 1, that a single-spare scenario does not need: does the rest of the VG actually have room? `pvmove` needs free extents on the VG's *other* PVs at least equal to however much the PV you're draining currently holds. A quick way to check both sides at once:
+
+<!-- astrona:playground:renew -->
 
 ```sh
 sudo pvs -o pv_name,pv_used,pv_free
 ```
 
-Compare the `pv_used` figure for the PV you're about to drain against the sum of `pv_free` across every *other* PV in the VG. If the other PVs don't have enough combined free space, `pvmove` will simply refuse to start (or stall partway) rather than doing anything destructive — the fix is the same `vgextend` with another disk that Part 2 used, not a data-loss risk.
+Compare the `pv_used` figure for the PV you're about to drain against the sum of `pv_free` across every *other* PV in the VG. If the other PVs don't have enough combined free space, `pvmove` will simply refuse to start (or stall partway) rather than doing anything destructive — the fix is the same `vgextend` with another disk used in a single-spare move, not a data-loss risk.
 
-### Hands-on: build a three-way spread, then remove one PV out of three
+### See it in your playground
 
-`source_disk` has been sitting raw and unclaimed since Part 3 removed it — that's the disk this exercise reuses to reach three PVs, no new hardware needed.
+`source_disk` has been sitting raw and unclaimed since it was removed from the group — that's the disk this exercise reuses to reach three PVs, no new hardware needed.
 
 **0. Make sure the disk-name variables are loaded in this shell** (if your session from earlier parts closed, or you're picking this up fresh, `$source_disk` and `$spare_disk` won't be set otherwise):
 ```sh
@@ -39,7 +39,7 @@ sudo vgextend company_storage "$source_disk"
   Physical volume "/dev/vdc" successfully created.
   Volume group "company_storage" successfully extended
 ```
-Same two commands as Part 2 — nothing about rejoining a previously-removed disk is different from adding a brand-new one.
+Same two commands as for any new disk (`pvcreate`, `vgextend`) — nothing about rejoining a previously-removed disk is different from adding a brand-new one.
 
 **2. Grow `shared_documents` by 600 MiB, restricted to `spare_disk`:**
 ```sh
@@ -48,7 +48,7 @@ sudo lvextend -L +600M /dev/company_storage/shared_documents "$spare_disk"
 ```text
   Size of logical volume company_storage/shared_documents changed from 350.00 MiB to 950.00 MiB.
 ```
-Naming a PV after the size argument restricts the *new* extents to that PV specifically — the same technique this playground's own setup script used back in Part 1 to force every extent onto one disk. Here it guarantees the growth lands on `spare_disk`, not wherever the default allocator would otherwise choose.
+Naming a PV after the size argument restricts the *new* extents to that PV specifically — the same technique this playground's own setup script used back in this module to force every extent onto one disk. Here it guarantees the growth lands on `spare_disk`, not wherever the default allocator would otherwise choose.
 
 **3. Grow it again by 300 MiB, this time restricted to `source_disk`:**
 ```sh
@@ -88,7 +88,7 @@ sudo lvs -o +devices
 ```
 `spare_disk` (`/dev/vde`) is gone from the list entirely. `source_disk` (`/dev/vdc`) now carries two separate ranges — its original 300 MiB starting at extent 0, plus the 600 MiB just migrated onto it starting right after, at extent 75 (300 MiB ÷ 4 MiB per extent) — which is exactly why the same PV can appear more than once in this column: each entry is one contiguous range, not one entry per disk.
 
-**7. Detach and wipe the now-empty PV, same as Part 3:**
+**7. Detach and wipe the now-empty PV, same as for any retired disk:**
 ```sh
 sudo vgreduce company_storage "$spare_disk"
 sudo pvremove "$spare_disk"
@@ -111,7 +111,7 @@ sudo vgs
   VG               #PV #LV #SN Attr   VSize VFree
   company_storage   2   1   0 wz--n- 1.99g 0.77g
 ```
-`#PV 2`, same as after Part 3 — but the disks making up the pair have changed (`second_disk` and `source_disk` now, not `second_disk` and `spare_disk`), and `shared_documents` is still 1250 MiB, still mounted, still readable the entire time. Removing one PV out of three worked exactly like removing one PV out of two — because it *is* the same operation.
+`#PV 2`, same as after the first removal — but the disks making up the pair have changed (`second_disk` and `source_disk` now, not `second_disk` and `spare_disk`), and `shared_documents` is still 1250 MiB, still mounted, still readable the entire time. Removing one PV out of three worked exactly like removing one PV out of two — because it *is* the same operation.
 
 ## What `pvremove` doesn't do
 
@@ -127,17 +127,42 @@ A minimal checklist for a real disk, after `pvremove` reports success:
 
 None of this is optional because LVM asked nicely — it's a different layer's job entirely, which is exactly why `pvremove` finishing without error is not, by itself, the same statement as "safe to unplug."
 
+> *Removing a PV is always the same three commands, no matter how many PVs the VG has or how an LV's extents are laid out across them — the only thing that changes is how much free space you need elsewhere first. Getting the LVM layer to zero on a device is necessary but not sufficient for pulling it out of a real machine; the hardware layer keeps its own separate bookkeeping.*
+
+## Common pitfalls
+
 > [!WARNING]
-> **Common pitfalls**
 >
 > - **Treating `pvremove` success as physical-removal clearance.** On real hardware, it isn't — see the checklist above. On this playground's virtual disks, it is, because there's no physical layer underneath to clear.
 > - **Starting `pvmove` without checking free space on the *other* PVs first.** It fails safely rather than corrupting anything, but checking with `pvs -o pv_name,pv_used,pv_free` up front saves a wasted run on a large migration.
 > - **Assuming the PV you're removing holds a clean, single range.** As step 6 above shows, one PV can appear more than once in `lvs -o +devices` if it has absorbed extents at different times. Read the whole `Devices` cell, not just the first entry.
 
-> *Removing a PV is always the same three commands, no matter how many PVs the VG has or how an LV's extents are laid out across them — the only thing that changes is how much free space you need elsewhere first. Getting the LVM layer to zero on a device is necessary but not sufficient for pulling it out of a real machine; the hardware layer keeps its own separate bookkeeping.*
+## Your mission: LVM: Removing One PV Out of Three, Mixed Extents Lab
 
-## Reference
+You can now remove any one disk from a pool, even when its extents are mixed with the extents of other volumes. The mission asks you to remove `disk2` from the pool `vg_split`, which has three disks and mixed extents, without losing data.
 
-- `man pvmove` — the optional destination-PV argument used in step 5 above, to direct evacuated extents to a specific disk instead of letting the allocator choose.
-- `man lvextend` / `man lvcreate` — the trailing PV-list argument used in steps 2–3 to restrict new extents to a named disk.
-- Your storage controller's or cloud provider's own documentation for hot-removal — there is no single Linux-wide command for "make this physical disk safe to pull"; SATA, NVMe, and hardware RAID each expose that differently.
+The mission runs on its own training ship. A playground cannot be paused, so remove it first to free memory; it always starts clean again:
+
+```sh
+astrona destroy section-030-module-02-playground
+```
+
+Then start the mission and connect to it:
+
+```sh
+astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-030/module-02/labs/lab-04
+astrona ssh ats-004-lab-039
+```
+
+Read the task in [`question.md`](./labs/lab-04/question.md) and solve it on your own first. When you think you are done, send it for grading:
+
+```sh
+astrona submit -c sections/section-030/module-02/labs/lab-04
+```
+
+When the mission is done, remove it and start a fresh playground:
+
+```sh
+astrona destroy ats-004-lab-039
+astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-030/module-02/playground
+```

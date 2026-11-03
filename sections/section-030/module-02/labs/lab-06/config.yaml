@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-030-02-06"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 2
+        serial: "lab030206-disk1"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-030-02-06-setup"
+      description: "Builds vg_data with an ext4 volume lv_reports, mounted by hand with no fstab line"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-lv-fstab-and-grow"
+      description: "Confirms the fstab line, the grown volume and filesystem, and that mount -a brings the volume back"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

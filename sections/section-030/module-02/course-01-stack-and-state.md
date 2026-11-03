@@ -1,12 +1,10 @@
-# Part 1 — The LVM Stack, Recapped & Reading State
-
-> Prerequisite: [Module landing page](./course.md). Next: [Part 2 — Live Migration: pvmove](./course-02-pvmove-migration.md).
+# The LVM Stack, Recapped & Reading State
 
 Every operation later in this module — moving data off a dying disk, retiring it, growing a volume live — is a rearrangement of one underlying structure: a list of extents. This part pins down exactly what that structure is and how to read it with `pvs`/`vgs`/`lvs`, because every command after this one only makes sense in terms of it.
 
 ## The extent is the unit of everything
 
-The previous module built the three-layer stack:
+The LVM stack has three layers:
 
 ```text
   Logical volume    shared_documents  <- what you format and mount
@@ -23,9 +21,9 @@ The previous module built the three-layer stack:
 That list-of-pointers model is the single fact that explains everything downstream:
 
 - An LV's extents do not need to be contiguous, or even on the same PV. `shared_documents`'s 100 extents could be 60 on one disk and 40 on another, and the filesystem on top would never know — device-mapper stitches the list into one linear address space.
-- **Relocating** an extent means changing one entry in that list and copying the data it points to — not moving a filesystem, not touching mount state. That is the entire mechanism behind `pvmove`, covered in Part 2.
-- **Adding capacity to an LV** means appending more entries to its list, drawn from whichever PVs currently have free extents. That is `lvextend`, covered in Part 3.
-- **Removing a PV from a VG** is only safe once zero of its extents appear in *any* LV's list — otherwise removing it would leave dangling pointers. That is the rule `vgreduce` enforces, also in Part 3.
+- **Relocating** an extent means changing one entry in that list and copying the data it points to — not moving a filesystem, not touching mount state. That is the entire mechanism behind `pvmove`.
+- **Adding capacity to an LV** means appending more entries to its list, drawn from whichever PVs currently have free extents. That is `lvextend`.
+- **Removing a PV from a VG** is only safe once zero of its extents appear in *any* LV's list — otherwise removing it would leave dangling pointers. That is the rule `vgreduce` enforces.
 
 ## Reading the command names
 
@@ -54,11 +52,13 @@ Two patterns cover almost everything in this module:
 - **`vgs`** — one line per VG: PV count, LV count, total size, free size.
 - **`lvs`** — one line per LV: name, VG, size. `-o +devices` appends *where its extents currently are* — reading the extent-assignment list directly. This is the single most important column to check before a `pvmove`, and the one that proves a migration finished.
 
-### Hands-on: survey the stack
+### See it in your playground
 
 On `astro-section-030-module-02-playground` (`astrona ssh` in). Disk letters and exact free-space figures will vary on your VM — that's expected, LVM assigns them at boot.
 
 **1. Read the kernel disk names the bootstrap script recorded, so you don't have to guess `vdX` order:**
+<!-- astrona:playground:renew -->
+
 ```sh
 cat /etc/playground-disks
 ```
@@ -67,9 +67,9 @@ source_disk=/dev/vdc   # holds all of shared_documents's extents (the 'failing' 
 second_disk=/dev/vdd   # also in company_storage
 spare_disk=/dev/vde    # raw, not yet a PV
 ```
-These three lines are just plain shell variable assignments, written by the playground's setup script — not LVM output. `source_disk` and `second_disk` are the two PVs already pooled into the VG; `spare_disk` is a third disk left untouched for Part 2.
+These three lines are just plain shell variable assignments, written by the playground's setup script — not LVM output. `source_disk` and `second_disk` are the two PVs already pooled into the VG; `spare_disk` is a third disk left untouched for the migration that follows.
 
-**`/etc/playground-disks` is this one playground's convenience shortcut — it will not exist on a real server, a different VM, or any of this module's graded labs.** Don't rely on it existing anywhere but here. The general way to find the same information anywhere else is the method Module 1 already taught:
+**`/etc/playground-disks` is this one playground's convenience shortcut — it will not exist on a real server, a different VM, or any of this module's graded labs.** Don't rely on it existing anywhere but here. The general way to find the same information anywhere else is to list the disks with their serial numbers:
 ```sh
 lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,SERIAL
 ```
@@ -94,7 +94,7 @@ sudo vgs
   VG               #PV #LV #SN Attr   VSize VFree
   company_storage   2   1   0 wz--n- 1.99g 1.60g
 ```
-`#PV 2` matches the two rows from step 2. `#LV 1` — one logical volume has been carved out already (this playground starts pre-built, unlike Module 1's from-scratch walkthrough). `#SN 0` means no snapshots exist.
+`#PV 2` matches the two rows from step 2. `#LV 1` — one logical volume has been carved out already (this playground starts pre-built, unlike a from-scratch build). `#SN 0` means no snapshots exist.
 
 **4. List logical volumes with their extent locations:**
 ```sh
@@ -114,11 +114,13 @@ df -h /mnt/shared_documents
   Filesystem                                    Size  Used Avail Use% Mounted on
   /dev/mapper/company_storage-shared_documents  359M   36K  331M   1% /mnt/shared_documents
 ```
-An ordinary mounted ext4 filesystem, exactly like Module 1 ended with — this confirms the pre-built stack is live and usable before Part 2 starts moving its extents around.
+An ordinary mounted ext4 filesystem, an ordinary freshly built stack — this confirms the pre-built stack is live and usable before any extents are moved.
 
 > *The LV is not where its data lives — it's a list of where each of its extents lives, and every command in this module edits that list.*
 
-## Reference
+## Common pitfalls
 
-- `man lvs` — the full column reference for `-o`; `devices` is the one worth memorizing.
-- `man lvm` — the top-level man page describing the PV/VG/LV/PE terminology this whole module builds on.
+> [!WARNING]
+> - **Trusting a `vdX` letter.** The letters can shift between boots. Match disks by serial (`lsblk -o NAME,SIZE,SERIAL`) or by `/dev/disk/by-id/`.
+> - **Reading `lvs` without `-o +devices`.** The default columns hide which disks hold the extents, and that is the one fact you need before a move.
+> - **Relying on `/etc/playground-disks` outside this playground.** It exists only here. Real servers and the graded missions have no such file.

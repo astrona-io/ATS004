@@ -1,135 +1,200 @@
-# Part 2 — Writing Native .mount and .automount Units
+# Writing Native .mount and .automount Units
 
-> Prerequisite: [Part 1 — How /etc/fstab Becomes systemd Units](./course-01-fstab-generated-units-and-naming.md). Next: [Part 3 — The fstab Shortcut and Common Pitfalls](./course-03-fstab-shortcut-and-pitfalls.md).
-
-Part 1 showed that a hand-written unit in `/etc/systemd/system/` always wins over whatever the fstab generator would produce for the same path. This part writes one of those units for real — first a plain `.mount`, then an `.automount` paired with it — and along the way settles what `enable` and `daemon-reload` actually do, since both commands are easy to run without understanding what changed.
+Astronaut, now you write duty orders by hand. A hand-written unit in `/etc/systemd/system/` always wins over anything the fstab generator writes for the same path. On this page you write a plain `.mount` unit, then pair it with an `.automount` unit that docks the hold only when someone knocks on the hatch. On the way, you learn exactly what `daemon-reload`, `enable` and `start` each change.
 
 ## Anatomy of a `.mount` unit
 
-A `.mount` unit lives in `/etc/systemd/system/`, named per Part 1's rule. Its `[Mount]` section carries the same information as an fstab line: `What=` (the device — `UUID=` works), `Where=` (the mount point, matching the filename), `Type=`, and `Options=`.
+A `.mount` unit carries the same facts as a line in `/etc/fstab`, written as named settings. This section shows a real unit first, then what each setting means.
 
-> [!TIP]
-> **Try it — mount via a unit**
->
-> ```sh
-> UUID=$(sudo blkid -s UUID -o value /dev/vdb)
-> sudo mkdir -p /srv/data
-> sudo tee /etc/systemd/system/srv-data.mount >/dev/null <<EOF
-> [Unit]
-> Description=Data filesystem at /srv/data
->
-> [Mount]
-> What=UUID=$UUID
-> Where=/srv/data
-> Type=ext4
-> Options=defaults,nofail
->
-> [Install]
-> WantedBy=multi-user.target
-> EOF
-> sudo systemctl daemon-reload
-> sudo systemctl start srv-data.mount
-> findmnt /srv/data
-> ```
->
-> Expect something like:
->
-> ```text
-> TARGET     SOURCE    FSTYPE OPTIONS
-> /srv/data  /dev/vdb  ext4   rw,relatime,nofail
-> ```
->
-> `findmnt` (*find mount*) confirms it. `sudo systemctl enable srv-data.mount` would make it mount at boot too — the next section explains exactly what `enable` does to make that true.
+### Write and start a mount unit
 
-## What `daemon-reload`, `enable`, and `start` each actually touch
+The spare disk in your playground already has an ext4 filesystem with the label `DATA`. It is usually `/dev/vdb`; confirm the name with `lsblk` first. Print its UUID, the hold's serial number, and create the mount point:
 
-These three get run together often enough that it is easy to lose track of which one does what. Each touches a different layer:
+<!-- astrona:playground:renew -->
 
-```text
-edit unit file on disk
-        |
-        v
-daemon-reload   -- re-reads ALL unit files from disk (and re-runs generators).
-        |          Does not start, stop, enable, or disable anything.
-        v
-enable          -- reads the unit's [Install] section and creates a symlink:
-        |          WantedBy=multi-user.target means the symlink goes into
-        |          /etc/systemd/system/multi-user.target.wants/. That symlink
-        |          is the *entire* effect of enable — it wires this unit into
-        |          the boot dependency graph so it starts next boot.
-        |          A unit with no [Install] section has nothing for enable to do.
-        v
-start           -- actually runs the unit right now (mounts the filesystem).
-                    Independent of enable: start without enable runs it once,
-                    this boot only; enable without start sets it up for next
-                    boot but does nothing this session (hence --now to do both).
+```sh
+sudo blkid -s UUID -o value /dev/vdb
+sudo mkdir -p /srv/data
 ```
 
-If you edit a unit file and only run `systemctl restart`, nothing changes — `restart` re-runs the unit using the copy systemd already has loaded in memory, not the file on disk. `daemon-reload` is what makes systemd re-read the file; only after that does a `restart` (or `start`) pick up the edit.
+Save this as `/etc/systemd/system/srv-data.mount`. Replace `<UUID>` with the value `blkid` printed. Files under `/etc` are saved with `sudo`, for example `sudo nano /etc/systemd/system/srv-data.mount`:
 
-Ordering between units works the same layered way: `After=`/`Before=` control *sequence* only — they say nothing about whether the other unit runs at all. `Requires=` pulls the other unit in and fails this one if it fails. For mounts specifically, systemd usually does this for you: any unit that references a path under an fstab-listed mount gets an automatic `RequiresMountsFor=` dependency, so you rarely need to write `After=srv-data.mount` by hand unless you are ordering against something unusual.
+```ini
+[Unit]
+Description=Data filesystem at /srv/data
+
+[Mount]
+What=UUID=<UUID>
+Where=/srv/data
+Type=ext4
+Options=defaults,nofail
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Apply it:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl start srv-data.mount
+```
+
+Then check the result:
+
+```sh
+findmnt /srv/data
+```
+
+Expect something like:
+
+```text
+TARGET     SOURCE    FSTYPE OPTIONS
+/srv/data  /dev/vdb  ext4   rw,relatime,nofail
+```
+
+`findmnt` (find mount) reads the kernel's table of mounts and confirms that the hold is docked. Your `OPTIONS` column may show only `rw,relatime`. `nofail` is read by systemd and `mount`, not by the kernel, so it does not always appear there.
+
+### What each setting means
+
+The `[Mount]` section holds four settings. Each one matches a field in an `/etc/fstab` line:
+
+```text
+ What=      the device to mount. UUID= works, and survives device names moving.
+ Where=     the mount point. It must match the unit's filename.
+ Type=      the filesystem type, here ext4.
+ Options=   mount options, the same ones fstab uses.
+```
+
+The `[Install]` section is not used when you `start` the unit. It only matters when you `enable` it, as the next section shows. `nofail` means that a missing disk does not fail the boot: systemd notes the problem and carries on.
+
+## What `daemon-reload`, `enable` and `start` each change
+
+People often run these three commands together and lose track of which one does what. Each one touches a different layer, and only one of them actually mounts anything.
+
+### Three commands, three layers
+
+| Command | What it changes | What it does not do |
+| --- | --- | --- |
+| `sudo systemctl daemon-reload` | systemd reads every unit file from disk again, and runs the generators again | It does not start, stop, enable or disable anything |
+| `sudo systemctl enable <unit>` | systemd reads the unit's `[Install]` section and creates a link. `WantedBy=multi-user.target` puts the link in `/etc/systemd/system/multi-user.target.wants/`, so the unit starts at the next boot | It does not start the unit now. A unit with no `[Install]` section gives `enable` nothing to do |
+| `sudo systemctl start <unit>` | systemd runs the unit right now, so the kernel mounts the filesystem | It does not survive a reboot. Without `enable`, the unit runs this boot only |
+
+`enable --now` does both: it creates the boot link and starts the unit at once.
+
+If you edit a unit file and only run `systemctl restart`, nothing changes. `restart` reuses the copy systemd already holds in memory, not the file on disk. Run `daemon-reload` first so systemd reads the file again; only then does `restart` or `start` use your edit.
+
+### Ordering between units
+
+Ordering works in the same layered way. `After=` and `Before=` only set the **order**: they say nothing about whether the other unit runs at all. `Requires=` pulls the other unit in, and fails this unit if the other one fails.
+
+For mounts, systemd often adds this for you. A mount inside another mount, or a service whose working directory sits on a mount, gets an automatic `RequiresMountsFor=` dependency. So you rarely need to write `After=srv-data.mount` by hand.
 
 ## Adding an `.automount`
 
-An `.automount` unit does not mount anything itself. It watches the mount point; the first access triggers the paired `.mount` unit. Both units share the base name — `srv-data.automount` pairs with `srv-data.mount`. `TimeoutIdleSec=` unmounts again after a period with no activity. You enable the **`.automount`**, not the `.mount` — enabling the `.mount` directly would mount it unconditionally at boot, defeating the point.
+An **`.automount` unit** is a duty order to dock a hold the moment someone knocks on the hatch. It does not mount anything itself. It watches the mount point, and the first access starts the paired `.mount` unit.
+
+### How the pair works
+
+Both units share the same base name: `srv-data.automount` pairs with `srv-data.mount`. `TimeoutIdleSec=` undocks the hold again after a period with no activity.
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Idle: systemctl enable --now *.automount
-    Idle --> Mounting: first access (ls, cd, open...)
-    Mounting --> Mounted: paired .mount unit starts
-    Mounted --> Idle: TimeoutIdleSec elapses, auto-unmount
-    Idle --> [*]: systemctl disable --now *.automount
-
-    note right of Idle
-        findmnt shows fstype "autofs" --
-        a placeholder, not the real filesystem
-    end note
-
-    note right of Mounted
-        findmnt shows the real fstype (ext4, xfs, ...)
-        systemctl is-active *.mount --> active
-    end note
+flowchart TB
+    O["Nothing docked"] -->|"enable --now srv-data.automount"| W["Waiting: autofs trigger"]
+    W -->|"first access: ls or cd"| M["srv-data.mount starts"]
+    M -->|"kernel mounts ext4"| D["Mounted: ext4"]
+    D -->|"TimeoutIdleSec passes"| W
+    W -->|"disable --now srv-data.automount"| O
 ```
 
-> [!TIP]
-> **Try it — mount on first access**
->
-> ```sh
-> sudo systemctl stop srv-data.mount
-> sudo tee /etc/systemd/system/srv-data.automount >/dev/null <<EOF
-> [Unit]
-> Description=Automount for /srv/data
->
-> [Automount]
-> Where=/srv/data
-> TimeoutIdleSec=30
->
-> [Install]
-> WantedBy=multi-user.target
-> EOF
-> sudo systemctl daemon-reload
-> sudo systemctl enable --now srv-data.automount
-> findmnt /srv/data
-> ls /srv/data
-> systemctl is-active srv-data.mount
-> ```
->
-> Expect something like:
->
-> ```text
-> /srv/data  systemd-1  autofs  rw,relatime,...   <- before access: an autofs trigger
-> (ls output)
-> active                                          <- after access: really mounted
-> ```
->
-> Before the `ls`, `findmnt` shows `/srv/data` as an `autofs` trigger point owned by systemd — the `.automount` unit's `enable --now`, not the `.mount`, is what put it there. The `ls` triggers `srv-data.mount`; after ~30 seconds idle it unmounts again. This is systemd's built-in equivalent of autofs (Section 050) — no map files, but no wildcards either.
+The diagram shows the cycle. While the unit waits, `findmnt` shows the type `autofs`, a placeholder and not the real filesystem. After the first access, `findmnt` shows the real type, such as ext4, and `systemctl is-active srv-data.mount` prints `active`.
 
-> *`enable` doesn't start a unit — it wires the `[Install]` section into the boot graph; only `start` (or an automount trigger) actually runs it.*
+You enable the **`.automount`**, not the `.mount`. Enabling the `.mount` would dock the hold at every boot whether anyone needs it or not, which defeats the point.
 
-## Reference
+### Mount on first access
 
-- `man systemd.mount` — the full `[Mount]` section directive list.
-- `man systemd.automount` — `[Automount]` directives including `TimeoutIdleSec=`.
-- `man systemd.unit` — `[Install]`, `WantedBy=`, and the `After=`/`Requires=` dependency directives.
-- `man systemctl` — exact semantics of `daemon-reload`, `enable`, `start`, and `--now`.
+Stop the plain mount first, so the automount can take over the hatch:
+
+```sh
+sudo systemctl stop srv-data.mount
+```
+
+Save this as `/etc/systemd/system/srv-data.automount`:
+
+```ini
+[Unit]
+Description=Automount for /srv/data
+
+[Automount]
+Where=/srv/data
+TimeoutIdleSec=30
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Apply it:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now srv-data.automount
+```
+
+Then check the result. Look at the hatch, knock on it with `ls`, and ask whether the mount unit is now running:
+
+```sh
+findmnt /srv/data
+ls /srv/data
+systemctl is-active srv-data.mount
+```
+
+Expect something like:
+
+```text
+/srv/data  systemd-1  autofs  rw,relatime,...   <- before access: an autofs trigger
+(ls output)
+active                                          <- after access: really mounted
+```
+
+Before the `ls`, `findmnt` shows `/srv/data` as an `autofs` trigger owned by systemd. The `.automount` unit's `enable --now` put it there, not the `.mount`. The `ls` makes systemd start `srv-data.mount`, and the kernel mounts the ext4 filesystem. After about 30 seconds with nobody using it, systemd unmounts it again.
+
+This is systemd's built-in version of autofs, the docking robot that follows a map of holds and hatches. It has no map files, but it has no wildcards either.
+
+> *`enable` does not start a unit. It wires the `[Install]` section into the boot order; only `start`, or an automount trigger, actually runs it.*
+
+## Common pitfalls
+
+> [!WARNING]
+> - **Editing a unit and not reloading.** systemd only reads unit files again on `daemon-reload`. A plain `restart` reuses what is already in memory. Run `sudo systemctl daemon-reload` after every new or changed unit, and after every change to `/etc/fstab`.
+> - **Enabling the `.mount` instead of the `.automount`.** For on-demand mounting, enable and start the `.automount`, and leave the `.mount` to be started by the trigger. Enabling the `.mount` mounts it at every boot instead.
+> - **Leaving `nofail` off a `.mount` unit.** This is the same rule as in fstab. A required device that is missing fails the unit, and any unit that requires it fails too.
+
+## Your mission: systemd .mount and .automount Units
+
+You can now write a native `.mount` unit, pair it with an `.automount` unit and trigger it by accessing the path. The mission asks you to format a raw disk and make it appear at `/srv/appdata` on demand, using only hand-written units.
+
+The mission runs on its own training ship. A playground cannot be paused, so remove it first to free memory; it always starts clean again:
+
+```sh
+astrona destroy section-010-module-06-playground
+```
+
+Then start the mission and connect to it:
+
+```sh
+astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-010/module-06/labs/lab-01
+astrona ssh ats-004-lab-016
+```
+
+Read the task in [`question.md`](./labs/lab-01/question.md) and solve it on your own first. When you think you are done, send it for grading:
+
+```sh
+astrona submit -c sections/section-010/module-06/labs/lab-01
+```
+
+When the mission is done, remove it and start a fresh playground:
+
+```sh
+astrona destroy ats-004-lab-016
+astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-010/module-06/playground
+```

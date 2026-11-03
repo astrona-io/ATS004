@@ -1,0 +1,56 @@
+# Network Block Devices: NBD and iSCSI (PLAYGROUND) - Playground environment
+# Two VMs on a private subnet:
+#   server (10.10.60.10) - iSCSI target (tgt) with one disk, NBD server with
+#                          one export named "cargo"
+#   client (10.10.60.5)  - nbd-client and open-iscsi installed, /mnt/cargo
+# No task, no grading, no `astrona submit`.
+# Schema: internal/config.LabConfig.
+
+metadata:
+  name: "section-020-module-03-playground"
+  docs:
+    guide: "docs/overview.md"
+
+runtime:
+  type: "qemu"
+  networks:
+    - name: "pg-net"
+      cidr: "10.10.60.0/24"
+  qemu:
+    - name: "server"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      networks:
+        - name: "pg-net"
+          ipv4: "10.10.60.10"
+      bootstrap:
+        init:
+          - name: "server-prepare"
+            description: "Install tgt and nbd-server, create the backing files, publish one iSCSI target and one NBD export."
+            type: "folder"
+            source: "bootstrap/server/"
+    - name: "client"
+      image:
+        type: "oci"
+        source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+      cpus: 2
+      memoryMB: 2048
+      diskSizeGB: 15
+      display: false
+      networks:
+        - name: "pg-net"
+          ipv4: "10.10.60.5"
+      bootstrap:
+        init:
+          - name: "client-prepare"
+            description: "Install nbd-client and open-iscsi, create /mnt/cargo, add server to /etc/hosts."
+            type: "folder"
+            source: "bootstrap/client/"
+
+teardown:
+  keepCluster: false

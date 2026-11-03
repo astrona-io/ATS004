@@ -2,7 +2,7 @@
 
 Solve this question on: `terminal`
 
-A raw secondary disk (`/dev/disk/by-id/virtio-lab015-data1`) is attached but has no filesystem and is not mounted.
+Astronaut, a new cargo hold has been fitted to your ship for application data. A raw secondary disk (`/dev/disk/by-id/virtio-lab015-data1`) is attached, but it has no filesystem and is not mounted. Mission control wants it docked at every launch, and the logbook must stay safe to boot from.
 
 1. Format the disk `ext4` with the volume label `APPDATA`.
 2. Create the mount point `/mnt/appdata`.

@@ -25,6 +25,9 @@ This section is divided into two modules, both paired with hands-on practice ins
 *   **Module Reader:** **[Module 1: Temporary Safety Valves: Swap Files](./module-01/course.md)**
     1. [What Swap Is & Checking What You Have](./module-01/course-01-what-swap-is-and-checking-it.md)
     2. [Allocating, Activating & Deactivating a Swap File](./module-01/course-02-allocating-activating-deactivating.md)
+    3. [Making a Swap File Survive a Reboot](./module-01/course-03-persisting-a-swap-file.md)
+    4. [Tuning Swap Behaviour with swappiness](./module-01/course-04-swappiness-tuning.md)
+    5. [Wrap-Up: Mission Debrief](./module-01/course-05-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-040/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -35,7 +38,10 @@ This section is divided into two modules, both paired with hands-on practice ins
 ### 2. Permanent Swap Partitions & Priority Scheduling
 *   **Module Reader:** **[Module 2: Permanent Swap Partitions & Priority Scheduling](./module-02/course.md)**
     1. [Partition vs File & Creating the Partition](./module-02/course-01-partition-vs-file-and-creating-it.md)
-    2. [Formatting, Priorities & Persistence](./module-02/course-02-formatting-priorities-persistence.md)
+    2. [Formatting, Activating & Priorities](./module-02/course-02-formatting-activating-and-priorities.md)
+    3. [Making Swap Persistent in /etc/fstab](./module-02/course-03-persistence-in-fstab.md)
+    4. [Labels, the Swap Table & Fixing a Swap That Will Not Start](./module-02/course-04-labels-swap-table-and-troubleshooting.md)
+    5. [Wrap-Up: Mission Debrief](./module-02/course-05-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-040/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -49,4 +55,4 @@ This section is divided into two modules, both paired with hands-on practice ins
 
 Test your theoretical knowledge and diagnostic reasoning before tackling the swap lab mission:
 
-*   **[Take the Section 040 Knowledge Check Quiz](./quiz.md)**
+*   **[Take the Section 040 Knowledge Check Quiz](./quiz.yaml)**

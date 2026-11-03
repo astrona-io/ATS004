@@ -9,27 +9,40 @@
 > astrona destroy section-040-module-01-playground
 > ```
 
-When a Linux machine runs out of physical RAM and has no swap, the kernel's Out-Of-Memory (OOM) killer picks a process and terminates it to free memory. It aims at large, low-priority processes, but the one it lands on is often something you care about. Swap space gives the kernel somewhere to park idle memory pages instead, so a memory spike slows the system down rather than killing a service.
+Astronaut, a ship's working memory (RAM) is its flight deck: fast, but small. When the deck is full and nothing can be moved out, the kernel's emergency crew, the Out-Of-Memory (OOM) killer, picks a process and ends it. Swap is a spare cargo hold where the kernel parks idle memory pages instead. A spike then slows the ship down. It no longer costs you a crew member.
 
-This module covers the quickest way to add swap to a running system: a swap file. You will allocate it, lock down its permissions, format it for swap, activate it, and turn it off again.
-
-## How this module is organised
-
-1. **[Part 1 — What Swap Is & Checking What You Have](./course-01-what-swap-is-and-checking-it.md)** — the kernel's page-reclaim mechanism (`kswapd`, active/inactive lists, `vm.swappiness`) that explains *when* swap gets used, and reading the current picture with `free` / `swapon --show`.
-2. **[Part 2 — Allocating, Activating & Deactivating a Swap File](./course-02-allocating-activating-deactivating.md)** — the full lifecycle: `fallocate`, `chmod 600`, what `mkswap`'s header actually contains, `swapon`, and `swapoff`.
+In this module you add swap to a running ship with a swap file. You allocate it, lock it down, format it, switch it on and off, make it return after a reboot, and tune how eagerly the kernel uses it.
 
 ## Learning objectives
 
 After this module you can:
 
-- Explain what swap space does, and describe the kernel's page-reclaim mechanism (`kswapd`, active/inactive lists) that decides when it gets used.
+- Explain what swap does and describe the kernel's page-reclaim mechanism (`kswapd`, active and inactive lists) that decides when it is used.
 - Allocate a swap file with `fallocate` and explain why `chmod 600` on it matters.
-- Format a file for swap with `mkswap` and state what its header actually contains.
-- Activate it with `swapon` and read active swap areas from `swapon --show` and `free`.
-- Deactivate a swap file with `swapoff` and describe when that command fails.
+- Format a file for swap with `mkswap` and state what its header contains.
+- Activate it with `swapon`, read the result from `swapon --show` and `free`, and deactivate it with `swapoff`.
+- Make a swap file persistent with an `/etc/fstab` line and prove it with `swapoff -a` and `swapon -a`.
+- Read and change `vm.swappiness`, and keep the value across a reboot with a file in `/etc/sysctl.d/`.
 
 ## Before you start
 
-You should know basic file commands (`ls`, `chmod`, `rm`), `sudo`, and how to read sizes in command output.
+Every mission starts with a pre-flight check. Know the basics below, and know what waits for you in your training ship.
 
-The linked playground gives you an Ubuntu server VM with 2 GB RAM, an ext4 root filesystem with room to spare, passwordless `sudo`, and the swap tools installed. `bootstrap/prepare.sh` prints the starting memory and swap picture. Run the command blocks in both parts in that VM after connecting with `astrona ssh section-040-module-01-playground`.
+### What you should already know
+
+- Basic file commands (`ls`, `chmod`, `rm`) and `sudo`.
+- How to read sizes in command output.
+
+### What is in your playground
+
+Your playground is one training spaceship: an Ubuntu 24.04 virtual machine with 2 GB of memory, an ext4 root filesystem with room to spare and passwordless `sudo`. The swap tools are installed, and no swap is active at the start. The bootstrap script prints the starting memory and swap picture and removes any old `/swapfile`.
+
+Start the playground and connect to it with `astrona ssh section-040-module-01-playground`. Run every command in the parts in that shell.
+
+## The parts of this module
+
+1. [What Swap Is and Checking What You Have](./course-01-what-swap-is-and-checking-it.md): why the kernel swaps and how to read the current picture.
+2. [Allocating, Activating and Deactivating a Swap File](./course-02-allocating-activating-deactivating.md): the full life of a swap file, from `fallocate` to `swapoff`.
+3. [Making a Swap File Survive a Reboot](./course-03-persisting-a-swap-file.md): the `/etc/fstab` line, the safe check, and your first graded mission.
+4. [Tuning Swap Behaviour with swappiness](./course-04-swappiness-tuning.md): read the dial, turn it, and keep it across reboots.
+5. [Wrap-Up: Mission Debrief](./course-05-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.

@@ -11,10 +11,13 @@
 
 The Filesystem Hierarchy Standard (FHS) is why `/etc` holds configuration, `/var` holds changing data, and programs live under `/usr/bin` on every Linux system. Modern distributions also lean heavily on **symbolic links** to keep that layout stable while the real files move around underneath — most visibly, `/bin`, `/sbin`, and `/lib` are now links into `/usr`.
 
-## How this module is organised
+## The parts of this module
 
-1. **[Part 1 — What a Symlink Is & Finding Them](./course-01-what-a-symlink-is-and-finding-them.md)** — the path-substitution mechanism every symlink command in this module comes back to, and locating links with `find -type l`.
-2. **[Part 2 — Resolving, du's Blind Spot & Removing Safely](./course-02-resolving-du-and-removing-safely.md)** — following a chain to its absolute target, why `du` treats a symlink as weightless, and the trailing-slash `rm` mistake that destroys a link's target.
+1. [What a Symlink Is & Finding Them](./course-01-what-a-symlink-is-and-finding-them.md): the path swap the kernel performs, and finding links with `find -type l`.
+2. [Creating Links, Hard Links & Dangling Links](./course-02-creating-links-hard-links-and-dangling.md): `ln` and `ln -s`, inode numbers, and what survives a delete.
+3. [Resolving, du's Blind Spot & Removing Safely](./course-03-resolving-du-and-removing-safely.md): following a chain, why `du` sees a link as weightless, and removing links without harm.
+4. [The Filesystem Hierarchy](./course-04-the-filesystem-hierarchy.md): what each standard directory holds, and the usrmerge on Ubuntu 24.04. A graded mission ends this part.
+5. [Wrap-Up: Mission Debrief](./course-05-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
 
 ## Learning objectives
 
@@ -23,10 +26,12 @@ After this module you can:
 - Explain the path-substitution mechanism the kernel performs when it follows a symlink, and locate symlinks in a directory with `find -type l`.
 - Resolve a symlink's target with `ls -ld`, `readlink`, `readlink -f`, and `realpath`.
 - Explain why `du` reports a symlink as ~0 bytes, in terms of that same substitution mechanism.
-- Remove a symlink without touching its target, and explain exactly what a trailing slash changes about path resolution.
+- Create hard links and symlinks, and say what survives when the original name is deleted.
+- Remove a symlink without touching its target, and explain what a trailing slash or a glob changes about path resolution.
+- Name what the standard directories (`/etc`, `/var`, `/usr`, `/opt`, `/srv`, `/home`, `/tmp`, `/run`, `/boot`) hold.
 
 ## Before you start
 
-You should know basic navigation (`ls`, `cd`), and `du` from the previous module helps but is not required.
+You should know basic navigation (`ls`, `cd`).
 
-The linked playground gives you an Ubuntu server VM with the distro's usrmerge symlinks in place (`/bin`, `/sbin`, `/lib` → `/usr/...`), a sample `/srv/www/active → /srv/releases/v2` to inspect, and a **disposable** `/tmp/rmdemo` (a real directory `real/` plus `link → real`) with a `reset-symlink-demo` command to rebuild it. Run the command blocks in Parts 1–2 in that VM after `astrona ssh section-080-module-04-playground`.
+Your playground is one training spaceship: an Ubuntu 24.04 virtual machine with passwordless `sudo`. It has the distro's usrmerge symlinks in place (`/bin`, `/sbin`, `/lib` → `/usr/...`), a sample `/srv/www/active → /srv/releases/v2` to inspect, and a **disposable** `/tmp/rmdemo` (a real directory `real/` plus `link → real`) with a `reset-symlink-demo` command to rebuild it. Start the playground and connect to it with `astrona ssh section-080-module-04-playground`. Run every command in the parts in that shell.

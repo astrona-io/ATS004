@@ -15,8 +15,10 @@ This module covers how SSHFS works (the FUSE mechanism underneath it), why it is
 
 ## How this module is organised
 
-1. **[Part 1 — SSHFS and the FUSE Mechanism](./course-01-sshfs-and-fuse.md)** — what SSHFS is for, and the `/dev/fuse` request/reply relay that lets an unprivileged process serve a filesystem.
-2. **[Part 2 — Performance, Sharing & Unmounting](./course-02-performance-sharing-and-unmounting.md)** — why the FUSE relay makes many-small-file workloads slow, the two independent checks (`allow_other`, `default_permissions`) controlling who can read the mount, and how to unmount it.
+1. **[SSHFS and the FUSE Mechanism](./course-01-sshfs-and-fuse.md)** — what SSHFS is for, and the `/dev/fuse` request/reply relay that lets an unprivileged process serve a filesystem.
+2. **[Performance, Sharing & Unmounting](./course-02-performance-sharing-and-unmounting.md)** — why the FUSE relay makes many-small-file workloads slow, the two independent checks (`allow_other`, `default_permissions`) controlling who can read the mount, and how to unmount it. A graded mission ends this part.
+3. **[Keeping an SSHFS Mount Alive](./course-03-reconnecting-and-persistent-sshfs.md)** — surviving a dropped link with `reconnect` and keep-alives, and an `/etc/fstab` line for a mount at boot.
+4. **[Wrap-Up: Mission Debrief](./course-04-wrap-up.md)** — a recap, a self-check, and how to land the playground.
 
 ## Learning objectives
 
@@ -28,9 +30,10 @@ After this module you can:
 - Explain why an SSHFS mount is private to the mounting user by default, and open it up with `-o allow_other`.
 - Describe what `-o default_permissions` changes about where file permissions are enforced, and why it is a separate setting from `allow_other`.
 - Unmount an SSHFS filesystem with `umount` or `fusermount -u`.
+- Keep an SSHFS mount alive across a dropped connection with `reconnect` and `ServerAliveInterval`, and write an `/etc/fstab` line for it with `_netdev`.
 
 ## Before you start
 
 You should know how to mount and unmount a local filesystem and be comfortable with `sudo` and basic SSH.
 
-The linked playground gives you two VMs on a private network: `client` (where you run every command below, reached with `astrona ssh astro-section-020-module-01-playground` — choose `client` when prompted) and `srv` (a plain SSH host exposing `/srv/logs`). On `client`, `sshfs` and FUSE are installed, `/etc/fuse.conf` already has the `user_allow_other` opt-in, there is a spare local user `bob`, and your **login user on `client` has passwordless SSH to `srv`** (the playground wires this up), so `sshfs srv:...` works with no password and no `sudo`. `~` is your login user's home — for example `/home/ubuntu` — and the bootstrap already created `~/remote` there for you to use as the mount point. `/srv/logs` on `srv` holds `app.log` and `access.log` (world-readable) plus `secret.txt` (mode 600, readable on `srv` only by your login user). Run the command blocks in Parts 1–2 in that VM.
+The linked playground gives you two VMs on a private network: `client` (where you run every command below, reached with `astrona ssh astro-section-020-module-01-playground` — choose `client` when prompted) and `srv` (a plain SSH host exposing `/srv/logs`). On `client`, `sshfs` and FUSE are installed, `/etc/fuse.conf` already has the `user_allow_other` opt-in, there is a spare local user `bob`, and your **login user on `client` has passwordless SSH to `srv`** (the playground wires this up), so `sshfs srv:...` works with no password and no `sudo`. `~` is your login user's home — for example `/home/ubuntu` — and the bootstrap already created `~/remote` there for you to use as the mount point. `/srv/logs` on `srv` holds `app.log` and `access.log` (world-readable) plus `secret.txt` (mode 600, readable on `srv` only by your login user). Run the command blocks in that VM.

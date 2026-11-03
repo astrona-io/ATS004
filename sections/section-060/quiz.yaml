@@ -1,0 +1,300 @@
+# Knowledge check for section 060.
+schema_version: 1
+kind: question_bank
+id: ats004-060
+course_id: ATS004
+exam_code: LFCS
+status: draft
+provenance: Original practice material written for this course; not official exam questions.
+scope:
+  type: section
+  id: section-060
+  title: "Virtual Filesystems"
+questions:
+  - id: ats004-060-q01
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Explain why `/proc` files show size 0"
+    source_readings:
+      - sections/section-060/module-01/course-01-live-view-and-system-wide-files.md
+    prompt: |-
+      In `ls -l /proc` many files show size `0`, yet `cat` prints several lines. Why?
+    options:
+      - id: a
+        text: "The filesystem is mounted read-only."
+        explanation: "Mount options do not change the size field."
+      - id: b
+        text: "Your user lacks permission to see sizes."
+        explanation: "Root sees size 0 as well."
+      - id: c
+        text: "The files are damaged and need `fsck`."
+        explanation: "`/proc` has no disk blocks to repair."
+      - id: d
+        text: "The kernel builds the text each time you read the file. Nothing is stored on a disk."
+        explanation: "Correct. `/proc` is a virtual filesystem. A read runs kernel code that produces the current values, so there is no stored size."
+    correct_option: d
+    explanation: "`/proc` is a virtual filesystem. A read runs kernel code that produces the current values, so there is no stored size."
+
+  - id: ats004-060-q02
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Count the open files of a process"
+    source_readings:
+      - sections/section-060/module-01/course-02-per-process-and-file-descriptors.md
+    prompt: |-
+      A service logs `Too many open files`. Which command counts the file descriptors one process holds?
+    options:
+      - id: a
+        text: "`df -h | grep <PID>`"
+        explanation: "`df` shows disk space, not open files."
+      - id: b
+        text: "`cat /proc/meminfo`"
+        explanation: "This shows system memory totals."
+      - id: c
+        text: "`sysctl -a | grep files`"
+        explanation: "This shows limits, not the count one process uses."
+      - id: d
+        text: "`sudo ls /proc/<PID>/fd | wc -l`"
+        explanation: "Correct. Each process has a folder `/proc/<PID>/fd` with one link per open file, socket or pipe."
+    correct_option: d
+    explanation: "Each process has a folder `/proc/<PID>/fd` with one link per open file, socket or pipe."
+
+  - id: ats004-060-q03
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Make a sysctl value permanent"
+    source_readings:
+      - sections/section-060/module-02/course-04-sysctl-persisting-and-precedence.md
+    prompt: |-
+      You ran `echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward`. After a reboot it is `0` again. What makes it permanent?
+    options:
+      - id: a
+        text: "Run `tee` with a persist option."
+        explanation: "`tee` has no such option."
+      - id: b
+        text: "Move the file out of `/proc`."
+        explanation: "You cannot move kernel files."
+      - id: c
+        text: "A line `net.ipv4.ip_forward = 1` in a file under `/etc/sysctl.d/`, applied with `sudo sysctl --system`."
+        explanation: "Correct. Writes to `/proc/sys` change the running kernel only. The files in `/etc/sysctl.d/` are read at every boot."
+      - id: d
+        text: "List `/proc/sys/net/ipv4/ip_forward` in `/etc/fstab`."
+        explanation: "`/etc/fstab` is for filesystems and swap."
+    correct_option: c
+    explanation: "Writes to `/proc/sys` change the running kernel only. The files in `/etc/sysctl.d/` are read at every boot."
+
+  - id: ats004-060-q04
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Find the live mount table"
+    source_readings:
+      - sections/section-060/module-02/course-01-hardware-tree-and-mount-list.md
+    prompt: |-
+      `/proc/mounts` and `/etc/fstab` differ. Which one shows what is mounted now?
+    options:
+      - id: a
+        text: "`/proc/sys/fs/mounts`"
+        explanation: "No such file exists."
+      - id: b
+        text: "`/proc/mounts`"
+        explanation: "Correct. `/etc/fstab` is a list of wishes for boot. `/proc/mounts` is the kernel's own live table. `findmnt` reads it too."
+      - id: c
+        text: "`/etc/fstab`"
+        explanation: "It records intent, not the live state."
+      - id: d
+        text: "`/etc/exports`"
+        explanation: "This file is for NFS exports."
+    correct_option: b
+    explanation: "`/etc/fstab` is a list of wishes for boot. `/proc/mounts` is the kernel's own live table. `findmnt` reads it too."
+
+  - id: ats004-060-q05
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Read memory numbers correctly"
+    source_readings:
+      - sections/section-060/module-01/course-01-live-view-and-system-wide-files.md
+    prompt: |-
+      Which `/proc/meminfo` field estimates the memory new programs can use without swapping?
+    options:
+      - id: a
+        text: "`MemTotal`"
+        explanation: "This is all installed memory."
+      - id: b
+        text: "`Buffers`"
+        explanation: "This is one small cache."
+      - id: c
+        text: "`MemAvailable`"
+        explanation: "Correct. Free memory looks small because Linux uses spare memory as cache. `MemAvailable` adds the part the kernel can give back."
+      - id: d
+        text: "`MemFree`"
+        explanation: "This counts only fully unused memory."
+    correct_option: c
+    explanation: "Free memory looks small because Linux uses spare memory as cache. `MemAvailable` adds the part the kernel can give back."
+
+  - id: ats004-060-q06
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Read process limits"
+    source_readings:
+      - sections/section-060/module-01/course-03-limits-status-and-storage-counters.md
+    prompt: |-
+      Where do you read the maximum number of open files for a running process?
+    options:
+      - id: a
+        text: "`/proc/<PID>/maps`"
+        explanation: "This lists memory ranges."
+      - id: b
+        text: "`/proc/uptime`"
+        explanation: "This shows time since boot."
+      - id: c
+        text: "`/etc/fstab`"
+        explanation: "This has nothing to do with process limits."
+      - id: d
+        text: "`/proc/<PID>/limits`"
+        explanation: "Correct. The file lists each limit for that process, with soft and hard values. Compare it with the count in `/proc/<PID>/fd`."
+    correct_option: d
+    explanation: "The file lists each limit for that process, with soft and hard values. Compare it with the count in `/proc/<PID>/fd`."
+
+  - id: ats004-060-q07
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Read per-device counters"
+    source_readings:
+      - sections/section-060/module-01/course-03-limits-status-and-storage-counters.md
+    prompt: |-
+      Which file holds the raw counters for reads and writes of every block device, which tools such as `iostat` read?
+    options:
+      - id: a
+        text: "`/proc/diskstats`"
+        explanation: "Correct. The kernel updates one line per device. Tools turn the changes between two readings into rates."
+      - id: b
+        text: "`/proc/cpuinfo`"
+        explanation: "This describes processors."
+      - id: c
+        text: "`/proc/swaps`"
+        explanation: "This lists swap areas."
+      - id: d
+        text: "`/etc/mtab`"
+        explanation: "This lists mounts, not counters."
+    correct_option: a
+    explanation: "The kernel updates one line per device. Tools turn the changes between two readings into rates."
+
+  - id: ats004-060-q08
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Read and change the I/O scheduler"
+    source_readings:
+      - sections/section-060/module-02/course-02-block-queue-attributes-and-udev.md
+    prompt: |-
+      How do you see which I/O scheduler `vdb` uses?
+    options:
+      - id: a
+        text: "`blkid /dev/vdb`"
+        explanation: "`blkid` shows filesystem signatures."
+      - id: b
+        text: "`cat /sys/block/vdb/queue/scheduler`. The active one is in square brackets."
+        explanation: "Correct. The control panel in `/sys` shows each option and marks the active one. Writing a name to it changes the scheduler until reboot."
+      - id: c
+        text: "`cat /proc/scheduler`"
+        explanation: "No such file exists."
+      - id: d
+        text: "`sysctl block.vdb.scheduler`"
+        explanation: "This is not a sysctl key."
+    correct_option: b
+    explanation: "The control panel in `/sys` shows each option and marks the active one. Writing a name to it changes the scheduler until reboot."
+
+  - id: ats004-060-q09
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Tell a sysctl change that is live from one that is saved"
+    source_readings:
+      - sections/section-060/module-02/course-03-sysctl-viewing-and-changing.md
+    prompt: |-
+      What does `sudo sysctl -w vm.swappiness=10` do?
+    options:
+      - id: a
+        text: "It needs a reboot before it works."
+        explanation: "It works immediately."
+      - id: b
+        text: "It changes `/etc/fstab`."
+        explanation: "It does not touch that file."
+      - id: c
+        text: "It saves the value in `/etc/sysctl.conf`."
+        explanation: "The command does not edit files."
+      - id: d
+        text: "It changes the running kernel at once, and the value is lost at reboot."
+        explanation: "Correct. `sysctl -w` writes the live value only. A file in `/etc/sysctl.d/` saves it."
+    correct_option: d
+    explanation: "`sysctl -w` writes the live value only. A file in `/etc/sysctl.d/` saves it."
+
+  - id: ats004-060-q10
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Predict which sysctl file wins"
+    source_readings:
+      - sections/section-060/module-02/course-04-sysctl-persisting-and-precedence.md
+    prompt: |-
+      `/etc/sysctl.d/10-a.conf` sets `vm.swappiness = 10`, and `/etc/sysctl.d/99-b.conf` sets it to `30`. Both are read at boot. What is the result?
+    options:
+      - id: a
+        text: "The boot fails because of the clash."
+        explanation: "A repeat is allowed."
+      - id: b
+        text: "`30`, because files are read in name order and the later setting overrides the earlier one."
+        explanation: "Correct. The last value written for a key stays. A high number prefix such as `99-` means the file is read last."
+      - id: c
+        text: "`60`, the default."
+        explanation: "The default is used only when no file sets the key."
+      - id: d
+        text: "`10`, because the first file wins."
+        explanation: "The later value replaces the earlier one."
+    correct_option: b
+    explanation: "The last value written for a key stays. A high number prefix such as `99-` means the file is read last."
+
+  - id: ats004-060-q11
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Map a sysctl key to its `/proc/sys` path"
+    source_readings:
+      - sections/section-060/module-02/course-03-sysctl-viewing-and-changing.md
+    prompt: |-
+      Which file holds the value for the key `vm.swappiness`?
+    options:
+      - id: a
+        text: "`/proc/sys/vm/swappiness`"
+        explanation: "Correct. Dots in a key become slashes under `/proc/sys`."
+      - id: b
+        text: "`/proc/vm.swappiness`"
+        explanation: "Dots are not used in the path."
+      - id: c
+        text: "`/sys/vm/swappiness`"
+        explanation: "This is not under `/sys`."
+      - id: d
+        text: "`/etc/vm/swappiness`"
+        explanation: "No such folder exists."
+    correct_option: a
+    explanation: "Dots in a key become slashes under `/proc/sys`."
+
+  - id: ats004-060-q12
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Choose the right virtual filesystem"
+    source_readings:
+      - sections/section-060/module-02/course-02-block-queue-attributes-and-udev.md
+    prompt: |-
+      You need to see whether a block device spins (rotational). Where do you look?
+    options:
+      - id: a
+        text: "`/proc/mounts`"
+        explanation: "It lists mounts only."
+      - id: b
+        text: "`/sys/block/<device>/queue/rotational`, where `0` means it does not spin."
+        explanation: "Correct. `/sys` shows devices and their settings. `/proc` is mostly about processes and kernel state."
+      - id: c
+        text: "`/proc/rotational`"
+        explanation: "No such file exists."
+      - id: d
+        text: "`/etc/fstab`"
+        explanation: "It lists mounts, not device traits."
+    correct_option: b
+    explanation: "`/sys` shows devices and their settings. `/proc` is mostly about processes and kernel state."

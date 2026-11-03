@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-091"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 2
+        serial: "lab091-btrfs"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-091-setup"
+      description: "Waits for the blank disk and installs btrfs-progs if it is missing"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-btrfs-subvolume-snapshot"
+      description: "Confirms the Btrfs label, the persistent subvolume mount by UUID, and a read-only snapshot"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

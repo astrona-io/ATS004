@@ -8,21 +8,24 @@ In this section, we explore how to bridge filesystems over network wires. We foc
 
 ## What You Will Master
 
-By completing this section, you will acquire three core network storage capabilities:
+By completing this section, you will acquire four core network storage capabilities:
 *   **User-Space Mounts (SSHFS):** How to securely mount remote directories over SSH without requiring root privileges or complex firewall configurations.
 *   **Enterprise Share Exporting (NFS):** How to configure the NFS daemon, export directories securely to specific whitelisted networks, and balance sync states for data safety.
+*   **Network Block Devices (NBD and iSCSI):** How to connect to a disk served over the network, format it, and mount it so it comes back at boot.
 *   **Resilient Network Mounting:** How to connect remote exports to client nodes and configure mount parameters to prevent terminal hangs if the storage server goes offline.
 
 ---
 
 ## The Learning & Lab Path
 
-This section is divided into two modules, both paired with hands-on practice within the remote network laboratory environment:
+This section is divided into three modules, all paired with hands-on practice within the remote network laboratory environment:
 
 ### 1. Ad-Hoc Mounting with SSHFS
 *   **Module Reader:** **[Module 1: Ad-Hoc Mounting with SSHFS](./module-01/course.md)**
     1. [SSHFS and the FUSE Mechanism](./module-01/course-01-sshfs-and-fuse.md)
     2. [Performance, Sharing & Unmounting](./module-01/course-02-performance-sharing-and-unmounting.md)
+    3. [Keeping an SSHFS Mount Alive](./module-01/course-03-reconnecting-and-persistent-sshfs.md)
+    4. [Wrap-Up: Mission Debrief](./module-01/course-04-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-020/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -34,6 +37,9 @@ This section is divided into two modules, both paired with hands-on practice wit
 *   **Module Reader:** **[Module 2: Enterprise Sharing with NFS](./module-02/course.md)**
     1. [Client-Server Model & Exports](./module-02/course-01-client-server-and-exports.md)
     2. [Mounting, Read-Only & a Down Server](./module-02/course-02-mounting-readonly-and-server-down.md)
+    3. [Persistent NFS Mounts](./module-02/course-03-persistent-nfs-mounts.md)
+    4. [Troubleshooting NFS](./module-02/course-04-troubleshooting-nfs.md)
+    5. [Wrap-Up: Mission Debrief](./module-02/course-05-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-020/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -41,10 +47,27 @@ This section is divided into two modules, both paired with hands-on practice wit
     ```
 *   **Hands-on Objective:** Set up the NFS server on `terminal` to export `/nfs/share` as read-only to client networks. On the client `app-srv1`, mount the shared directory stably under `/nfs/terminal/share`.
 
+### 3. Network Block Devices: NBD and iSCSI
+*   **Module Reader:** **[Module 3: Network Block Devices: NBD and iSCSI](./module-03/course.md)**
+    1. [Block Devices Versus Shared Files, and NBD](./module-03/course-01-block-versus-file-sharing-and-nbd.md)
+    2. [The iSCSI Initiator: Discover, Log In and Mount](./module-03/course-02-iscsi-initiator-login-and-mount.md)
+    3. [Making the Disk Come Back After a Restart](./module-03/course-03-persistence-and-pitfalls.md)
+    4. [Wrap-Up: Mission Debrief](./module-03/course-04-wrap-up.md)
+*   **Hands-on Playground:** `sections/section-020/module-03/playground/`
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-020/module-03/playground
+    ```
+*   **Practice Lab Sandbox:** **`sections/section-020/module-03/labs/lab-01`**
+*   **Lab Run Command:**
+    ```bash
+    astrona run --git git@github.com:astrona-io/ATS004.git -c sections/section-020/module-03/labs/lab-01
+    ```
+*   **Hands-on Objective:** On the `client`, log in to an iSCSI target served by `server`, format the new disk with ext4 and mount it persistently with `_netdev`.
+
 ---
 
 ## Ready for Assessment?
 
 Test your theoretical knowledge and diagnostic reasoning before tackling the network lab mission:
 
-*   **[Take the Section 020 Knowledge Check Quiz](./quiz.md)**
+*   **[Take the Section 020 Knowledge Check Quiz](./quiz.yaml)**

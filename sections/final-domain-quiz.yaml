@@ -1,0 +1,925 @@
+# Final domain knowledge check across all eight sections.
+schema_version: 1
+kind: question_bank
+id: ats004-final
+course_id: ATS004
+exam_code: LFCS
+status: draft
+provenance: Original practice material written for this course; not official exam questions.
+scope:
+  type: domain
+  id: storage
+  title: "Storage"
+questions:
+  - id: ats004-final-q01
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Find the process that blocks an unmount"
+    source_readings:
+      - sections/section-010/module-01/course-02-diagnosing-a-stuck-disk.md
+    prompt: |-
+      `umount /mnt/data` fails with `target is busy`. Which command shows the process that keeps the mount in use?
+    options:
+      - id: a
+        text: "`blkid /mnt/data`"
+        explanation: "`blkid` reads filesystem labels and identifiers."
+      - id: b
+        text: "`fuser -vm /mnt/data`"
+        explanation: "Correct. It lists the processes that use the mounted filesystem."
+      - id: c
+        text: "`mount -a`"
+        explanation: "`mount -a` mounts entries from `/etc/fstab`. It finds no processes."
+      - id: d
+        text: "`lsblk /mnt/data`"
+        explanation: "`lsblk` lists devices. It does not list processes."
+    correct_option: b
+    explanation: "`fuser -vm` (or `lsof +f -- /mnt/data`) names the processes using the mount. Stop them or leave the directory, then unmount."
+
+  - id: ats004-final-q02
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Create a GPT partition and make the kernel see it"
+    source_readings:
+      - sections/section-010/module-02/course-02-write-an-aligned-gpt-partition.md
+    prompt: |-
+      You created a partition on `/dev/vdb` with `parted`, but `/dev/vdb1` does not exist yet. Which command asks the kernel to read the table again?
+    options:
+      - id: a
+        text: "`partprobe /dev/vdb`"
+        explanation: "Correct. It tells the kernel to re-read the partition table."
+      - id: b
+        text: "`mkfs.ext4 /dev/vdb`"
+        explanation: "This formats the whole disk and destroys the table."
+      - id: c
+        text: "`fsck /dev/vdb`"
+        explanation: "`fsck` checks a filesystem, not a partition table."
+      - id: d
+        text: "`swapon /dev/vdb`"
+        explanation: "This only works on a swap area."
+    correct_option: a
+    explanation: "`partprobe` (or `partx -u`) makes the kernel re-read the table so the new device node appears."
+
+  - id: ats004-final-q03
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Explain keyslots in LUKS"
+    source_readings:
+      - sections/section-010/module-03/course-02-creating-a-container-and-keyslots.md
+    prompt: |-
+      A LUKS container has two passphrases in two keyslots. You remove one with `cryptsetup luksRemoveKey`. What happens to the data?
+    options:
+      - id: a
+        text: "The container turns into plain ext4."
+        explanation: "LUKS never removes encryption this way."
+      - id: b
+        text: "It is re-encrypted with the remaining key."
+        explanation: "The data key stays the same. Only the keyslot is removed."
+      - id: c
+        text: "It is lost."
+        explanation: "The remaining keyslot still unlocks the same data key."
+      - id: d
+        text: "It stays readable with the remaining passphrase."
+        explanation: "Correct. Each keyslot holds the same data key, wrapped by a different passphrase."
+    correct_option: d
+    explanation: "Keyslots are separate locks for one data key. Removing one lock leaves the others working. Removing the last one makes the data unreadable."
+
+  - id: ats004-final-q04
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Open, use and close a LUKS volume"
+    source_readings:
+      - sections/section-010/module-03/course-03-opening-using-closing.md
+    prompt: |-
+      After `cryptsetup open /dev/vdb secret`, which path do you format and mount?
+    options:
+      - id: a
+        text: "`/dev/vdb`"
+        explanation: "This is the encrypted container. Writing a filesystem here destroys the header."
+      - id: b
+        text: "`/dev/mapper/secret`"
+        explanation: "Correct. The mapper device is the decrypted view."
+      - id: c
+        text: "`/dev/secret1`"
+        explanation: "This name is not created."
+      - id: d
+        text: "`/mnt/secret`"
+        explanation: "This is a mount point, not a device."
+    correct_option: b
+    explanation: "`cryptsetup open` creates `/dev/mapper/<name>`. Work on that device, and close it with `cryptsetup close <name>` after unmounting."
+
+  - id: ats004-final-q05
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Set a label on an ext4 filesystem"
+    source_readings:
+      - sections/section-010/module-04/course-02-labels-uuids-and-tuning.md
+    prompt: |-
+      Which command gives an existing ext4 filesystem on `/dev/vdb1` the label `DATA` without formatting it?
+    options:
+      - id: a
+        text: "`e2label /dev/vdb1 DATA`"
+        explanation: "Correct. `e2label` (or `tune2fs -L`) changes the label in place."
+      - id: b
+        text: "`blkid -L DATA /dev/vdb1`"
+        explanation: "`blkid -L` searches for a label. It does not set one."
+      - id: c
+        text: "`fsck -L DATA /dev/vdb1`"
+        explanation: "`fsck` has no label option."
+      - id: d
+        text: "`mkfs.ext4 -L DATA /dev/vdb1`"
+        explanation: "This formats the disk and erases the data."
+    correct_option: a
+    explanation: "`e2label` or `tune2fs -L` writes the label into the existing superblock. Data stays."
+
+  - id: ats004-final-q06
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Run fsck safely"
+    source_readings:
+      - sections/section-010/module-04/course-01-fsck-repair-model.md
+    prompt: |-
+      You must repair an ext4 filesystem with `fsck`. What must be true first?
+    options:
+      - id: a
+        text: "The filesystem is mounted read-write."
+        explanation: "Repairing a mounted filesystem can corrupt it."
+      - id: b
+        text: "The filesystem is unmounted (or mounted read-only at boot)."
+        explanation: "Correct. `fsck` needs a quiet filesystem."
+      - id: c
+        text: "The disk is encrypted."
+        explanation: "Encryption is not required."
+      - id: d
+        text: "The filesystem is empty."
+        explanation: "Not needed."
+    correct_option: b
+    explanation: "Unmount the filesystem first. Then run `fsck`. A mounted filesystem changes while the repair crew walks the shelves."
+
+  - id: ats004-final-q07
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Pick a stable identifier for fstab"
+    source_readings:
+      - sections/section-010/module-05/course-01-fields-and-stable-identifiers.md
+    prompt: |-
+      Why does `/etc/fstab` use `UUID=` instead of `/dev/vdb1`?
+    options:
+      - id: a
+        text: "UUID encrypts the mount."
+        explanation: "UUID is only an identifier."
+      - id: b
+        text: "UUID is faster to read."
+        explanation: "Speed is not the reason."
+      - id: c
+        text: "Device names can change with the attach order, but the UUID stays with the filesystem."
+        explanation: "Correct."
+      - id: d
+        text: "`/dev/` names are not allowed in fstab."
+        explanation: "They are allowed. They are just fragile."
+    correct_option: c
+    explanation: "Find the UUID with `blkid`. A UUID follows the filesystem, so the mount survives disk reordering."
+
+  - id: ats004-final-q08
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Verify fstab before a reboot"
+    source_readings:
+      - sections/section-010/module-05/course-02-options-and-verifying.md
+    prompt: |-
+      You edited `/etc/fstab`. Which check finds a mistake without rebooting?
+    options:
+      - id: a
+        text: "`sudo findmnt --verify`"
+        explanation: "Correct. It checks the file, and `mount -a` tries the mounts."
+      - id: b
+        text: "`lsblk -f` only"
+        explanation: "It does not parse fstab."
+      - id: c
+        text: "`swapoff -a`"
+        explanation: "This turns off swap."
+      - id: d
+        text: "`sync`"
+        explanation: "This flushes buffers."
+    correct_option: a
+    explanation: "Run `sudo findmnt --verify` and `sudo mount -a` before a reboot, because a broken line can stop the boot."
+
+  - id: ats004-final-q09
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Name a systemd mount unit"
+    source_readings:
+      - sections/section-010/module-06/course-02-native-mount-and-automount-units.md
+    prompt: |-
+      What is the unit file name for the mount point `/srv/app/data`?
+    options:
+      - id: a
+        text: "`/srv/app/data.mount`"
+        explanation: "Unit names cannot contain slashes."
+      - id: b
+        text: "`srv.app.data.mount`"
+        explanation: "Dots are not used for path parts."
+      - id: c
+        text: "`data.mount`"
+        explanation: "The name must carry the whole path."
+      - id: d
+        text: "`srv-app-data.mount`"
+        explanation: "Correct. Slashes become dashes, without the leading one."
+    correct_option: d
+    explanation: "`systemd-escape -p --suffix=mount /srv/app/data` prints the name."
+
+  - id: ats004-final-q10
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Mount FAT32 for a normal user"
+    source_readings:
+      - sections/section-010/module-07/course-02-mounting-fat32-quirks.md
+    prompt: |-
+      FAT32 has no Unix owners. How do you make files on a mounted FAT32 disk belong to your user?
+    options:
+      - id: a
+        text: "`chown -R` after mounting"
+        explanation: "FAT32 cannot store owners, so this fails."
+      - id: b
+        text: "Mount with `-o uid=1000,gid=1000`"
+        explanation: "Correct. The mount options set the owner for all files."
+      - id: c
+        text: "Format with `mkfs.ext4`"
+        explanation: "This changes the filesystem type."
+      - id: d
+        text: "Use `chmod 777` on the device"
+        explanation: "This does not set owners."
+    correct_option: b
+    explanation: "On FAT32 the kernel reports the owner from the mount options `uid=`, `gid=` and `umask=`."
+
+  - id: ats004-final-q11
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Clone a disk safely"
+    source_readings:
+      - sections/section-010/module-08/course-01-cloning-a-disk-with-dd.md
+    prompt: |-
+      Before `dd if=/dev/vdb of=/dev/vdc`, what is the most important check?
+    options:
+      - id: a
+        text: "That the disks are LVM volumes"
+        explanation: "No."
+      - id: b
+        text: "That `vdc` is the blank target and `vdb` the source"
+        explanation: "Correct. Swapped names overwrite the source."
+      - id: c
+        text: "That both disks are mounted"
+        explanation: "Mounted disks change during the copy."
+      - id: d
+        text: "That `bs` is 1"
+        explanation: "A tiny block size only slows the copy."
+    correct_option: b
+    explanation: "Confirm with `lsblk` and `blkid`. `dd` writes without asking. Verify the clone afterwards with a checksum."
+
+  - id: ats004-final-q12
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Create and inspect an XFS filesystem"
+    source_readings:
+      - sections/section-010/module-09/course-01-creating-and-inspecting-xfs.md
+    prompt: |-
+      Which command creates an XFS filesystem with the label `LOGS` on `/dev/vdb1`?
+    options:
+      - id: a
+        text: "`mkfs.xfs -L LOGS /dev/vdb1`"
+        explanation: "Correct."
+      - id: b
+        text: "`mkfs.xfs -n LOGS /dev/vdb1`"
+        explanation: "`-n` sets naming options, not the label."
+      - id: c
+        text: "`xfs_repair -L LOGS /dev/vdb1`"
+        explanation: "`-L` here zeroes the log. It is a dangerous last resort."
+      - id: d
+        text: "`e2label /dev/vdb1 LOGS`"
+        explanation: "`e2label` is for ext filesystems."
+    correct_option: a
+    explanation: "`mkfs.xfs -L` sets the label. `xfs_info` shows the layout of a mounted XFS filesystem."
+
+  - id: ats004-final-q13
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Grow XFS"
+    source_readings:
+      - sections/section-010/module-09/course-02-growing-and-repairing-xfs.md
+    prompt: |-
+      The logical volume under a mounted XFS filesystem is now larger. How do you grow the filesystem?
+    options:
+      - id: a
+        text: "`xfs_growfs /mount/point`"
+        explanation: "Correct. XFS grows while mounted, and you give it the mount point."
+      - id: b
+        text: "`xfs_repair /mount/point`"
+        explanation: "This repairs, it does not grow."
+      - id: c
+        text: "Unmount and run `mkfs.xfs` again"
+        explanation: "This erases the data."
+      - id: d
+        text: "`resize2fs /dev/vg/lv`"
+        explanation: "`resize2fs` is for ext filesystems."
+    correct_option: a
+    explanation: "XFS can grow online with `xfs_growfs`. It can never shrink."
+
+  - id: ats004-final-q14
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Repair XFS"
+    source_readings:
+      - sections/section-010/module-09/course-02-growing-and-repairing-xfs.md
+    prompt: |-
+      An XFS filesystem will not mount after a crash. What is the correct first step?
+    options:
+      - id: a
+        text: "Run `xfs_repair -L` at once"
+        explanation: "This discards the log and can lose recent changes. Use it last."
+      - id: b
+        text: "Run `fsck.xfs`"
+        explanation: "On XFS this program does nothing at boot."
+      - id: c
+        text: "Unmount it and run `xfs_repair -n` first to look"
+        explanation: "Correct. `-n` makes no changes. Then run `xfs_repair` on the unmounted device."
+      - id: d
+        text: "Run `xfs_growfs`"
+        explanation: "This does not repair."
+    correct_option: c
+    explanation: "Repair needs an unmounted filesystem. Mount and unmount once to replay the log, and use `xfs_repair -L` only if that fails."
+
+  - id: ats004-final-q15
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Mount a Btrfs subvolume"
+    source_readings:
+      - sections/section-010/module-10/course-01-creating-btrfs-and-subvolumes.md
+    prompt: |-
+      How do you mount the Btrfs subvolume `data` on its own at `/srv/data`?
+    options:
+      - id: a
+        text: "`mkdir data` on the filesystem"
+        explanation: "This makes a plain directory."
+      - id: b
+        text: "`mount -o subvol=data UUID=<UUID> /srv/data`"
+        explanation: "Correct."
+      - id: c
+        text: "`mount -t subvolume data /srv/data`"
+        explanation: "There is no such type."
+      - id: d
+        text: "`btrfs mount data /srv/data`"
+        explanation: "This is not a command."
+    correct_option: b
+    explanation: "A subvolume looks like a directory but mounts separately. `btrfs subvolume list` shows them."
+
+  - id: ats004-final-q16
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Take a snapshot"
+    source_readings:
+      - sections/section-010/module-10/course-02-snapshots-and-resizing.md
+    prompt: |-
+      Which command makes a read-only snapshot of the subvolume `/mnt/pool/data`?
+    options:
+      - id: a
+        text: "`btrfs subvolume snapshot -r /mnt/pool/data /mnt/pool/data-snap`"
+        explanation: "Correct."
+      - id: b
+        text: "`cp -a /mnt/pool/data /mnt/pool/data-snap`"
+        explanation: "This is a plain copy, not a snapshot."
+      - id: c
+        text: "`btrfs filesystem resize -r`"
+        explanation: "This resizes."
+      - id: d
+        text: "`dd if=/mnt/pool/data`"
+        explanation: "`dd` does not read a subvolume this way."
+    correct_option: a
+    explanation: "The snapshot shares data with the source until either changes (copy-on-write), so it is quick and small."
+
+  - id: ats004-final-q17
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Share an SSHFS mount"
+    source_readings:
+      - sections/section-020/module-01/course-02-performance-sharing-and-unmounting.md
+    prompt: |-
+      A background job running as another user cannot read your SSHFS mount. Which option opens it?
+    options:
+      - id: a
+        text: "`-o ro`"
+        explanation: "This only makes it read-only."
+      - id: b
+        text: "`-o compression=no`"
+        explanation: "This changes transfer only."
+      - id: c
+        text: "`-p 22`"
+        explanation: "This sets the port."
+      - id: d
+        text: "`-o allow_other`"
+        explanation: "Correct. It needs `user_allow_other` in `/etc/fuse.conf` for normal users."
+    correct_option: d
+    explanation: "FUSE mounts are private to the user who made them by default."
+
+  - id: ats004-final-q18
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Write an NFS export"
+    source_readings:
+      - sections/section-020/module-02/course-01-client-server-and-exports.md
+    prompt: |-
+      Which `/etc/exports` line shares `/data/assets` read-write and synchronously with `10.10.40.0/24`?
+    options:
+      - id: a
+        text: "`/data/assets 10.10.40.0/24(rw,sync,no_subtree_check)`"
+        explanation: "Correct. There is no space before the parenthesis."
+      - id: b
+        text: "`/data/assets 10.10.40.0/24 (rw,sync)`"
+        explanation: "A space makes the options apply to every host."
+      - id: c
+        text: "`10.10.40.0/24:/data/assets rw`"
+        explanation: "This is not the exports syntax."
+      - id: d
+        text: "`mount -t nfs /data/assets`"
+        explanation: "This is a client command."
+    correct_option: a
+    explanation: "After editing run `sudo exportfs -ra` and check with `exportfs -v`."
+
+  - id: ats004-final-q19
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Make an NFS mount survive a reboot"
+    source_readings:
+      - sections/section-020/module-02/course-03-persistent-nfs-mounts.md
+    prompt: |-
+      Which fstab options keep a boot from hanging when the NFS server is down?
+    options:
+      - id: a
+        text: "`noatime`"
+        explanation: "This does not help."
+      - id: b
+        text: "`defaults,noauto`"
+        explanation: "The share is never mounted at boot."
+      - id: c
+        text: "`_netdev,nofail`"
+        explanation: "Correct. The mount waits for the network and does not block the boot."
+      - id: d
+        text: "`ro,sync`"
+        explanation: "These do not help."
+    correct_option: c
+    explanation: "`_netdev` orders the mount after the network. `nofail` lets the boot continue if it fails."
+
+  - id: ats004-final-q20
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Tell block sharing from file sharing"
+    source_readings:
+      - sections/section-020/module-03/course-01-block-versus-file-sharing-and-nbd.md
+    prompt: |-
+      What is the difference between NFS and a network block device?
+    options:
+      - id: a
+        text: "NFS shares files. A block device shares a raw disk that the client formats itself."
+        explanation: "Correct."
+      - id: b
+        text: "NFS is faster in every case."
+        explanation: "There is no such rule."
+      - id: c
+        text: "A block device shares directories."
+        explanation: "It shares a raw device."
+      - id: d
+        text: "There is no difference."
+        explanation: "They work at different layers."
+    correct_option: a
+    explanation: "On a network block device the client owns the filesystem, so mount it on one client at a time."
+
+  - id: ats004-final-q21
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Log in to an iSCSI target"
+    source_readings:
+      - sections/section-020/module-03/course-02-iscsi-initiator-login-and-mount.md
+    prompt: |-
+      Which pair of steps finds an iSCSI target and logs in to it from the client?
+    options:
+      - id: a
+        text: "`iscsiadm -m discovery -t sendtargets -p <ip>`, then `iscsiadm -m node --login`"
+        explanation: "Correct. The new disk then appears as a block device."
+      - id: b
+        text: "`exportfs -ra`, then `showmount`"
+        explanation: "This is NFS."
+      - id: c
+        text: "`nbd-client -d`, then `lsblk`"
+        explanation: "`-d` disconnects an NBD device."
+      - id: d
+        text: "`mount -t iscsi`, then `fsck`"
+        explanation: "There is no such mount type."
+    correct_option: a
+    explanation: "The client is the initiator. After login, format the new disk with `mkfs` and mount it."
+
+  - id: ats004-final-q22
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Mount iSCSI at boot"
+    source_readings:
+      - sections/section-020/module-03/course-03-persistence-and-pitfalls.md
+    prompt: |-
+      Why does an fstab line for a filesystem on an iSCSI disk need `_netdev`?
+    options:
+      - id: a
+        text: "It makes the disk faster."
+        explanation: "It does not change speed."
+      - id: b
+        text: "It tells the system to mount only after the network and the iSCSI login are ready."
+        explanation: "Correct."
+      - id: c
+        text: "It encrypts the traffic."
+        explanation: "No."
+      - id: d
+        text: "It sets the label."
+        explanation: "No."
+    correct_option: b
+    explanation: "Use `UUID=` too, because the device name can change."
+
+  - id: ats004-final-q23
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Build the LVM stack in order"
+    source_readings:
+      - sections/section-030/module-01/course-03-logical-volumes.md
+    prompt: |-
+      What is the correct order to create a logical volume from a blank disk?
+    options:
+      - id: a
+        text: "`mkfs`, `pvcreate`, `lvcreate`"
+        explanation: "The filesystem goes on the logical volume last."
+      - id: b
+        text: "`lvcreate`, `vgcreate`, `pvcreate`"
+        explanation: "The order is reversed."
+      - id: c
+        text: "`pvcreate`, `vgcreate`, `lvcreate`"
+        explanation: "Correct. Disk, then pool, then volume."
+      - id: d
+        text: "`vgcreate`, `pvcreate`, `lvcreate`"
+        explanation: "A group needs physical volumes first."
+    correct_option: c
+    explanation: "Then run `mkfs` on `/dev/<vg>/<lv>`."
+
+  - id: ats004-final-q24
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Grow an LV and its filesystem"
+    source_readings:
+      - sections/section-030/module-02/course-05-growing-in-one-command.md
+    prompt: |-
+      Which command grows a logical volume by 1 GiB and its ext4 or XFS filesystem in one step?
+    options:
+      - id: a
+        text: "`lvextend -r -L +1G /dev/vg/lv`"
+        explanation: "Correct. `-r` resizes the filesystem too."
+      - id: b
+        text: "`lvcreate -L +1G`"
+        explanation: "This creates a new volume."
+      - id: c
+        text: "`vgextend -r`"
+        explanation: "This adds disks to a group."
+      - id: d
+        text: "`pvmove -r`"
+        explanation: "This moves data."
+    correct_option: a
+    explanation: "Without `-r` you must run `resize2fs` or `xfs_growfs` yourself."
+
+  - id: ats004-final-q25
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Persist a RAID array"
+    source_readings:
+      - sections/section-030/module-03/course-02-creating-and-persisting.md
+    prompt: |-
+      After `mdadm --create` you reboot and the array has a different name. What was missing?
+    options:
+      - id: a
+        text: "The array line in `mdadm.conf` and an updated initramfs"
+        explanation: "Correct. Use `mdadm --detail --scan` and `update-initramfs -u`."
+      - id: b
+        text: "A swap partition"
+        explanation: "Not related."
+      - id: c
+        text: "`mkfs.xfs`"
+        explanation: "Not related."
+      - id: d
+        text: "An fstab entry for `/dev/md0` only"
+        explanation: "fstab does not define the array."
+    correct_option: a
+    explanation: "Mount by UUID of the filesystem on the array."
+
+  - id: ats004-final-q26
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Replace a failed RAID member"
+    source_readings:
+      - sections/section-030/module-04/course-01-health-and-failure.md
+    prompt: |-
+      A RAID 1 array shows `[U_]`. Which sequence replaces the failed disk?
+    options:
+      - id: a
+        text: "`mdadm /dev/md0 --fail`, `--remove` the old disk, then `--add` the new one"
+        explanation: "Correct. Watch `/proc/mdstat` while it rebuilds."
+      - id: b
+        text: "`mkfs` the array again"
+        explanation: "This destroys the data."
+      - id: c
+        text: "`pvmove`"
+        explanation: "This is LVM."
+      - id: d
+        text: "Reboot and wait"
+        explanation: "It does not repair itself."
+    correct_option: a
+    explanation: "`[U_]` means one of two members is missing."
+
+  - id: ats004-final-q27
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Persist a swap file"
+    source_readings:
+      - sections/section-040/module-01/course-03-persisting-a-swap-file.md
+    prompt: |-
+      Which fstab line enables the swap file `/swapfile` at boot?
+    options:
+      - id: a
+        text: "`/swapfile swap none 0 0`"
+        explanation: "The fields are in the wrong order."
+      - id: b
+        text: "`/swapfile none swap sw 0 0`"
+        explanation: "Correct."
+      - id: c
+        text: "`/swapfile /swap ext4 defaults 0 2`"
+        explanation: "Swap has no mount point or type ext4."
+      - id: d
+        text: "`swapon /swapfile`"
+        explanation: "This is a command, not a line."
+    correct_option: b
+    explanation: "Check with `sudo swapon -a` and `swapon --show`. The file must have mode 600 and be made with `mkswap`."
+
+  - id: ats004-final-q28
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Use swap priority"
+    source_readings:
+      - sections/section-040/module-02/course-02-formatting-activating-and-priorities.md
+    prompt: |-
+      Two swap areas have priorities 10 and 5. Which is used first?
+    options:
+      - id: a
+        text: "The one with priority 10"
+        explanation: "Correct. The higher number is used first."
+      - id: b
+        text: "The one with priority 5"
+        explanation: "The lower number is used later."
+      - id: c
+        text: "Both alternately"
+        explanation: "Equal priorities are shared. These are not equal."
+      - id: d
+        text: "Neither, until reboot"
+        explanation: "Both are active now."
+    correct_option: a
+    explanation: "Set it with `swapon -p` or `pri=` in fstab."
+
+  - id: ats004-final-q29
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Write an autofs direct map"
+    source_readings:
+      - sections/section-050/module-01/course-03-direct-maps.md
+    prompt: |-
+      In which file does the master map point to a direct map?
+    options:
+      - id: a
+        text: "`/etc/fstab` only"
+        explanation: "This is not autofs."
+      - id: b
+        text: "`/etc/exports`"
+        explanation: "This is the NFS server list."
+      - id: c
+        text: "`/etc/hosts`"
+        explanation: "Not related."
+      - id: d
+        text: "`/etc/auto.master` (or a file in `/etc/auto.master.d/`) with the line `/- /etc/auto.direct`"
+        explanation: "Correct."
+    correct_option: d
+    explanation: "Restart or reload `autofs` after the change."
+
+  - id: ats004-final-q30
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Use a wildcard map"
+    source_readings:
+      - sections/section-050/module-02/course-03-wildcards.md
+    prompt: |-
+      A map has the line `* -fstype=nfs,rw server:/export/&`. What does accessing `/net/eng` do?
+    options:
+      - id: a
+        text: "Mounts `server:/export/eng`"
+        explanation: "Correct. `&` repeats the key."
+      - id: b
+        text: "Mounts `server:/export/*`"
+        explanation: "`&` is replaced by the key."
+      - id: c
+        text: "Fails, wildcards are not allowed"
+        explanation: "They are allowed."
+      - id: d
+        text: "Mounts `/net` itself"
+        explanation: "The key is the subdirectory."
+    correct_option: a
+    explanation: "`*` matches any key and `&` is replaced by it."
+
+  - id: ats004-final-q31
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Read /proc per process"
+    source_readings:
+      - sections/section-060/module-01/course-02-per-process-and-file-descriptors.md
+    prompt: |-
+      Where do you find the open file descriptors of process 1234?
+    options:
+      - id: a
+        text: "`/dev/1234`"
+        explanation: "Not there."
+      - id: b
+        text: "`/proc/1234/fd`"
+        explanation: "Correct."
+      - id: c
+        text: "`/sys/1234/fd`"
+        explanation: "`/sys` is not per process."
+      - id: d
+        text: "`/etc/1234`"
+        explanation: "Not there."
+    correct_option: b
+    explanation: "Each entry is a link to the open file."
+
+  - id: ats004-final-q32
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Persist a sysctl value"
+    source_readings:
+      - sections/section-060/module-02/course-04-sysctl-persisting-and-precedence.md
+    prompt: |-
+      How do you make `vm.swappiness=10` survive a reboot?
+    options:
+      - id: a
+        text: "`sysctl -w vm.swappiness=10` only"
+        explanation: "This lasts until reboot."
+      - id: b
+        text: "Save it in a file under `/etc/sysctl.d/` and run `sudo sysctl --system`"
+        explanation: "Correct."
+      - id: c
+        text: "Write it to `/proc/sys/vm/swappiness` once"
+        explanation: "This is temporary."
+      - id: d
+        text: "Add it to `/etc/fstab`"
+        explanation: "Wrong file."
+    correct_option: b
+    explanation: "`sysctl -w` and writing under `/proc/sys` change only the running kernel."
+
+  - id: ats004-final-q33
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Read iostat"
+    source_readings:
+      - sections/section-070/module-01/course-03-reading-iostat-columns.md
+    prompt: |-
+      Which `iostat -x` column tells you the average time a request waits, including queue time?
+    options:
+      - id: a
+        text: "`%idle`"
+        explanation: "CPU, not disk."
+      - id: b
+        text: "`tps`"
+        explanation: "Requests per second."
+      - id: c
+        text: "`kB_read`"
+        explanation: "Total data read."
+      - id: d
+        text: "`await` (or `r_await` and `w_await`)"
+        explanation: "Correct."
+    correct_option: d
+    explanation: "A high `await` with a high `%util` points to a busy device."
+
+  - id: ats004-final-q34
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Find deleted files that hold space"
+    source_readings:
+      - sections/section-070/module-02/course-03-lsof-files-and-processes.md
+    prompt: |-
+      `df` says the disk is full but `du` finds little. Which command lists deleted files still held open?
+    options:
+      - id: a
+        text: "`lsof +L1`"
+        explanation: "Correct. It lists open files with no remaining link."
+      - id: b
+        text: "`lsblk -f`"
+        explanation: "No."
+      - id: c
+        text: "`swapon --show`"
+        explanation: "No."
+      - id: d
+        text: "`ls -la`"
+        explanation: "Deleted files are not listed."
+    correct_option: a
+    explanation: "Stop or restart the process that holds the file, and the space returns."
+
+  - id: ats004-final-q35
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Enable ext4 user quotas"
+    source_readings:
+      - sections/section-080/module-02/course-01-turning-on-and-setting-limits.md
+    prompt: |-
+      Which mount option and command start user quotas on ext4?
+    options:
+      - id: a
+        text: "`quotaoff` only"
+        explanation: "This turns quotas off."
+      - id: b
+        text: "`usrquota`, then `quotacheck` and `quotaon`"
+        explanation: "Correct."
+      - id: c
+        text: "`noquota`"
+        explanation: "This disables them."
+      - id: d
+        text: "`ro`"
+        explanation: "Not related."
+    correct_option: b
+    explanation: "Set limits with `edquota` or `setquota`, and report with `repquota`."
+
+  - id: ats004-final-q36
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Set an XFS project quota"
+    source_readings:
+      - sections/section-080/module-03/course-02-project-quotas.md
+    prompt: |-
+      When are XFS quota options such as `pquota` turned on?
+    options:
+      - id: a
+        text: "With a remount at any time"
+        explanation: "A remount does not turn on accounting."
+      - id: b
+        text: "At the first mount, so unmount and mount again with the option"
+        explanation: "Correct."
+      - id: c
+        text: "With `quotaon` only"
+        explanation: "XFS needs the mount option."
+      - id: d
+        text: "They are always on"
+        explanation: "They are off by default."
+    correct_option: b
+    explanation: "Then `xfs_quota -x -c 'limit -p bhard=100m <project>' /mount`."
+
+  - id: ats004-final-q37
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Tell links apart"
+    source_readings:
+      - sections/section-080/module-04/course-02-creating-links-hard-links-and-dangling.md
+    prompt: |-
+      What happens to a symbolic link if its target file is deleted?
+    options:
+      - id: a
+        text: "It keeps a copy of the data"
+        explanation: "Only hard links keep the data."
+      - id: b
+        text: "It is removed too"
+        explanation: "It stays."
+      - id: c
+        text: "It points to the parent folder"
+        explanation: "No."
+      - id: d
+        text: "It becomes a dangling link that points to nothing"
+        explanation: "Correct."
+    correct_option: d
+    explanation: "A hard link shares the inode, so the data stays until the last link is gone."
+
+  - id: ats004-final-q38
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Know the FHS"
+    source_readings:
+      - sections/section-080/module-04/course-04-the-filesystem-hierarchy.md
+    prompt: |-
+      Where do variable data such as logs and spool files belong?
+    options:
+      - id: a
+        text: "`/var`"
+        explanation: "Correct."
+      - id: b
+        text: "`/etc`"
+        explanation: "Configuration."
+      - id: c
+        text: "`/usr/bin`"
+        explanation: "Programs."
+      - id: d
+        text: "`/boot`"
+        explanation: "Boot files."
+    correct_option: a
+    explanation: "Use `/etc` for configuration, `/srv` for served data and `/tmp` for temporary files."
+

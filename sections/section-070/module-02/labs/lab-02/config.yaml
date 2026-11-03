@@ -1,0 +1,37 @@
+metadata:
+  name: "ats-004-lab-070-02-02"
+  docs:
+    solution: "solution.md"
+    question: "question.md"
+
+runtime:
+  type: "qemu"
+  qemu:
+  - image:
+      type: "oci"
+      source: "ghcr.io/astrona-io/ubuntu-qcow2-image:24.04-lfcs-{ARCH}"
+
+    cpus: 2
+    memoryMB: 2048
+    diskSizeGB: 15
+    extraDisks:
+      - sizeGB: 1
+        serial: "lab070202-spool"
+    display: false
+
+bootstrap:
+  init:
+    - name: "lab-070-02-02-setup"
+      description: "Builds a spool filesystem where a process holds a deleted 300M file open"
+      type: "folder"
+      source: "bootstrap/"
+
+validation:
+  scripts:
+    - name: "verify-hidden-space-and-scheduler"
+      description: "Confirms the holder was recorded and stopped, the space is free, and a udev rule sets mq-deadline on the spool disk"
+      type: "file"
+      source: "validation/validate-completed.sh"
+
+teardown:
+  keepCluster: false

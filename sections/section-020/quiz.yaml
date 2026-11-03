@@ -1,0 +1,324 @@
+# Knowledge check for section 020. Listed in astrona.yaml as a `type: quiz` entry after the section's modules.
+schema_version: 1
+kind: question_bank
+id: ats004-020
+course_id: ATS004
+exam_code: LFCS
+status: draft
+provenance: Original practice material written for this course; not official exam questions.
+scope:
+  type: section
+  id: section-020
+  title: "Remote Filesystems (SSHFS, NFS and Network Block Devices)"
+questions:
+  - id: ats004-020-q01
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Explain why an SSHFS mount is private and how to share it"
+    source_readings:
+      - sections/section-020/module-01/course-02-performance-sharing-and-unmounting.md
+    prompt: |-
+      You mount a remote directory with `sshfs root@db-node:/var/log /mnt/db-logs`. A cron job that runs as `backup-agent` gets `Permission denied` on the mount. Why?
+    options:
+      - id: a
+        text: "SSHFS cannot show directories owned by root."
+        explanation: "SSHFS has no rule about root-owned files."
+      - id: b
+        text: "By default a FUSE mount is open only to the user who ran `sshfs`. Other users need `-o allow_other`."
+        explanation: "Correct. The mount is private to its owner until you add `allow_other`."
+      - id: c
+        text: "The SSH port closed after the mount."
+        explanation: "A closed port would give input/output errors, not a permission error."
+      - id: d
+        text: "`backup-agent` has no SSH keys, and the local kernel checks keys."
+        explanation: "The refusal is made by the local kernel on the mount, not by SSH keys."
+    correct_option: b
+    explanation: "FUSE blocks other users from the mount unless `allow_other` is set. A non-root user also needs `user_allow_other` in `/etc/fuse.conf`."
+
+  - id: ats004-020-q02
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Describe what FUSE is and why SSHFS needs no root on the server"
+    source_readings:
+      - sections/section-020/module-01/course-01-sshfs-and-fuse.md
+    prompt: |-
+      What does the FUSE kernel module do when you read a file on an SSHFS mount?
+    options:
+      - id: a
+        text: "It decrypts the file with the SSH key."
+        explanation: "SSH encrypts the link. FUSE does not decrypt files."
+      - id: b
+        text: "It copies the whole remote directory to local disk."
+        explanation: "Nothing is copied ahead of time. Each read is fetched when needed."
+      - id: c
+        text: "It runs the SSH server on your ship."
+        explanation: "The SSH server runs on the remote ship."
+      - id: d
+        text: "It passes the request through `/dev/fuse` to the `sshfs` program, which fetches the data over SSH."
+        explanation: "Correct."
+    correct_option: d
+    explanation: "FUSE is only a relay. The `sshfs` program runs as an ordinary user. It answers each request by talking to the remote `sshd`."
+
+  - id: ats004-020-q03
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Unmount an SSHFS filesystem and keep it across a restart"
+    source_readings:
+      - sections/section-020/module-01/course-03-reconnecting-and-persistent-sshfs.md
+    prompt: |-
+      How does an ordinary user unmount an SSHFS mount at `~/remote`?
+    options:
+      - id: a
+        text: "`fusermount -u ~/remote`"
+        explanation: "Correct."
+      - id: b
+        text: "`rm -rf ~/remote`"
+        explanation: "`rm -rf` would delete remote files through the mount."
+      - id: c
+        text: "`sshfs -d ~/remote`"
+        explanation: "`sshfs` has no `-d` for unmounting. `-d` is debug."
+      - id: d
+        text: "`kill -9` the SSH server"
+        explanation: "The server does not own the mount. Your local `sshfs` process does."
+    correct_option: a
+    explanation: "`fusermount -u` unmounts a FUSE filesystem without root. `sudo umount` also works."
+
+  - id: ats004-020-q04
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Write a correct NFS export line"
+    source_readings:
+      - sections/section-020/module-02/course-01-client-server-and-exports.md
+    prompt: |-
+      Which `/etc/exports` line shares `/data/assets` read-write with the network `10.10.40.0/24`, writing data to disk before replying?
+    options:
+      - id: a
+        text: "`/data/assets 10.10.40.0/24 (rw,async)`"
+        explanation: "The space before the bracket makes the options apply to everyone, and `async` is not safe."
+      - id: b
+        text: "`/data/assets 10.10.40.0/24(rw,sync,no_subtree_check)`"
+        explanation: "Correct."
+      - id: c
+        text: "`10.10.40.0/24:/data/assets rw,sync`"
+        explanation: "This is not the format of the file."
+      - id: d
+        text: "`mount -t nfs 10.10.40.0/24:/data/assets`"
+        explanation: "That is a client command, not an export."
+    correct_option: b
+    explanation: "The format is `path client(options)` with no space before the bracket. `sync` replies only after the data is on disk."
+
+  - id: ats004-020-q05
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Load an export and check it"
+    source_readings:
+      - sections/section-020/module-02/course-01-client-server-and-exports.md
+    prompt: |-
+      You edited `/etc/exports`. Which command makes the server use the change and prints what it did?
+    options:
+      - id: a
+        text: "`sudo exportfs -arv`"
+        explanation: "Correct."
+      - id: b
+        text: "`showmount -e`"
+        explanation: "`showmount -e` lists exports. It does not load them."
+      - id: c
+        text: "`sudo mount -a`"
+        explanation: "`mount -a` reads `/etc/fstab`."
+      - id: d
+        text: "`rpcinfo -p`"
+        explanation: "`rpcinfo -p` lists registered services."
+    correct_option: a
+    explanation: "`exportfs -arv` re-exports everything and is verbose. `exportfs -v` then shows the active table."
+
+  - id: ats004-020-q06
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Choose hard or soft for an NFS mount"
+    source_readings:
+      - sections/section-020/module-02/course-02-mounting-readonly-and-server-down.md
+    prompt: |-
+      The NFS server goes away while a program writes to the share. With the default `hard` option, what does the program do?
+    options:
+      - id: a
+        text: "It gets an input/output error at once."
+        explanation: "That is `soft` behaviour."
+      - id: b
+        text: "The share turns into an empty local directory."
+        explanation: "The mount stays. It does not become local."
+      - id: c
+        text: "It waits and retries until the server returns."
+        explanation: "Correct."
+      - id: d
+        text: "The kernel switches to `soft` after 10 seconds."
+        explanation: "The kernel never changes the option by itself."
+    correct_option: c
+    explanation: "`hard` retries forever. This protects writes. `soft` gives up and can lose data, so use it only for read-only data."
+
+  - id: ats004-020-q07
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Make an NFS mount survive a reboot"
+    source_readings:
+      - sections/section-020/module-02/course-03-persistent-nfs-mounts.md
+    prompt: |-
+      Which option pair on an NFS line in `/etc/fstab` waits for the network and lets the boot go on if the server is down?
+    options:
+      - id: a
+        text: "`noauto,ro`"
+        explanation: "`noauto` means no mount at boot."
+      - id: b
+        text: "`_netdev,nofail`"
+        explanation: "Correct."
+      - id: c
+        text: "`soft,noatime`"
+        explanation: "`soft` and `noatime` do neither of these jobs."
+      - id: d
+        text: "`sync,nodev`"
+        explanation: "These control write timing and device files."
+    correct_option: b
+    explanation: "`_netdev` makes systemd wait for the network. `nofail` stops a failed mount from blocking the boot."
+
+  - id: ats004-020-q08
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Check the real options of an NFS mount"
+    source_readings:
+      - sections/section-020/module-02/course-04-troubleshooting-nfs.md
+    prompt: |-
+      Which command shows the real mount options of each NFS mount, such as `vers=`, `hard` and `timeo=`?
+    options:
+      - id: a
+        text: "`exportfs -v`"
+        explanation: "That is the server export table."
+      - id: b
+        text: "`showmount -e`"
+        explanation: "That lists exports, not client options."
+      - id: c
+        text: "`nfsstat -m`"
+        explanation: "Correct."
+      - id: d
+        text: "`lsblk -f`"
+        explanation: "`lsblk` shows block devices, not NFS mounts."
+    correct_option: c
+    explanation: "`nfsstat -m` prints the flags the client really uses. `exportfs -v` shows the server side."
+
+  - id: ats004-020-q09
+    type: single_choice
+    difficulty: beginner
+    learning_objective: "Tell a network block device from a shared directory"
+    source_readings:
+      - sections/section-020/module-03/course-01-block-versus-file-sharing-and-nbd.md
+    prompt: |-
+      What is the main difference between NFS and a network block device?
+    options:
+      - id: a
+        text: "NFS shares a file tree. A network block device gives your ship a raw disk that it formats and mounts."
+        explanation: "Correct."
+      - id: b
+        text: "NFS is a block device and NBD is a file tree."
+        explanation: "This is reversed."
+      - id: c
+        text: "Both give you files, and only the port differs."
+        explanation: "The kind of object is different, not only the port."
+      - id: d
+        text: "A network block device needs no network."
+        explanation: "It needs the network, like any remote storage."
+    correct_option: a
+    explanation: "NFS serves files and the server owns the filesystem. A block device shows up as a bare disk and your ship builds the filesystem."
+
+  - id: ats004-020-q10
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Use nbd-client"
+    source_readings:
+      - sections/section-020/module-03/course-01-block-versus-file-sharing-and-nbd.md
+    prompt: |-
+      Which command connects the export `cargo` of `server` to `/dev/nbd0`?
+    options:
+      - id: a
+        text: "`nbd-client -d /dev/nbd0`"
+        explanation: "`-d` disconnects the device."
+      - id: b
+        text: "`mount -t nbd server:cargo /dev/nbd0`"
+        explanation: "There is no such mount type."
+      - id: c
+        text: "`nbd-client server /dev/nbd0 -N cargo`"
+        explanation: "Correct."
+      - id: d
+        text: "`nbd-server -N cargo`"
+        explanation: "`nbd-server` runs on the server side."
+    correct_option: c
+    explanation: "The client call is `nbd-client <server> <device> -N <export>`. `nbd-client -l server` lists exports. The `nbd` kernel module must be loaded."
+
+  - id: ats004-020-q11
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Discover and log in to an iSCSI target"
+    source_readings:
+      - sections/section-020/module-03/course-02-iscsi-initiator-login-and-mount.md
+    prompt: |-
+      What is the correct order to attach an iSCSI disk from `10.10.60.10`?
+    options:
+      - id: a
+        text: "Mount the target, then discover it, then log in."
+        explanation: "A target cannot be mounted. Its disk can."
+      - id: b
+        text: "Log in, then discover, then format."
+        explanation: "You must discover the target before you can log in to it."
+      - id: c
+        text: "Discover with `iscsiadm -m discovery -t sendtargets -p 10.10.60.10`, log in with `--login`, then format and mount the new disk."
+        explanation: "Correct."
+      - id: d
+        text: "Run `mkfs` on the target name, then log in."
+        explanation: "`mkfs` works on a disk, not on a target name."
+    correct_option: c
+    explanation: "Discovery learns the target names. `--login` creates the session and a new disk appears. Only then do you format and mount it."
+
+  - id: ats004-020-q12
+    type: single_choice
+    difficulty: intermediate
+    learning_objective: "Explain _netdev for iSCSI and automatic login"
+    source_readings:
+      - sections/section-020/module-03/course-03-persistence-and-pitfalls.md
+    prompt: |-
+      An iSCSI disk is in `/etc/fstab` by `UUID=`, but it is missing after a restart. What else must be set besides `_netdev` on the line?
+    options:
+      - id: a
+        text: "`node.startup = automatic` for the target, so the initiator logs in at launch."
+        explanation: "Correct. They work as a pair."
+      - id: b
+        text: "Nothing. `_netdev` also logs in."
+        explanation: "`_netdev` does not log in to a target."
+      - id: c
+        text: "A `dump` value of 1."
+        explanation: "`dump` is for the old backup tool."
+      - id: d
+        text: "`noatime`."
+        explanation: "`noatime` has no effect here."
+    correct_option: a
+    explanation: "`_netdev` only makes the mount wait for the network. Something must log in to the target. `node.startup = automatic` lets `iscsid` do it at launch."
+
+  - id: ats004-020-q13
+    type: single_choice
+    difficulty: advanced
+    learning_objective: "Safely disconnect a network block device"
+    source_readings:
+      - sections/section-020/module-03/course-03-persistence-and-pitfalls.md
+    prompt: |-
+      You want to disconnect `/dev/nbd0`, which is mounted at `/mnt/cargo`. What is the right order?
+    options:
+      - id: a
+        text: "`nbd-client -d /dev/nbd0`, then `umount /mnt/cargo`."
+        explanation: "This pulls the disk out from under the mount."
+      - id: b
+        text: "`umount /mnt/cargo`, then `nbd-client -d /dev/nbd0`."
+        explanation: "Correct."
+      - id: c
+        text: "Remove the fstab line only."
+        explanation: "The mount stays until you unmount it."
+      - id: d
+        text: "Unload the `nbd` module first."
+        explanation: "Unloading the module first fails or breaks the mount."
+    correct_option: b
+    explanation: "Undock the hold first. Cutting the device while it is mounted can lose data and leave a dead mount."

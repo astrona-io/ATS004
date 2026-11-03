@@ -24,7 +24,10 @@ This section is divided into two modules, both paired with hands-on practice in 
 ### 1. Device-Level Diagnostics: Queues & Latency
 *   **Module Reader:** **[Module 1: Device-Level Diagnostics: Queues & Latency](./module-01/course.md)**
     1. [I/O Wait, IOPS & Throughput](./module-01/course-01-io-wait-iops-throughput.md)
-    2. [Reading iostat & Watching Saturation](./module-01/course-02-iostat-and-saturation.md)
+    2. [Where iostat Gets Its Numbers](./module-01/course-02-where-iostat-gets-its-numbers.md)
+    3. [Reading iostat Columns](./module-01/course-03-reading-iostat-columns.md)
+    4. [Watching a Device Saturate](./module-01/course-04-watching-a-device-saturate.md)
+    5. [Wrap-Up: Mission Debrief](./module-01/course-05-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-070/module-01/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -35,7 +38,10 @@ This section is divided into two modules, both paired with hands-on practice in 
 ### 2. Process-Level Auditing: Identifying the Culprit
 *   **Module Reader:** **[Module 2: Process-Level Auditing: Identifying the Culprit](./module-02/course.md)**
     1. [From Device to Process: iotop & pidstat](./module-02/course-01-iotop-and-pidstat.md)
-    2. [lsof & Closing the Loop](./module-02/course-02-lsof-and-closing-the-loop.md)
+    2. [Where Per-Process I/O Numbers Come From](./module-02/course-02-per-process-io-counters.md)
+    3. [lsof: Which File, Which Process](./module-02/course-03-lsof-files-and-processes.md)
+    4. [Closing the Loop](./module-02/course-04-closing-the-loop.md)
+    5. [Wrap-Up: Mission Debrief](./module-02/course-05-wrap-up.md)
 *   **Practice Lab Sandbox:** **`sections/section-070/module-02/labs/lab-01`**
 *   **Lab Run Command:**
     ```bash
@@ -49,4 +55,4 @@ This section is divided into two modules, both paired with hands-on practice in 
 
 Test your theoretical knowledge and diagnostic reasoning before tackling the performance lab mission:
 
-*   **[Take the Section 070 Knowledge Check Quiz](./quiz.md)**
+*   **[Take the Section 070 Knowledge Check Quiz](./quiz.yaml)**
