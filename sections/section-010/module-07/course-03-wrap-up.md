@@ -85,3 +85,5 @@ astrona destroy ats-004-lab-017
 Run `astrona list` again. The playground and the mission should no longer be in the list.
 
 > *FAT32 is the galaxy's shared shelf list: every ship can read it, and nobody's name is on the crates.*
+
+<!-- astrona:playground:destroy -->

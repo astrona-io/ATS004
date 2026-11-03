@@ -20,13 +20,13 @@ and no pass/fail. Explore, break things, `astrona destroy`, start over.
 
 ## Already know an earlier part? Skip ahead
 
-If you've already done Part 2's exercise elsewhere and just want to read Part 3, run:
+If you've already done the second part's exercise elsewhere and just want to read the third part, run:
 
 ```sh
 catchup part3
 ```
 
-This runs Part 2's commands for you (`pvcreate` + `vgcreate` on two disks) so you land exactly where Part 3 starts — a Volume Group already pooling two disks, nothing carved out of it yet. Run `catchup` with no arguments for a description of what it does before you use it; it runs the real commands, it doesn't explain them, so only use it if Part 2 is already familiar.
+This runs the second part's commands for you (`pvcreate` + `vgcreate` on two disks) so you land exactly where the third part starts — a Volume Group already pooling two disks, nothing carved out of it yet. Run `catchup` with no arguments for a description of what it does before you use it; it runs the real commands, it doesn't explain them, so only use it if the second part is already familiar.
 
 ## Things to try
 

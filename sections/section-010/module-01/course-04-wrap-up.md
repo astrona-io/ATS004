@@ -118,3 +118,5 @@ astrona list
 ```
 
 The list should no longer show the playground or any mission from this module. You can start the playground again at any time with the `astrona run` command from the end of each mission; it always starts clean, so nothing you broke carries over.
+
+<!-- astrona:playground:destroy -->

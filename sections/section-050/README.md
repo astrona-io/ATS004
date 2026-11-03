@@ -2,7 +2,7 @@
 
 Welcome to Section 050. In this section, we explore how to automate network storage connections dynamically.
 
-In Section 020, we learned how to mount remote NFS shares. However, listing network shares inside the permanent `/etc/fstab` table presents a massive production risk: if the remote storage server goes offline, or if your local server experiences a network hiccup during boot, the local server will hang indefinitely while waiting for the remote share to respond.
+Remote NFS shares can be mounted at boot. However, listing network shares inside the permanent `/etc/fstab` table presents a massive production risk: if the remote storage server goes offline, or if your local server experiences a network hiccup during boot, the local server will hang indefinitely while waiting for the remote share to respond.
 
 To prevent boot hangs and stale connection freezes, we use **autofs**. Instead of mounting shares permanently, `autofs` monitors your directories and automatically mounts remote shares *only* when an application tries to access them, cleanly unmounting them after a defined period of inactivity.
 

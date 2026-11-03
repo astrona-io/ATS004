@@ -102,3 +102,5 @@ astrona list
 The list should no longer show the playground or the mission. You can start the playground again at any time with the `astrona run` command for this module. It always starts clean, with a fresh backup of `/etc/fstab`, so nothing you broke carries over.
 
 > *Write the logbook with a serial number, not a door number, and test every line before you land: `findmnt --verify` first, then `sudo mount -a`.*
+
+<!-- astrona:playground:destroy -->

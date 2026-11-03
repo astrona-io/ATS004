@@ -110,3 +110,5 @@ astrona list
 The playground and the mission should no longer be listed. You can start the playground again at any time with the `astrona run` command from the module's landing page. It always starts clean, so nothing you changed carries over.
 
 > *Write the deck plan with GPT, start the first room at sector 2048, and make sure the ship's core reads the plan you wrote.*
+
+<!-- astrona:playground:destroy -->

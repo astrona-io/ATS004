@@ -85,3 +85,5 @@ astrona destroy ats-004-lab-018
 Run `astrona list` again. The playground and the mission should no longer be in the list.
 
 > *`dd` copies the hold, `tar` packs the cargo, and a checksum proves the copy is real.*
+
+<!-- astrona:playground:destroy -->

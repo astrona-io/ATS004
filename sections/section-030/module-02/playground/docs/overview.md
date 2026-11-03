@@ -22,11 +22,11 @@ and no pass/fail. Explore, break things, `astrona destroy`, start over.
 
 ## Already know an earlier part? Skip ahead — or reset
 
-This module's parts build on each other in the same running VM. If you already know Part 2 or Part 2+3's material and just want to read a later part, skip the setup:
+This module's parts build on each other in the same running VM. If you already know the second part or the material of the second and third parts and just want to read a later part, skip the setup:
 
 ```sh
-catchup part3   # runs Part 2's exercise for you: extend the VG, evacuate source_disk
-catchup part4   # runs Part 2 AND Part 3's exercises (retire the emptied disk, then grow and shrink the volume) so you land at the start of Part 4
+catchup part3   # runs the exercise of the second part for you: extend the VG, evacuate source_disk
+catchup part4   # runs the exercises of the second AND third parts (retire the emptied disk, then grow and shrink the volume) so you land at the start of the fourth part
 ```
 
 Broke something mid-exploration and want the original 2-PV, 400M starting state back, without a full `astrona destroy` + `astrona run`?

@@ -110,3 +110,5 @@ astrona destroy ats-004-lab-013
 Run `astrona list` again. Neither the playground nor the mission should be in the list.
 
 > *A filesystem you can repair, name and find again is a hold you can trust at every launch.*
+
+<!-- astrona:playground:destroy -->

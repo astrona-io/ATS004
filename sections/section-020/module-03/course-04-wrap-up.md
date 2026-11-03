@@ -97,3 +97,5 @@ astrona list
 ```
 
 The list should no longer show the playground or the mission from this module. You can start the playground again at any time; it always starts clean.
+
+<!-- astrona:playground:destroy -->
