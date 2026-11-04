@@ -4,7 +4,7 @@ kind: question_bank
 id: ats004-070
 course_id: ATS004
 exam_code: LFCS
-status: draft
+status: alpha
 provenance: Original practice material written for this course; not official exam
   questions.
 scope:
