@@ -385,7 +385,7 @@ modules:
         estimated_duration: 20m
         topic: filesystems
         task_kind: build
-        tags: [xfs, mkfs.xfs, xfs_repair, fstab, uuids, noatime]
+        tags: [xfs, mkfs.xfs, xfs-repair, fstab, uuids, noatime]
         learning_goals:
           - Format a blank disk as XFS with the label NEWCARGO
           - Mount it at /srv/newcargo by UUID through /etc/fstab with the options defaults,noatime
