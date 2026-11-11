@@ -101,7 +101,7 @@ class Lifecycle:
         vms = self.config['runtime']['qemu']
         for vm in vms:
             key = vm.get('name', 'default')
-            name = self.name + ('-' + key if len(vms) > 1 else '')
+            name = self.name + ('-' + key if vm.get('name') else '')
             path = Path.home() / '.astrona/qemu' / name / 'handle.json'
             handle = json.loads(path.read_text())
             if handle['clusterName'] != name or handle.get('labName', name) != self.name:
