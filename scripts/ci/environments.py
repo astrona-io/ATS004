@@ -5,6 +5,7 @@ import json
 import subprocess
 from pathlib import Path
 import yaml
+from curriculum import check_distinct_labs, register_practice
 
 
 def discover(root):
@@ -19,6 +20,8 @@ def discover(root):
                 if item['path'] in registered:
                     raise ValueError(f'Duplicate lab registration: {path}')
                 registered[item['path']] = item
+    check_distinct_labs(root, registered)
+    registered.update(register_practice(root, registered))
     question_ids = set()
     for bank in sorted(root.rglob('quiz.yaml')):
         data = yaml.safe_load(bank.read_text())
