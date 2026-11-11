@@ -5,6 +5,10 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Environment prep only — no task, no grading. Installs the client tools and
 # creates the mount point, but does NOT mount anything.
 set -eu
+if ! command -v mount.nfs >/dev/null; then
+  sudo apt-get update -qq
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y nfs-common
+fi
 
 export DEBIAN_FRONTEND=noninteractive
 

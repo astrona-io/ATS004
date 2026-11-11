@@ -27,4 +27,9 @@ sudo mkdir -p /nfs/share
 if ! grep -q '[[:space:]]app-srv1$' /etc/hosts; then
   echo "10.10.40.10 app-srv1" | sudo tee -a /etc/hosts >/dev/null
 fi
+# Allow the NFS server on this isolated practice subnet.
+if sudo systemctl is-active --quiet firewalld; then
+  sudo firewall-cmd --permanent --add-service=nfs
+  sudo firewall-cmd --add-service=nfs
+fi
 ASTRONA_STUDENT_SCRIPT

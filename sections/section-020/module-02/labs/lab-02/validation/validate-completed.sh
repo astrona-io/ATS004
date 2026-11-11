@@ -41,10 +41,9 @@ esac
 has_option "$ssh_opts" _netdev       || fail "SSHFS fstab line has no _netdev option"
 has_option "$ssh_opts" IdentityFile  || fail "SSHFS fstab line has no IdentityFile= option (root needs a key file)"
 
-# --- Prove the lines work: drop both mounts, let mount -a bring them back ---
-sudo umount /mnt/nfs-reports 2>/dev/null
-sudo umount /mnt/sshfs-logs 2>/dev/null
-sudo mount -a >/dev/null 2>&1
+# Inspect the current mounts without repairing unfinished work.
+mountpoint -q /mnt/nfs-reports || fail "/mnt/nfs-reports is not mounted"
+mountpoint -q /mnt/sshfs-logs || fail "/mnt/sshfs-logs is not mounted"
 
 nfs_fstype=$(findmnt -no FSTYPE /mnt/nfs-reports 2>/dev/null)
 case "$nfs_fstype" in nfs|nfs4) ;; *) fail "after 'mount -a', /mnt/nfs-reports is not an NFS mount (found '$nfs_fstype'). Is the export fixed?" ;; esac
