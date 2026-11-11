@@ -29,7 +29,7 @@ if ! grep -q '[[:space:]]app-srv1$' /etc/hosts; then
 fi
 # Allow the NFS server on this isolated practice subnet.
 if sudo systemctl is-active --quiet firewalld; then
-  sudo firewall-cmd --permanent --add-service=nfs
-  sudo firewall-cmd --add-service=nfs
+  sudo firewall-cmd --permanent --zone=trusted --add-source=10.10.40.0/24
+  sudo firewall-cmd --zone=trusted --add-source=10.10.40.0/24
 fi
 ASTRONA_STUDENT_SCRIPT

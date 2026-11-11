@@ -15,11 +15,16 @@ if [ "$usage_kb" -gt 26000 ]; then
   exit 1
 fi
 
+if ! sudo repquota /quota2 | awk '$1 == "carol" && $2 ~ /^\+/ && $3 > 20480 && $3 <= 25600 && $4 == 20480 && $5 == 25600 {ok=1} END {exit !ok}'; then
+  echo "FAIL: carol must be over her 20M soft limit and within her 25M hard limit"
+  exit 1
+fi
+
 if [ ! -f /root/grace-evidence.txt ]; then
   echo "FAIL: /root/grace-evidence.txt not found - grace-period state was never captured"
   exit 1
 fi
-if ! grep -qE '^carol\b.*\*' /root/grace-evidence.txt; then
+if ! grep -qE '^carol[[:space:]]+\+' /root/grace-evidence.txt; then
   echo "FAIL: /root/grace-evidence.txt does not show carol marked over her soft limit"
   cat /root/grace-evidence.txt
   exit 1

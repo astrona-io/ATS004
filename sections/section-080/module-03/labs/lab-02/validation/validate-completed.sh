@@ -8,14 +8,14 @@ set -u
 fail() { echo "FAIL: $*"; exit 1; }
 
 # --- ext4: bob and carol have alice's limits (40M soft, 50M hard) ---
-user_report=$(sudo repquota -s /quota-ext 2>/dev/null)
+user_report=$(sudo repquota -v /quota-ext 2>/dev/null)
 [ -n "$user_report" ] || fail "repquota could not report on /quota-ext (are user quotas on?)"
 
 for user in alice bob carol; do
   line=$(echo "$user_report" | grep -E "^$user\b")
   [ -n "$line" ] || fail "no quota entry for $user on /quota-ext"
-  # Match soft immediately followed by hard, not a fixed column.
-  echo "$line" | grep -Pq '\b40M\s+50M\b' || fail "$user's block limits are not 40M soft / 50M hard: $line"
+  # Numeric reports include the status flags before usage and limits.
+  echo "$line" | awk '$4 == 40960 && $5 == 51200 {ok=1} END {exit !ok}' || fail "$user's block limits are not 40M soft / 50M hard: $line"
 done
 
 # --- XFS: group engineers has 50M soft / 80M hard ---

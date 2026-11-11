@@ -6,6 +6,10 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # configuring /etc/auto.master(.d) and the indirect map is the graded task.
 set -eu
 
+if ! command -v mount.nfs >/dev/null || ! command -v automount >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y autofs nfs-common
+fi
 sudo mkdir -p /mnt/auto
 
 # /etc/hosts entry so "data-001" resolves without relying on DNS.

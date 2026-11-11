@@ -25,7 +25,7 @@ sudo nano /etc/auto.net
 ```
 Add the wildcard rule to resolve client connections dynamically:
 ```text
-* -fstype=nfs,ro,soft 127.0.0.1:/var/nfs/exports/&
+* -fstype=nfs,ro,nobind 127.0.0.1:/var/nfs/exports/&
 ```
 
 ---
@@ -44,3 +44,5 @@ Add the wildcard rule to resolve client connections dynamically:
    ```bash
    mount | grep project-alpha
    ```
+
+Use `nobind` for this localhost export. Otherwise autofs can replace the NFS mount with a bind mount, which does not exercise the NFS client.
