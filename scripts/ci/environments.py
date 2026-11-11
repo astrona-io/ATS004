@@ -19,6 +19,25 @@ def discover(root):
                 if item['path'] in registered:
                     raise ValueError(f'Duplicate lab registration: {path}')
                 registered[item['path']] = item
+    question_ids = set()
+    for bank in sorted(root.rglob('quiz.yaml')):
+        data = yaml.safe_load(bank.read_text())
+        for question in data.get('questions', []):
+            identifier = question['id']
+            if identifier in question_ids:
+                raise ValueError(f'Duplicate question ID: {identifier}')
+            question_ids.add(identifier)
+            options = question['options']
+            option_ids = [option['id'] for option in options]
+            if question['type'] != 'single_choice' or len(set(option_ids)) != len(option_ids):
+                raise ValueError(f'Invalid single-choice options: {bank}: {identifier}')
+            if question['correct_option'] not in option_ids:
+                raise ValueError(f'Unknown correct option: {bank}: {identifier}')
+            if not question.get('source_readings'):
+                raise ValueError(f'Question has no supporting lesson: {bank}: {identifier}')
+            for reading in question['source_readings']:
+                if not (root / reading).is_file():
+                    raise ValueError(f'Missing question reading: {bank}: {reading}')
     names = set()
     found = set()
     environments = []
@@ -52,10 +71,25 @@ def discover(root):
         for script in directory.rglob('*.sh'):
             subprocess.run(['bash', '-n', str(script)], check=True)
         scenario_path = directory / 'testing/scenario.json'
-        if kind == 'lab' and not scenario_path.exists():
+        if not scenario_path.exists():
             raise ValueError(f'Missing lifecycle scenario: {relative}')
         if scenario_path.exists():
             scenario = json.loads(scenario_path.read_text())
+            grader_keys = {
+                vm.get('name', 'default') + '/' + item['name']
+                for vm in cfg['runtime']['qemu']
+                for scope in (cfg, vm)
+                for item in scope.get('validation', {}).get('scripts', [])
+            }
+            expected = set(scenario.get('initial_failures', {}))
+            for case in scenario.get('negative', []):
+                expected.update(case['failures'])
+            if expected - grader_keys:
+                raise ValueError(f'Unknown grader in {scenario_path}: {expected - grader_keys}')
+            if kind == 'lab' and (not scenario.get('solution') or not scenario.get('initial_failures')):
+                raise ValueError(f'Lab needs a solution and an intended initial failure: {scenario_path}')
+            if kind == 'playground' and not scenario.get('smoke'):
+                raise ValueError(f'Playground needs a smoke check: {scenario_path}')
             steps = scenario.get('solution', []) + scenario.get('smoke', [])
             for case in scenario.get('negative', []):
                 steps += case['apply'] + case['restore']

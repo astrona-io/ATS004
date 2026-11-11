@@ -28,7 +28,7 @@ def package(root, reports, output, version):
     if set(evidence) != {item['path'] for item in environments}:
         raise ValueError('Lifecycle reports must cover every registered lab and playground')
     revision = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
-    if any(report.get('revision') != revision for report in evidence.values()):
+    if any(report.get('revision') != revision or report.get('dirty') is not False for report in evidence.values()):
         raise ValueError('Every lifecycle report must test the exact packaged revision')
     if subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain', '--untracked-files=no'], text=True).strip():
         raise ValueError('Package only a clean committed revision')

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise a fresh QEMU environment without submitting (which destroys it)."""
 import argparse
+import hashlib
 import json
 import re
 import signal
@@ -47,6 +48,9 @@ class Lifecycle:
         revision = subprocess.run(['git', '-C', str(self.directory), 'rev-parse', 'HEAD'],
                                   capture_output=True, text=True)
         self.revision = revision.stdout.strip() if revision.returncode == 0 else None
+        dirty = subprocess.run(['git', '-C', str(self.directory), 'status', '--porcelain'],
+                               capture_output=True, text=True)
+        self.dirty = dirty.returncode != 0 or bool(dirty.stdout.strip())
         scenario = directory / 'testing/scenario.json'
         if scenario.exists():
             self.spec = json.loads(scenario.read_text())
@@ -123,7 +127,12 @@ class Lifecycle:
         path = (self.directory / item['script']).resolve()
         if not path.is_relative_to(self.directory):
             raise InfrastructureError(f'Script outside environment: {path}')
-        result = self.ssh(vm, path.read_text(), label, item.get('timeout', 300), learner=True)
+        source = path.read_text()
+        delimiter = 'ASTRONA_REFERENCE_' + hashlib.sha256(source.encode()).hexdigest()
+        command = ('script=$(mktemp)\ntrap \'rm -f "$script"\' EXIT\n'
+                   + 'cat >"$script" <<\'' + delimiter + "'\n" + source + '\n' + delimiter
+                   + '\nbash "$script" </dev/null\n')
+        result = self.ssh(vm, command, label, item.get('timeout', 300), learner=True)
         if result.returncode:
             raise InfrastructureError(f'{label} failed ({result.returncode}): {result.stdout}')
 
@@ -159,12 +168,12 @@ class Lifecycle:
         checked_grade(before)
         requested = self.ssh(vm, 'sudo systemd-run --on-active=2s /usr/sbin/reboot', 'reboot')
         checked_grade(requested)
-        deadline = time.monotonic() + 180
+        deadline = time.monotonic() + self.spec.get('reboot_timeout', 180)
         while time.monotonic() < deadline:
             time.sleep(5)
             after = self.ssh(vm, 'cat /proc/sys/kernel/random/boot_id', 'wait-for-reboot', 20)
             if after.returncode == 0 and after.stdout.strip() != before.stdout.strip():
-                ready = self.ssh(vm, 'timeout 90 cloud-init status --wait; test -d /run/systemd/system', 'boot-ready', 100)
+                ready = self.ssh(vm, 'set -eu; timeout 90 cloud-init status --wait; test -d /run/systemd/system', 'boot-ready', 100)
                 checked_grade(ready)
                 return
         raise InfrastructureError(f'{vm} did not complete a reboot')
@@ -228,7 +237,7 @@ class Lifecycle:
             for vm in self.handles:
                 try:
                     self.ssh(vm, 'uname -a; systemctl --failed --no-pager; '
-                             'ip -br address; lsblk -f; sudo journalctl -b -p warning -n 100 --no-pager',
+                             'ip -br address; ip route; sudo nft list ruleset; lsblk -f; sudo journalctl -b -p warning -n 100 --no-pager',
                              'diagnostics-' + vm, 30)
                 except Exception as exc:
                     print(f'Diagnostics unavailable: {exc}', file=sys.stderr)
@@ -238,7 +247,7 @@ class Lifecycle:
             except Exception as exc:
                 failure = failure or exc
             (self.output / 'result.json').write_text(json.dumps({
-                'environment': str(self.directory), 'revision': self.revision, 'status': 'failed' if failure else 'passed',
+                'environment': str(self.directory), 'revision': self.revision, 'dirty': self.dirty, 'status': 'failed' if failure else 'passed',
                 'error_type': type(failure).__name__ if failure else None,
                 'error': str(failure) if failure else None, 'steps': self.results,
                 'images': [vm['image'] for vm in self.config['runtime']['qemu']],

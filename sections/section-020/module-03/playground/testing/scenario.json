@@ -1,0 +1,12 @@
+{
+  "smoke": [
+    {
+      "vm": "server",
+      "script": "testing/smoke-0.sh"
+    },
+    {
+      "vm": "client",
+      "script": "testing/smoke-1.sh"
+    }
+  ]
+}
