@@ -38,6 +38,7 @@ sudo -u carol dd if=/dev/zero of=/quota2/carol/overfile bs=1M count=22
 Removing `bigfile` first returns usage below the soft limit. The 22M write then succeeds and starts a new grace period.
 
 ```bash
+sync
 sudo repquota -s /quota2 | sudo tee /root/grace-evidence.txt
 ```
 

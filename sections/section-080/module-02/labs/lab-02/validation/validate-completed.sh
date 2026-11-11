@@ -5,6 +5,9 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 sudo -n bash <<'GRADER_ROOT'
 set -u
 
+# Flush delayed allocation before reading the kernel quota counters.
+sync
+
 usage_kb=$(sudo du -sk /quota2/carol 2>/dev/null | awk '{print $1}')
 if [ -z "$usage_kb" ]; then
   echo "FAIL: could not read /quota2/carol usage"
