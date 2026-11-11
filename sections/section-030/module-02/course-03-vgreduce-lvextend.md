@@ -222,6 +222,8 @@ Down from the `553M` you saw at the end of the growing walkthrough, matching the
 
 ## Optional guided practice: Live extent migration
 
+Use this shorter exercise if you want guided practice first. The main migration exercise is [lab 038](./labs/lab-03/question.md), which also adds destination capacity. You can skip lab 032 after completing 038.
+
 You can now move extents off a live disk with `pvmove`, pull the empty disk out with `vgreduce`, and wipe its label with `pvremove`. The mission asks you to migrate the volume group `vg_migration` off one disk, reduce it, and remove the disk's PV label.
 
 The mission runs on its own training ship. A playground cannot be paused, so remove it first to free memory; it always starts clean again:

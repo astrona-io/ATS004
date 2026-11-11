@@ -139,6 +139,8 @@ None of this is optional because LVM asked nicely — it's a different layer's j
 
 ## Optional advanced practice: Evacuate a middle PV
 
+This is an optional variation after [lab 038](./labs/lab-03/question.md). Attempt it when you want practice choosing existing destination capacity across a three-disk layout.
+
 You can now remove any one disk from a pool, even when its extents are mixed with the extents of other volumes. The mission asks you to remove `disk2` from the pool `vg_split`, which has three disks and mixed extents, without losing data.
 
 The mission runs on its own training ship. A playground cannot be paused, so remove it first to free memory; it always starts clean again:
