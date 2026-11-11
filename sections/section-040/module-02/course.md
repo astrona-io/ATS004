@@ -49,3 +49,9 @@ Start the playground and connect to it with `astrona ssh section-040-module-02-p
 3. [Making Swap Persistent in /etc/fstab](./course-03-persistence-in-fstab.md): the fstab lines, the safe check, and your graded mission.
 4. [Labels, the Swap Table and Fixing a Swap That Will Not Start](./course-04-labels-swap-table-and-troubleshooting.md): reading `/proc/swaps` and diagnosing a failed `swapon`.
 5. [Wrap-Up: Mission Debrief](./course-05-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Swap Partition Formatting & Priorities Lab](labs/lab-01/question.md): Format the dedicated disk as swap and activate it; Give the disk swap priority 10 and the existing /swapfile priority 5; Persist both swap areas with their priorities in /etc/fstab.
+- [Swap Space Management Capstone Lab](../capstone/labs/lab-01/question.md): Create, secure and activate a 2G swap file and persist it in /etc/fstab; Find the unformatted partition with lsblk and activate it as swap; Prefer the partition by giving it priority 10 and the swap file priority 5.

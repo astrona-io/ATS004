@@ -9,3 +9,14 @@ The `/quota` filesystem is already mounted with `usrquota,grpquota` options, but
 3. Set a block quota for `bob`: 20M soft, 30M hard (no inode limit).
 4. Set a block quota for group `team`: 100M soft, 120M hard (no inode limit).
 5. Confirm the limits with `repquota -s /quota`.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-02](../../course.md).
+
+The grader checks:
+
+- Confirms user and group quotas are enabled and limits are set correctly.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

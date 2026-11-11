@@ -10,3 +10,14 @@ Astronaut, a new cargo hold has just been fitted to your training ship. It is a 
 4. Create an empty marker file named `completed` directly inside the mounted directory: `/mnt/backup-black/completed`.
 
 The grader checks the live machine: an ext4 filesystem must be mounted at `/mnt/backup-black`, and the file `completed` must exist on it.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-01](../../course.md).
+
+The grader checks:
+
+- Confirms an ext4 filesystem is mounted at /mnt/backup-black and contains the completed file.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

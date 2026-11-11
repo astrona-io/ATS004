@@ -46,3 +46,9 @@ Start the playground and connect to it with `astrona ssh section-040-module-01-p
 3. [Making a Swap File Survive a Reboot](./course-03-persisting-a-swap-file.md): the `/etc/fstab` line, the safe check, and your first graded mission.
 4. [Tuning Swap Behaviour with swappiness](./course-04-swappiness-tuning.md): read the dial, turn it, and keep it across reboots.
 5. [Wrap-Up: Mission Debrief](./course-05-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Swap File Allocation & Security Lab](labs/lab-01/question.md): Create a 512MB swap file at /swapfile that only root can read and write; Format and activate /swapfile as swap space; Add /swapfile to /etc/fstab so it survives a reboot.
+- [Swap Space Management Capstone Lab](../capstone/labs/lab-01/question.md): Create, secure and activate a 2G swap file and persist it in /etc/fstab; Find the unformatted partition with lsblk and activate it as swap; Prefer the partition by giving it priority 10 and the swap file priority 5.

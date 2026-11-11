@@ -13,3 +13,14 @@ Astronaut, a new cargo hold has been fitted to your ship for application data. A
 ## Prove the mount survives a reboot
 
 Check `sudo findmnt --verify` before rebooting. Run `sudo reboot`, reconnect after startup, and inspect `findmnt -no SOURCE,FSTYPE,OPTIONS /mnt/appdata`. The assigned disk must mount automatically with `noatime`. CI repeats the grader after a real reboot; a line in `/etc/fstab` alone does not prove that the mount works.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-05](../../course.md).
+
+The grader checks:
+
+- Confirms UUID-keyed, correctly-optioned, persistent fstab entry.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

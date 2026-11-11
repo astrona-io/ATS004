@@ -13,3 +13,14 @@ Astronaut, the mirror `/dev/md0` is a RAID 1 array on two disks. It is mounted a
 4. Find out whether the disk with the old label shows a RAID label (`mdadm --examine`). If a leftover array holds it, stop that array first. Then erase the label with `mdadm --zero-superblock` and confirm that `mdadm --examine` finds no label.
 
 The grader checks that `/dev/md0` is a clean RAID 1 with two active members, mounted at `/mnt/raid` with its file, and that `mdadm --examine` reports no md superblock on the third disk.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-04](../../course.md).
+
+The grader checks:
+
+- Confirms md0 is running again with both members and its data, and that the spare disk has no RAID label.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

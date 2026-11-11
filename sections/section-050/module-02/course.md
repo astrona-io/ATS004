@@ -48,3 +48,9 @@ Start the playground and connect with `astrona ssh section-050-module-02-playgro
 3. [Wildcards: One Line for Many Exports](./course-03-wildcards.md): `*` and `&`, the timeout on the master line, and your graded mission.
 4. [Exceptions: One Key With Its Own Options](./course-04-exceptions-and-precedence.md): explicit keys beat the wildcard.
 5. [Wrap-Up: Mission Debrief](./course-05-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Network autofs Wildcard Mounts Lab](labs/lab-01/question.md): Add an indirect map for /mnt/net to /etc/auto.master with a 120 second timeout; Write a wildcard entry that uses * and & to mount any NFS export under /var/nfs/exports on demand; Trigger the NFS mount by accessing /mnt/net/project-alpha.
+- [Filesystem Automount with autofs Capstone Lab](../capstone/labs/lab-01/question.md): Configure an autofs indirect map so that /mnt/auto/shared mounts data-001:/exports/shared on demand; Set a 300 second idle timeout so the share is released after five minutes; Keep the share out of /etc/fstab and prove access triggers a live mount.

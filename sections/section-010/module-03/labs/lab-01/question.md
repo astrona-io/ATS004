@@ -10,3 +10,14 @@ Astronaut, a new 2 GB disk has just been attached to your ship. It will carry se
 4. Format the mapped device with an `ext4` filesystem.
 5. Mount the formatted volume at `/mnt/secure-data`.
 6. Create an empty file named `/mnt/secure-data/sealed` to prove that the mount is writable.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-03](../../course.md).
+
+The grader checks:
+
+- Confirms LUKS container, formatting, and mounting.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

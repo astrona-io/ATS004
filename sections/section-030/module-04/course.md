@@ -34,3 +34,11 @@ After this module you can:
 You should know RAID levels, `mdadm --create`, `/proc/mdstat`, and why arrays need `mdadm.conf`.
 
 The linked playground gives you an Ubuntu server VM with a **pre-built RAID 5** at `/dev/md0` across three disks, an ext4 filesystem mounted at `/mnt/raid` with sample data, and a **fourth raw disk** as the spare. `/etc/playground-raid` records the kernel names as `member1`/`member2`/`member3`/`spare` — source that file rather than guessing device letters. Run the command blocks in each part in that VM after `astrona ssh section-030-module-04-playground`.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [RAID Failure, Replacement & Rebuild Lab](labs/lab-01/question.md): Mark a RAID 5 member as failed and remove it from /dev/md0; Add the spare disk as a replacement and wait for the rebuild to finish; Confirm the array is clean with three active devices and the data file is intact.
+- [RAID Grow & Failure Monitoring Lab](labs/lab-02/question.md): Add a fourth disk to the RAID 5 array and reshape it to four devices; Grow the ext4 filesystem on /dev/md0 to use the new capacity with the data file intact; Configure failure notification with a MAILADDR line in /etc/mdadm/mdadm.conf.
+- [RAID Stop, Reassemble and Wipe Lab](labs/lab-03/question.md): Stop a mirror and assemble it again with its data intact; Clear a leftover RAID signature from a spare disk with --zero-superblock; Prove the spare no longer belongs to any array.
+- [LVM Volume Groups and Logical Volumes Capstone Lab](../capstone/labs/lab-01/question.md): Find the physical volume that holds vol1/data1 and remove it from vol1; Create the volume group vol2 on the freed disk with a 50M logical volume named p1; Format vol2/p1 with ext4.

@@ -11,3 +11,14 @@ Astronaut, a new hold needs flexible shelving that can be photographed before ri
 5. Take a **read-only** snapshot of the subvolume `data`, named `data-snapshot`, at the top of the filesystem (next to `data`).
 
 The grader checks the live machine: the filesystem type and label, the subvolumes and the read-only flag of the snapshot, what is mounted at `/srv/vault`, the line in `/etc/fstab`, and that the snapshot holds `cargo.txt`.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-10](../../course.md).
+
+The grader checks:
+
+- Confirms the Btrfs label, the persistent subvolume mount by UUID, and a read-only snapshot.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

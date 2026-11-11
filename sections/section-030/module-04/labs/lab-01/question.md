@@ -9,3 +9,14 @@ A pre-built RAID5 array `/dev/md0` (three member disks) is mounted at `/mnt/raid
 3. Add `$spare` to the array as its replacement.
 4. Wait for the rebuild to finish.
 5. Confirm the array is back to a healthy `clean` state with all three slots active, and that `/mnt/raid/data.txt` still has its original content.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-04](../../course.md).
+
+The grader checks:
+
+- Confirms the failed member was replaced and the array rebuilt to a clean state.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

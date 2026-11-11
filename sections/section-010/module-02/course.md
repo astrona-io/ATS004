@@ -43,3 +43,9 @@ Read the parts in this order. The mission comes right after the part it tests.
 2. [Write an Aligned GPT Partition](./course-02-write-an-aligned-gpt-partition.md): write a table with `fdisk` and `parted`, and why the first partition starts at sector 2048. Ends with your mission.
 3. [When the Kernel Keeps the Old Table](./course-03-when-the-kernel-keeps-the-old-table.md): why the kernel's copy of the table can lag behind the disk, and how `partprobe` fixes it.
 4. [Wrap-Up: Mission Debrief](./course-04-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Partitioning Raw Storage: GPT/MBR Lab](labs/lab-01/question.md): Find the new 2 GB raw disk with standard discovery commands; Write a GPT partition table to the disk; Create a first partition aligned to start at sector 2048.
+- [Local Storage Integration Capstone Lab](../capstone/labs/lab-01/question.md): Find the unused disk, format it with ext4, mount it at /mnt/backup-black and add an empty completed file; Compare usage of the two mounted disks with df and empty the hidden .trash folder on the fuller one; Find the process using more memory and unmount the disk that holds its executable.

@@ -8,3 +8,14 @@ You are asked to set up a dedicated swap partition on a newly attached 1GB raw d
 2. Enable it as swap immediately.
 3. Configure the swap priority so that this fast swap partition has priority **10**, while the existing swap file `/swapfile` has priority **5**.
 4. Save the configuration in `/etc/fstab` so that both swap zones are persistent and retain their priorities after reboot.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-02](../../course.md).
+
+The grader checks:
+
+- Confirms swap partition formatting and priority queue scheduling.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

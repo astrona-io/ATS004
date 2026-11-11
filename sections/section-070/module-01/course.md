@@ -51,3 +51,9 @@ Start the playground and connect to it with `astrona ssh section-070-module-01-p
 3. [Reading iostat Columns](./course-03-reading-iostat-columns.md): the `iostat -xz 1` form, each column, and why `%util` can mislead.
 4. [Watching a Device Saturate](./course-04-watching-a-device-saturate.md): drive a disk to its limit with both load shapes and read the verdict.
 5. [Wrap-Up: Mission Debrief](./course-05-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Storage Performance Monitoring: iostat Wait Latency Lab](labs/lab-01/question.md): Watch extended device statistics with iostat to spot the saturated disk; Record the short kernel name of the busiest disk in /opt/course/audit/slow_device.txt.
+- [Storage Performance Monitoring Capstone Lab](../capstone/labs/lab-01/question.md): Identify the saturated block device and the mountpoint it backs; Identify the process that generates the load and whether the load is read or write; Record device, pid, process, direction and mountpoint in /opt/course/audit/io-report.txt.

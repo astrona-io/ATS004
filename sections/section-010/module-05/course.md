@@ -40,3 +40,9 @@ Start the playground and connect to it with `astrona ssh section-010-module-05-p
 1. [fstab Fields and Stable Identifiers](./course-01-fields-and-stable-identifiers.md): the six fields of an entry, and why `UUID=` beats a `/dev/` path.
 2. [Options and Verifying Before You Trust It](./course-02-options-and-verifying.md): `nofail`, `_netdev` and `noatime`, and the safe check with `findmnt --verify` and `mount -a` before a reboot.
 3. [Wrap-Up: Mission Debrief](./course-03-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Persistent fstab Mounting Lab](labs/lab-01/question.md): Format the raw disk with ext4 and write an /etc/fstab entry for /mnt/appdata keyed by its real UUID; Set the nofail option with dump 0 and pass 2, then mount the entry with mount -a; Check the entry with findmnt --verify so it is safe to trust at boot.
+- [Local Storage Integration Capstone Lab](../capstone/labs/lab-01/question.md): Find the unused disk, format it with ext4, mount it at /mnt/backup-black and add an empty completed file; Compare usage of the two mounted disks with df and empty the hidden .trash folder on the fuller one; Find the process using more memory and unmount the disk that holds its executable.

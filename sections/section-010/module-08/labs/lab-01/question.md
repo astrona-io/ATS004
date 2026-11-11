@@ -9,3 +9,14 @@ Astronaut, before a risky repair, mission control wants an exact copy of one car
 3. Verify that the clone is an exact match of the source with a checksum comparison.
 
 The grader compares the two disks byte for byte, and then mounts the clone read-only to check its label and the file on it.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-08](../../course.md).
+
+The grader checks:
+
+- Confirms the clone disk is a byte-for-byte match of the source disk.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

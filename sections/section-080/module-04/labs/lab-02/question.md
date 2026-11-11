@@ -16,3 +16,14 @@ Astronaut, a new service called `acme` was unpacked into the staging directory `
 3. Create a **symbolic link** named `/usr/local/bin/acme` that points to `/usr/local/bin/acme-report`.
 4. Create a **symbolic link** named `/var/lib/acme/current.log` that points to `/var/log/acme/acme.log`.
 5. Check the links with `ls -li`, `readlink -f` and `stat -c '%i %h %n'`.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-04](../../course.md).
+
+The grader checks:
+
+- Confirms the four files are in their FHS places, the hard link shares an inode, and both symbolic links resolve.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

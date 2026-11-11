@@ -52,3 +52,10 @@ Start the playground and connect to it with `astrona ssh section-070-module-02-p
 3. [lsof: Which File, Which Process](./course-03-lsof-files-and-processes.md): from a PID to its files, from a file to its users, and deleted files that still use space. A graded mission ends this part.
 4. [Closing the Loop](./course-04-closing-the-loop.md): chain device, mount, process and file into one diagnosis.
 5. [Wrap-Up: Mission Debrief](./course-05-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Free Hidden Space and Pin the Scheduler Lab](labs/lab-02/question.md): Find the process that holds a deleted file open with lsof +L1; Free the hidden space by stopping that process; Make a disk's I/O scheduler stick with a udev rule.
+- [Storage Performance: iotop and lsof Active Profiling Lab](labs/lab-01/question.md): Identify the PID of the process generating heavy writes with iotop or pidstat; Find the log file that process writes to with lsof and record both findings in culprit.txt.
+- [Storage Performance Monitoring Capstone Lab](../capstone/labs/lab-01/question.md): Identify the saturated block device and the mountpoint it backs; Identify the process that generates the load and whether the load is read or write; Record device, pid, process, direction and mountpoint in /opt/course/audit/io-report.txt.

@@ -41,3 +41,9 @@ Start the playground and connect to it with `astrona ssh section-010-module-04-p
 1. [Filesystem Corruption and the fsck Repair Model](./course-01-fsck-repair-model.md): how a crash leaves a filesystem's lists disagreeing, what the superblock and the journal store, and how to run `fsck` safely.
 2. [Labels, UUIDs and Tuning Check Intervals](./course-02-labels-uuids-and-tuning.md): give a filesystem a stable label, mount it by UUID, and plan regular checks with `tune2fs`.
 3. [Wrap-Up: Mission Debrief](./course-03-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Filesystem Repairs, Labeling, & UUIDs Lab](labs/lab-01/question.md): Repair a corrupted ext4 filesystem offline with e2fsck; Give the repaired filesystem the label RECOVERED_VOL and read its UUID; Mount it at /mnt/recovered through an /etc/fstab entry keyed by UUID.
+- [Local Storage Integration Capstone Lab](../capstone/labs/lab-01/question.md): Find the unused disk, format it with ext4, mount it at /mnt/backup-black and add an empty completed file; Compare usage of the two mounted disks with df and empty the hidden .trash folder on the fuller one; Find the process using more memory and unmount the disk that holds its executable.

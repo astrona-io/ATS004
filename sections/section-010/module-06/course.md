@@ -44,3 +44,9 @@ Start the playground and connect to it with `astrona ssh section-010-module-06-p
 2. [Writing Native .mount and .automount Units](./course-02-native-mount-and-automount-units.md): write a `.mount` and an `.automount` unit by hand, and see what `daemon-reload`, `enable` and `start` each do.
 3. [The fstab Shortcut and Common Pitfalls](./course-03-fstab-shortcut-and-pitfalls.md): get on-demand mounting from one `/etc/fstab` line, and why it never mixes with a hand-written unit.
 4. [Wrap-Up: Mission Debrief](./course-04-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [systemd .mount and .automount Units Lab](labs/lab-01/question.md): Write a native srv-appdata.mount unit that mounts an ext4 disk at /srv/appdata; Write a paired srv-appdata.automount unit with an idle timeout and enable it instead of the mount unit; Trigger the mount by accessing /srv/appdata and confirm the mount unit becomes active.
+- [Local Storage Integration Capstone Lab](../capstone/labs/lab-01/question.md): Find the unused disk, format it with ext4, mount it at /mnt/backup-black and add an empty completed file; Compare usage of the two mounted disks with df and empty the hidden .trash folder on the fuller one; Find the process using more memory and unmount the disk that holds its executable.

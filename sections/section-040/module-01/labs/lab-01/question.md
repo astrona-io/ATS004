@@ -9,3 +9,14 @@ Configure a temporary memory expansion by allocating and enabling a secure swap 
 3. Format `/swapfile` as a swap space.
 4. Enable the swap file so that the system immediately gains virtual memory.
 5. Add an entry to `/etc/fstab` to make `/swapfile` persistent across reboots.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-01](../../course.md).
+
+The grader checks:
+
+- Confirms swapfile creation, permissions, and persistent state.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

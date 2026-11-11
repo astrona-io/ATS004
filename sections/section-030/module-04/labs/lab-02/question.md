@@ -18,3 +18,14 @@ than guessing device letters.
 6.  Set up failure notification: add a `MAILADDR` line to
     `/etc/mdadm/mdadm.conf` and confirm a test alert fires with
     `mdadm --monitor`.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-04](../../course.md).
+
+The grader checks:
+
+- Confirms the array was grown to four disks, the filesystem extended, and monitoring configured.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

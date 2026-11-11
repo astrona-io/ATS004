@@ -42,3 +42,9 @@ Start the playground and connect to it with `astrona ssh section-010-module-10-p
 1. [Creating Btrfs and Subvolumes](./course-01-creating-btrfs-and-subvolumes.md): copy-on-write in plain words, formatting, mounting, inspecting, subvolumes and a persistent subvolume mount.
 2. [Snapshots and Resizing](./course-02-snapshots-and-resizing.md): read-only and writable snapshots, deleting subvolumes, growing and shrinking a mounted filesystem, and why `df` misleads.
 3. [Wrap-Up: Mission Debrief](./course-03-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Btrfs Subvolume and Snapshot Lab](labs/lab-01/question.md): Format the disk as Btrfs with the label VAULT and create the subvolume data; Mount the subvolume at /srv/vault with subvol=data and a persistent /etc/fstab line that uses the UUID; Take a read-only snapshot named data-snapshot of the subvolume.
+- [Local Storage Integration Capstone Lab](../capstone/labs/lab-01/question.md): Find the unused disk, format it with ext4, mount it at /mnt/backup-black and add an empty completed file; Compare usage of the two mounted disks with df and empty the hidden .trash folder on the fuller one; Find the process using more memory and unmount the disk that holds its executable.

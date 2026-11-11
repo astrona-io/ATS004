@@ -47,3 +47,9 @@ Connect with `astrona ssh section-020-module-03-playground` and choose `client`.
 2. [The iSCSI Initiator: Discover, Log In and Mount](./course-02-iscsi-initiator-login-and-mount.md): find a target, log in, locate the new disk, format and mount it.
 3. [Making the Disk Come Back After a Restart](./course-03-persistence-and-pitfalls.md): the `_netdev` fstab line, automatic login, and the mission.
 4. [Wrap-Up: Mission Debrief](./course-04-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [iSCSI Disk on a Remote Server Lab](labs/lab-01/question.md): Discover and log in to an iSCSI target and find the new disk by its by-path name; Create an ext4 filesystem on the iSCSI disk and mount it at /mnt/cargo; Add a UUID= fstab line with _netdev and set node.startup to automatic.
+- [Remote Filesystems: SSHFS and NFS Capstone Lab](../capstone/labs/lab-01/question.md): Mount app-srv1:/data-export on terminal with sshfs, read-write and with allow_other; Export /nfs/share from terminal read-only to the 10.10.40.0/24 network; Mount terminal:/nfs/share read-only at /nfs/terminal/share on app-srv1.

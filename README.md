@@ -89,3 +89,8 @@ This curriculum is designed with strict educational boundaries. To align perfect
 ## Support This Project
 
 ATS004 is free LFCS training material. If it helped you on your administrative journey, consider supporting ongoing work and resource development via [Liberapay](https://liberapay.com/Astrona.io).
+
+<!-- validation-links -->
+## Coverage, testing and releases
+
+See the [lesson and lab coverage map](docs/coverage.md), [validation and OCI release guide](docs/validation-and-releases.md), and [authoring guidance](docs/authoring.md). The coverage map lists every registered lab; CI also discovers every playground.

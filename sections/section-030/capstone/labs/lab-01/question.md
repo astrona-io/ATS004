@@ -12,3 +12,16 @@ Your tasks:
 2. Create a new volume group named `vol2` that uses that freed disk.
 3. Create a logical volume named `p1` in volume group `vol2`, with a size of `50M`.
 4. Format the logical volume `p1` with `ext4`.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-01](../../../module-01/course.md), [module-02](../../../module-02/course.md), [module-03](../../../module-03/course.md), [module-04](../../../module-04/course.md).
+
+The grader checks:
+
+- Confirms the 'lab030-b' disk (resolved via by-id serial) is no longer a PV member of vol1.
+- Confirms vol2 exists with the 'lab030-b' disk as its physical volume.
+- Confirms vol2/p1 is a ~50M logical volume formatted ext4.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

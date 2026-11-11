@@ -15,3 +15,14 @@ soft / 25M hard.
     that state, save `repquota -s /quota2` output to
     `/root/grace-evidence.txt` so it shows carol marked over her soft
     limit with a live grace countdown.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-02](../../course.md).
+
+The grader checks:
+
+- Confirms the hard limit was actually enforced and the grace-period state was captured.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

@@ -10,3 +10,14 @@ Astronaut, a crew member needs a drive that every ship in the galaxy can read. A
 4. Prove it works: as your normal user (no `sudo`), create a file at `/mnt/usbdata/proof.txt`.
 
 The grader checks the live machine: the filesystem type and label on the disk, what is mounted at `/mnt/usbdata` and with which `uid=`, and who owns and can write `proof.txt`.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-07](../../course.md).
+
+The grader checks:
+
+- Confirms FAT32 formatting, labeling, and a uid/gid-mounted writable mount.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

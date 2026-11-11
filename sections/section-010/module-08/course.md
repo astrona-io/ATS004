@@ -47,3 +47,9 @@ Start the playground and connect to it with `astrona ssh section-010-module-08-p
 1. **[Cloning a Disk with dd](./course-01-cloning-a-disk-with-dd.md)**: what `dd` copies, why swapping `if=` and `of=` destroys data, and how to copy a disk to a file and back.
 2. **[File-Level Backups with tar, and Verifying Them](./course-02-tar-backups-and-verifying.md)**: archiving and restoring with `tar`, when it beats `dd`, and proving a copy is good with checksums. Ends with your mission.
 3. **[Wrap-Up: Mission Debrief](./course-03-wrap-up.md)**: what you learned, your mission, and a short self-check.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Disk Cloning & Backup Lab](labs/lab-01/question.md): Tell the source disk from the blank clone disk before writing anything; Clone the source disk onto the clone disk byte for byte with dd; Prove the clone matches the source with a checksum comparison.
+- [Local Storage Integration Capstone Lab](../capstone/labs/lab-01/question.md): Find the unused disk, format it with ext4, mount it at /mnt/backup-black and add an empty completed file; Compare usage of the two mounted disks with df and empty the hidden .trash folder on the fuller one; Find the process using more memory and unmount the disk that holds its executable.

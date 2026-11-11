@@ -11,3 +11,14 @@ Astronaut, the spool hold at `/mnt/spool` (disk `/dev/disk/by-id/virtio-lab07020
 5. Reload the rules and trigger them, then check `cat /sys/block/<disk>/queue/scheduler`: `mq-deadline` is shown in square brackets.
 
 The grader compares the PID in `/root/holder-pid.txt` with the real holder, checks that the process is gone and the space is back, and reads the rule file and the live scheduler setting.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-02](../../course.md).
+
+The grader checks:
+
+- Confirms the holder was recorded and stopped, the space is free, and a udev rule sets mq-deadline on the spool disk.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

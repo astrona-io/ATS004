@@ -11,3 +11,14 @@ You are tasked with shrinking a production Volume Group named `vg_migration` by 
 2. Once the physical volume `/dev/disk/by-id/virtio-lab032-disk1` is completely free, remove it from the Volume Group `vg_migration` using `vgreduce`.
 3. Erase LVM signatures on `/dev/disk/by-id/virtio-lab032-disk1` using `pvremove` to return it to a raw state.
 4. Ensure the logical volume at `/mnt/lvm-migration` remains fully readable and writable throughout the process.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-02](../../course.md).
+
+The grader checks:
+
+- Confirms extent migration and removal of disk1 from the VG.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.
