@@ -19,7 +19,7 @@ python3 scripts/ci/lifecycle.py <environment-directory> --output test-results
 
 The lifecycle runner refuses to replace an existing environment of the same name. It captures each command, records the source revision and whether the checkout was modified, records tool/image details, and destroys its environment even after a failed check. It does not run `astrona submit`, because verification needs the VM for later negative and reboot checks.
 
-The `labs` workflow discovers every lab and playground on pull requests, main-branch pushes, manual runs and a weekly schedule. Its final `all-environments-pass` job requires every matrix entry to pass. A missing scenario, malformed reference, unknown grader, unsuccessful bootstrap or cleanup is a failure. Logs are retained as workflow artifacts for 14 days.
+The `labs` workflow discovers every main-path, optional and legacy lab and every playground on pull requests, main-branch pushes, manual runs and a weekly schedule. Its final `all-environments-pass` job requires every matrix entry to pass. A missing scenario, malformed reference, unknown grader, unsuccessful bootstrap or cleanup is a failure. Logs are retained as workflow artifacts for 14 days.
 
 ## VM images
 
@@ -42,3 +42,5 @@ tar -xzf course.tar.gz
 ```
 
 The version above is an example, not a claim that it has been published. `course.json` records the source commit and all lifecycle results. For an immutable reference, resolve the tag with `oras resolve` and pull by its returned digest. GitHub Actions uses its scoped package token to publish to GHCR; no Docker Hub credentials are needed.
+
+Discovery also checks `practice.yaml` replacements and rejects identical grader sets in the main course. See [optional and legacy exercises](practice-variants.md).

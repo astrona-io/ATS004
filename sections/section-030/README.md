@@ -127,3 +127,7 @@ All four modules are paired with a graded sandbox lab; modules 3–4 (RAID) also
 Test your theoretical knowledge and diagnostic reasoning before tackling the lab missions:
 
 *   **[Take the Section 030 Knowledge Check Quiz](./quiz.yaml)**
+
+## LVM migration practice
+
+Use [lab 038](module-02/labs/lab-03) for the main migration exercise. Labs 032 and 039 are optional guided and advanced variants; see [practice variants](../../docs/practice-variants.md).

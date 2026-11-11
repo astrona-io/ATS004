@@ -1,0 +1,61 @@
+# Exercises outside the ordered course. Paths and runtime IDs stay usable.
+labs:
+- type: lab
+  title: 'Advanced LVM: Live Extent Migration & VG Reduction Lab'
+  path: sections/section-030/module-02/labs/lab-01
+  difficulty: intermediate
+  estimated_duration: 20m
+  topic: lvm
+  task_kind: migration
+  tags:
+  - pvmove
+  - vgreduce
+  - by-id-paths
+  - findmnt
+  learning_goals:
+  - Move every allocated extent off the old disk with pvmove while the volume stays mounted
+  - Remove the emptied disk from vg_migration with vgreduce and wipe its label with pvremove
+  - Confirm the logical volume is still mounted at /mnt/lvm-migration with its data intact
+  resources:
+  - name: pvmove(8) manual page
+    url: https://man7.org/linux/man-pages/man8/pvmove.8.html
+  - name: vgreduce(8) manual page
+    url: https://man7.org/linux/man-pages/man8/vgreduce.8.html
+  - name: pvremove(8) manual page
+    url: https://man7.org/linux/man-pages/man8/pvremove.8.html
+  status: optional
+  reason: Guided introduction with destination capacity already available.
+  replacement: sections/section-030/module-02/labs/lab-03
+  lessons:
+  - sections/section-030/module-02/course.md
+- type: lab
+  title: 'LVM: Removing One PV Out of Three, Mixed Extents Lab'
+  path: sections/section-030/module-02/labs/lab-04
+  difficulty: intermediate
+  estimated_duration: 20m
+  topic: lvm
+  task_kind: migration
+  tags:
+  - pvmove
+  - vgreduce
+  - by-id-paths
+  - findmnt
+  learning_goals:
+  - Show with lvs -o +devices that lv_data spreads across three disks
+  - Evacuate the middle disk with pvmove onto the free space of the other two, then remove it with vgreduce and
+    pvremove
+  - Confirm vg_split keeps two physical volumes and lv_data stays mounted at its original size with data intact
+  resources:
+  - name: pvmove(8) manual page
+    url: https://man7.org/linux/man-pages/man8/pvmove.8.html
+  - name: vgreduce(8) manual page
+    url: https://man7.org/linux/man-pages/man8/vgreduce.8.html
+  - name: pvremove(8) manual page
+    url: https://man7.org/linux/man-pages/man8/pvremove.8.html
+  - name: lvs(8) manual page
+    url: https://man7.org/linux/man-pages/man8/lvs.8.html
+  status: optional
+  reason: 'Advanced variation: evacuate a middle PV across existing disks without adding capacity.'
+  replacement: sections/section-030/module-02/labs/lab-03
+  lessons:
+  - sections/section-030/module-02/course.md

@@ -1,5 +1,7 @@
 # Question
 
+**Optional practice.** Advanced variation: evacuate a middle PV across existing disks without adding capacity. The main learning path uses [lab 038](../lab-03/README.md). This ID remains runnable and covered by CI.
+
 Solve this question on: `terminal`
 
 A Volume Group named `vg_split` spans three disks, and a single Logical Volume named `lv_data` already has its extents spread across all three of them:
@@ -15,14 +17,14 @@ A Volume Group named `vg_split` spans three disks, and a single Logical Volume n
 3. Once `disk2` is completely free, remove it from `vg_split` with `vgreduce`.
 4. Erase its LVM signature with `pvremove`, returning it to a raw state.
 5. Confirm `vg_split` ends up with exactly two PVs, and that `lv_data` remains fully readable and writable at its original size throughout.
-<!-- curriculum-links -->
 
+<!-- curriculum-links -->
 ## Related lessons and assessment
 
-Read [module-02](../../course.md).
+Read [section-030/module-02](../../course.md).
 
 The grader checks:
 
 - Confirms disk2 was evacuated and removed while disk1/disk3 kept the LV intact.
 
-Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.
+Inspect your work before submitting. Submission ends this environment.

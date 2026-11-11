@@ -11,3 +11,9 @@ Bootstrap prepares the broken or incomplete starting point. It must not perform 
 Add a `testing/scenario.json` with an intended initial failure, the reference solution and negative cases for realistic wrong fixes. Restore after each negative case, then require every grader to pass. Add a real reboot when persistence is promised. A configuration-file match alone is not proof of live behavior or successful boot. Add a focused smoke script when a playground needs a prepared service or fixture.
 
 Keep infrastructure assumptions in `validation-and-releases.md`. Do not describe a check as passing until its runtime evidence exists. Preserve failed-run logs long enough to diagnose bootstrap, grading, restore and cleanup separately.
+
+## Distinct exercises and optional practice
+
+Before adding a lab, compare its starting state, required result and graders with existing exercises. Narrow a module lab to its own skill; an integration exercise must combine outcomes already taught. A different title or filename does not make a copied assessment distinct. Discovery rejects byte-identical grader sets in the main course; reviewers still need to assess semantic overlap.
+
+Keep the ordered course in `astrona.yaml`. Register an optional variant or retired exercise in `practice.yaml`, with its reason, lessons and main-path replacement. Preserve existing paths and runtime IDs. Remove its question and launch entry from the ordered course, label its task and README, and update the coverage map and lesson links. CI continues to validate and execute these compatibility exercises.

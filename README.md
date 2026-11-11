@@ -2,7 +2,7 @@
 
 [![Liberapay](https://img.shields.io/badge/Liberapay-Support_Astrona.io-F6C915?logo=liberapay&logoColor=black&style=for-the-badge)](https://liberapay.com/Astrona.io)
 
-Welcome to **ATS004**, a comprehensive, free training curriculum designed to help you fully master and pass the **Storage** domain of the **Linux Foundation Certified System Administrator (LFCS)** exam. 
+Welcome to **ATS004**, a comprehensive, free training curriculum designed to help you fully master and pass the **Storage** domain of the **Linux Foundation Certified System Administrator (LFCS)** exam.
 
 Storage represents **20% of the total LFCS exam weight**. This repository bridges theoretical operating system design with real-world, command-line muscle memory, transforming you from a Linux beginner into a confident systems administrator.
 
@@ -94,3 +94,7 @@ ATS004 is free LFCS training material. If it helped you on your administrative j
 ## Coverage, testing and releases
 
 See the [lesson and lab coverage map](docs/coverage.md), [validation and OCI release guide](docs/validation-and-releases.md), and [authoring guidance](docs/authoring.md). The coverage map lists every registered lab; CI also discovers every playground.
+
+## LVM migration practice
+
+Use [lab 038](sections/section-030/module-02/labs/lab-03) for the main migration exercise. Labs 032 and 039 are optional guided and advanced variants; see [practice variants](docs/practice-variants.md).
