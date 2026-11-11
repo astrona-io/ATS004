@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Confirms vol2/p1 exists, is ~50M (rounded to extent size), and is ext4.
 
 set -u
@@ -26,3 +28,4 @@ fi
 
 echo "PASS: vol2/p1 is a ${size_mib}m ext4 logical volume"
 exit 0
+ASTRONA_STUDENT_SCRIPT

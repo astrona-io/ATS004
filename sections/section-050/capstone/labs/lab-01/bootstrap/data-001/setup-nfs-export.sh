@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: fully pre-configures data-001 as the NFS export source. Not
 # part of the graded task -- the graded task is app-srv1's autofs config.
 set -eu
@@ -16,3 +18,4 @@ fi
 
 sudo systemctl enable --now nfs-kernel-server
 sudo exportfs -ra
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Directory Capacity Auditing" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Mounts a second filesystem at /data (so `du -x` has a boundary to stop at)
@@ -41,3 +43,4 @@ echo "  /data          -> second ext4 filesystem (du -x should stop here)"
 echo "  /opt/reports   -> big-real.bin, 256 MiB of real blocks"
 echo "  /opt/archive   -> sparse.img, 512 MiB apparent, ~0 on disk"
 echo "  /opt/logs      -> 200 tiny files"
+ASTRONA_STUDENT_SCRIPT

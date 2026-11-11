@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 fail() { echo "FAIL: $*"; exit 1; }
@@ -37,3 +39,4 @@ echo "$current" | grep -q '\[mq-deadline\]' || fail "the scheduler of $disk is n
 
 echo "PASS: the hidden space was freed after recording the holder, and a udev rule sets mq-deadline on the spool disk"
 exit 0
+ASTRONA_STUDENT_SCRIPT

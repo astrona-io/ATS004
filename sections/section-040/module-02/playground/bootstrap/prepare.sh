@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Swap Partitions & Priority Scheduling" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Wipes the spare disk back to raw, keeps a pristine copy of /etc/fstab so
@@ -34,3 +36,4 @@ echo "[playground] memory and swap at start:"
 free -h
 swapon --show || echo "(no swap active)"
 echo "[playground] spare disk is commonly /dev/vdb (raw). /etc/fstab backed up to /etc/fstab.orig."
+ASTRONA_STUDENT_SCRIPT

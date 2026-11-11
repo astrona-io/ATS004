@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: installs autofs + nfs-common and prepares the mountpoint
 # parent directory, but deliberately does NOT create any autofs map --
 # configuring /etc/auto.master(.d) and the indirect map is the graded task.
@@ -13,3 +15,4 @@ fi
 
 sudo systemctl enable autofs
 sudo systemctl restart autofs
+ASTRONA_STUDENT_SCRIPT

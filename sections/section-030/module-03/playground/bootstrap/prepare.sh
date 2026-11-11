@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Software RAID Fundamentals" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Makes sure mdadm is installed and the four spare disks carry no RAID
@@ -32,3 +34,4 @@ done
 
 echo "[playground] ready. Four raw spare disks (commonly /dev/vdb /dev/vdc /dev/vdd /dev/vde)."
 echo "[playground] mdadm is installed. Build an array with 'mdadm --create'."
+ASTRONA_STUDENT_SCRIPT

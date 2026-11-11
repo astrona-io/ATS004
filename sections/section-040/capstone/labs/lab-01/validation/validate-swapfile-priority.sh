@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Confirms the active swap file's priority is 5 (fallback, lower than the partition).
 
 set -u
@@ -16,3 +18,4 @@ fi
 
 echo "PASS: swap file priority is 5"
 exit 0
+ASTRONA_STUDENT_SCRIPT

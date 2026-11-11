@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 if ! grep -q "^\s*/-\s\+/etc/auto.direct" /etc/auto.master; then
@@ -29,3 +31,4 @@ fi
 
 echo "PASS: autofs direct map and timeout configured and verified successfully"
 exit 0
+ASTRONA_STUDENT_SCRIPT

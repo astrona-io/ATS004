@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 A=/dev/disk/by-id/virtio-lab039-disk1
@@ -30,3 +32,4 @@ sudo mount /dev/vg_split/lv_data /mnt/lvm-split
 sudo tee /mnt/lvm-split/split-marker.txt > /dev/null <<'EOF'
 LVM mixed-extent PV removal test. If you can read this, disk2 was safely removed.
 EOF
+ASTRONA_STUDENT_SCRIPT

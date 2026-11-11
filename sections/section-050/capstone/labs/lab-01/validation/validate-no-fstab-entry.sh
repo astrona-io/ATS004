@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Confirms /etc/fstab has no permanent entry for the shared export --
 # autofs must be used on demand instead.
 set -u
@@ -10,3 +12,4 @@ fi
 
 echo "PASS: /etc/fstab has no entry for the shared export"
 exit 0
+ASTRONA_STUDENT_SCRIPT

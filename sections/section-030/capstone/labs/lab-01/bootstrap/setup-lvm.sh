@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: builds the starting LVM stack for the lab — vol1 spanning
 # both extraDisks, with a logical volume forced onto the "lab030-b" disk
 # specifically so it holds real allocated extents and pvmove has actual
@@ -38,3 +40,4 @@ sudo mkfs.ext4 -q /dev/vol1/data1
 sudo mkdir -p /mnt/vol1-data1
 sudo mount /dev/vol1/data1 /mnt/vol1-data1
 echo "seed data for vol1/data1" | sudo tee /mnt/vol1-data1/seed.txt > /dev/null
+ASTRONA_STUDENT_SCRIPT

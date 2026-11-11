@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 if [ ! -f "/opt/course/audit/fd_count.txt" ]; then
@@ -34,3 +36,4 @@ fi
 
 echo "PASS: Process and system limits audited successfully"
 exit 0
+ASTRONA_STUDENT_SCRIPT

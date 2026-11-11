@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Lab bootstrap for the "client" VM: the iSCSI initiator tools only.
 # Nothing is discovered, logged in, formatted or mounted. Packages are
 # installed with apt at start-up. Not run or tested by the course authors.
@@ -42,3 +44,4 @@ if ! grep -q '[[:space:]]server$' /etc/hosts; then
 fi
 
 echo "[lab] client ready: open-iscsi installed, /mnt/cargo created."
+ASTRONA_STUDENT_SCRIPT

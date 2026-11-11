@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Symbolic Links & FHS" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # The system already has the usrmerge symlinks (/bin, /sbin, /lib -> usr/...).
@@ -30,3 +32,4 @@ reset-symlink-demo
 echo "[playground] ready:"
 echo "  /srv/www/active -> /srv/releases/v2   (sample release symlink)"
 echo "  /tmp/rmdemo/{real,link}               (disposable; rebuild with reset-symlink-demo)"
+ASTRONA_STUDENT_SCRIPT

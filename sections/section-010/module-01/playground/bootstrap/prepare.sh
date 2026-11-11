@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Lifecycle of Local Storage" playground.
 # Runs once when the environment comes up. Environment preparation only:
 # there is no task and no grading. This just guarantees the scratch disk
@@ -26,3 +28,4 @@ else
 fi
 
 echo "[playground] ready. The raw disk is commonly /dev/vdb — confirm with 'lsblk'."
+ASTRONA_STUDENT_SCRIPT

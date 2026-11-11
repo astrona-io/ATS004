@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Confirms the disk backing the higher-memory process's executable is
 # unmounted. Bootstrap fixes dark-matter-v2 at ~300MB resident vs
 # dark-matter-v1's ~50MB (see bootstrap/02-dark-matter-processes.sh), so
@@ -23,3 +25,4 @@ fi
 
 echo "PASS: /mnt/backup-red is unmounted and dark-matter-v2 is no longer running"
 exit 0
+ASTRONA_STUDENT_SCRIPT

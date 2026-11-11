@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "LVM Fundamentals" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Makes sure lvm2 is installed and the three spare disks carry no LVM
@@ -76,3 +78,4 @@ sudo chmod +x /usr/local/bin/catchup
 
 echo "[playground] ready. Spare disks are commonly /dev/vdb /dev/vdc /dev/vdd — confirm with 'lsblk'."
 echo "[playground] already done Part 2's exercise elsewhere and want to skip to Part 3? Run: catchup part3"
+ASTRONA_STUDENT_SCRIPT

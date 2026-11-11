@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Confirms the busier of /mnt/backup-blue / /mnt/backup-red (computed live
 # from df Used, not hardcoded) has an empty .trash directory. If one of the
 # two has already been unmounted (expected once the process-disk step is
@@ -45,3 +47,4 @@ fi
 
 echo "PASS: $trash is empty (busier disk: $busier)"
 exit 0
+ASTRONA_STUDENT_SCRIPT

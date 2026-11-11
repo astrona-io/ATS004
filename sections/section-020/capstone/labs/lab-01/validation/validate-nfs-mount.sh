@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Checks that /nfs/terminal/share is mounted from terminal's NFS export,
 # type nfs, read-only.
 
@@ -28,3 +30,4 @@ fi
 
 echo "PASS: /nfs/terminal/share mounted from terminal:/nfs/share, nfs, ro ($line)"
 exit 0
+ASTRONA_STUDENT_SCRIPT

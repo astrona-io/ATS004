@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 DISK="/dev/disk/by-id/virtio-lab017-media"
@@ -52,3 +54,4 @@ fi
 
 echo "PASS: disk formatted FAT32, labeled USBDATA, mounted with correct uid, and writable without sudo"
 exit 0
+ASTRONA_STUDENT_SCRIPT

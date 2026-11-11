@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Confirms the extra disk's first partition is active as partition-type
 # swap. Resolves the disk via its `serial` (set in config.yaml) through
 # /dev/disk/by-id/virtio-<serial> rather than a hardcoded /dev/vdX letter,
@@ -36,3 +38,4 @@ fi
 
 echo "PASS: $PART is active as partition-type swap"
 exit 0
+ASTRONA_STUDENT_SCRIPT

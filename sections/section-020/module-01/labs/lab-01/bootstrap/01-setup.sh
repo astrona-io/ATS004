@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
@@ -16,3 +18,4 @@ sudo tee /opt/remote-data/welcome.txt > /dev/null <<'EOF'
 Welcome to the secure ad-hoc remote share.
 EOF
 sudo chown -R sshuser:sshuser /opt/remote-data
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Checks that /opt/course/audit/dirsizes.txt exists and is non-empty.
 
 set -u
@@ -17,3 +19,4 @@ fi
 
 echo "PASS: dirsizes report exists and is non-empty ($f)"
 exit 0
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Checks io-report.txt's "device" line refers to the actual device mounted
 # at /mnt/data-ingest. Resolved live rather than hardcoded -- astrona-cli's
 # extraDisks aren't guaranteed to land on any particular /dev/vdX letter,
@@ -47,3 +49,4 @@ fi
 
 echo "FAIL: io-report device - '$value' does not resolve to $actual_resolved, the disk actually mounted at /mnt/data-ingest"
 exit 1
+ASTRONA_STUDENT_SCRIPT

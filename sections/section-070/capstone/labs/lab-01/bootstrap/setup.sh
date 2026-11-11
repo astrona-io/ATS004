@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: installs sysstat (vmstat/iostat) and iotop, formats the extra
 # scratch disk and mounts it at /mnt/data-ingest, then starts a continuous
 # write-heavy background job against it so the lab's I/O bottleneck is real
@@ -81,3 +83,4 @@ EOF
 
 sudo systemctl daemon-reload
 sudo systemctl enable --now data-ingest-job.service
+ASTRONA_STUDENT_SCRIPT

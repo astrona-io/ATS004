@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 fail() { echo "FAIL: $*"; exit 1; }
@@ -58,3 +60,4 @@ ssh_fstype=$(findmnt -no FSTYPE /mnt/sshfs-logs 2>/dev/null)
 
 echo "PASS: the NFS export is fixed and both remote mounts come back from /etc/fstab"
 exit 0
+ASTRONA_STUDENT_SCRIPT

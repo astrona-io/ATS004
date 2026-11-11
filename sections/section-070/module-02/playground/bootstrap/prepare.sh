@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Process-Level Auditing" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Installs iotop/sysstat/lsof/fio, mounts an ext4 fs at /mnt/perf, turns on
@@ -42,3 +44,4 @@ EOF
 sudo chmod +x /usr/local/bin/stop-io-load
 
 echo "[playground] ready. 'start-io-load' backgrounds a writer to /mnt/perf/leak.log; 'stop-io-load' ends it."
+ASTRONA_STUDENT_SCRIPT

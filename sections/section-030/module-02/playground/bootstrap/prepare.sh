@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Advanced LVM Operations" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 #
@@ -149,3 +151,4 @@ sudo chmod +x /usr/local/bin/playground-prepare
 
 echo "[playground] already know Part 2 or Part 2+3 and want to skip ahead? Run: catchup part3   or   catchup part4"
 echo "[playground] broke something and want to start over without destroying the VM? Run: catchup reset"
+ASTRONA_STUDENT_SCRIPT

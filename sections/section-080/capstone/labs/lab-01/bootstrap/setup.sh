@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: creates the report destination directory, then formats and
 # mounts the extra disk with a large dummy file so the "don't fold a
 # separately mounted filesystem into /" requirement has a real mount to
@@ -51,3 +53,4 @@ if command -v fallocate >/dev/null 2>&1; then
 else
   sudo dd if=/dev/zero of=/mnt/bigshare/dataset.bin bs=1M count=1024
 fi
+ASTRONA_STUDENT_SCRIPT

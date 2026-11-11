@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 DISK=/dev/disk/by-id/virtio-lab081-disk
@@ -21,3 +23,4 @@ sudo dd if=/dev/zero of=/var/log/heavy_local_log/local-file bs=1M count=200 stat
 
 sudo mkdir -p /opt/course/audit
 sudo chmod -R 777 /opt/course/audit
+ASTRONA_STUDENT_SCRIPT

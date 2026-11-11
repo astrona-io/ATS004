@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Checks that /opt/course/audit/symlinks.txt exists, is non-empty, and that
 # every symlink path it names is actually a symlink on disk.
 
@@ -33,3 +35,4 @@ fi
 
 echo "PASS: symlinks report exists and every listed entry is a real symlink"
 exit 0
+ASTRONA_STUDENT_SCRIPT

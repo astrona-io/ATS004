@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: one machine plays both ships. It prepares
 #  - an SSH login (sshuser) that root can reach with a key, for the SSHFS mount
 #  - an NFS export that is deliberately offered to the WRONG network, so the
@@ -38,3 +40,4 @@ sudo exportfs -ra
 
 # --- Empty hatches ---
 sudo mkdir -p /mnt/nfs-reports /mnt/sshfs-logs
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 mount_source=$(findmnt -no SOURCE /mnt/lvm-storage 2>/dev/null)
@@ -20,3 +22,4 @@ fi
 
 echo "PASS: lv_storage is formatted ext4 and mounted at /mnt/lvm-storage"
 exit 0
+ASTRONA_STUDENT_SCRIPT

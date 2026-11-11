@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Runs on "client". Checks the live machine.
 set -u
 
@@ -61,3 +63,4 @@ fi
 
 echo "PASS: iSCSI disk mounted at $MOUNT_POINT as ext4, persistent in fstab with _netdev, automatic login set"
 exit 0
+ASTRONA_STUDENT_SCRIPT

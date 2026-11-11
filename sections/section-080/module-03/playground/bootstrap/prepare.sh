@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "XFS Quotas and Project Quotas" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # XFS quotas are enabled purely by mount option, so the filesystem comes up
@@ -32,3 +34,4 @@ sudo chmod 1777 /srv/xfs/webdata
 echo "[playground] ready. /srv/xfs is XFS, mounted with uquota,pquota (see /etc/fstab)."
 echo "[playground] Directory tree /srv/xfs/webdata; users alice, bob."
 echo "[playground] No /etc/projects, /etc/projid, or limits yet — the chapter adds them."
+ASTRONA_STUDENT_SCRIPT

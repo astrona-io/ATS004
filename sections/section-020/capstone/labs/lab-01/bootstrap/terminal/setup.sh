@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap for the "terminal" VM: SSHFS client + NFS server role.
 # Installs the tools the task needs but does NOT create the sshfs mount,
 # the NFS export, or the /etc/fuse.conf opt-in -- those are the graded task.
@@ -16,3 +18,4 @@ sudo mkdir -p /nfs/share
 if ! grep -q '[[:space:]]app-srv1$' /etc/hosts; then
   echo "10.10.40.10 app-srv1" | sudo tee -a /etc/hosts >/dev/null
 fi
+ASTRONA_STUDENT_SCRIPT

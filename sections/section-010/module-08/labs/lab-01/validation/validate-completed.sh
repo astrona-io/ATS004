@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 SOURCE=$(readlink -f /dev/disk/by-id/virtio-lab018-source)
@@ -36,3 +38,4 @@ fi
 
 echo "PASS: clone disk is a verified byte-for-byte match of the source disk"
 exit 0
+ASTRONA_STUDENT_SCRIPT

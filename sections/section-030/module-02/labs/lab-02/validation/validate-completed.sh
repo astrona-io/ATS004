@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 size_raw=$(sudo lvs --noheadings --units m --nosuffix -o lv_size vg_resize/lv_data 2>/dev/null | tr -d ' ')
@@ -26,3 +28,4 @@ fi
 
 echo "PASS: lv_data grown then correctly shrunk to ~350M, filesystem healthy, data intact"
 exit 0
+ASTRONA_STUDENT_SCRIPT

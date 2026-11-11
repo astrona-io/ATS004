@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 DISK1=$(readlink -f /dev/disk/by-id/virtio-lab038-disk1)
@@ -46,3 +48,4 @@ fi
 
 echo "PASS: disk2 was added via vgextend, disk1 was fully evacuated and removed, data survived"
 exit 0
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Btrfs Basics" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 set -euo pipefail
@@ -19,3 +21,4 @@ fi
 
 echo "[playground] ready. Two blank spare disks (commonly /dev/vdb 2 GB and /dev/vdc 1 GB)."
 echo "[playground] /etc/fstab backed up to /etc/fstab.orig."
+ASTRONA_STUDENT_SCRIPT

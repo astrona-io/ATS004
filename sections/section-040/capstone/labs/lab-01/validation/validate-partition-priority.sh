@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Confirms the extra disk's first partition's active swap priority is 10
 # (preferred over the file's 5). Resolved via /dev/disk/by-id/virtio-<serial>
 # rather than a hardcoded /dev/vdX letter -- see
@@ -40,3 +42,4 @@ fi
 
 echo "PASS: $PART swap priority is 10"
 exit 0
+ASTRONA_STUDENT_SCRIPT

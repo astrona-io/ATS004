@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 DISK1=$(readlink -f /dev/disk/by-id/virtio-lab037-disk1)
@@ -21,3 +23,4 @@ fi
 
 echo "PASS: lv_wide's extents are confirmed spread across both physical disks"
 exit 0
+ASTRONA_STUDENT_SCRIPT

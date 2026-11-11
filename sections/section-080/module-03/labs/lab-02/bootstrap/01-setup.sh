@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap:
 #  - /quota-ext: ext4 with usrquota, quotas ON, user "alice" already has
 #    limits (the model user). bob and carol have none yet.
@@ -46,3 +48,4 @@ sudo mount /srv/xfs-teams
 sudo mkdir -p /srv/xfs-teams/engineers
 sudo chgrp engineers /srv/xfs-teams/engineers
 sudo chmod 2775 /srv/xfs-teams/engineers
+ASTRONA_STUDENT_SCRIPT

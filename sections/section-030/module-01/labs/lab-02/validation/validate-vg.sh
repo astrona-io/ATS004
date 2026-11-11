@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 if ! sudo vgs vg_pool >/dev/null 2>&1; then
@@ -14,3 +16,4 @@ fi
 
 echo "PASS: vg_pool exists and pools exactly 2 PVs"
 exit 0
+ASTRONA_STUDENT_SCRIPT

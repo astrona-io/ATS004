@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 NEW_DISK=/dev/disk/by-id/virtio-lab091-new
@@ -21,3 +23,4 @@ echo "manifest-intact" | sudo tee /mnt/lab091-seed/manifest.txt >/dev/null
 sync
 sudo umount /mnt/lab091-seed
 sudo rmdir /mnt/lab091-seed
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: builds a healthy RAID5 array across three of the four spare
 # disks, with sample data mounted at /mnt/raid, and leaves the fourth disk
 # raw as the replacement spare. The GRADED task is the fail/replace/rebuild
@@ -36,3 +38,4 @@ sudo mdadm --detail --scan | sudo tee /etc/mdadm/mdadm.conf > /dev/null
   echo "member3=$(readlink -f "$C")"
   echo "spare=$(readlink -f "$D")"
 } | sudo tee /etc/lab034-raid > /dev/null
+ASTRONA_STUDENT_SCRIPT

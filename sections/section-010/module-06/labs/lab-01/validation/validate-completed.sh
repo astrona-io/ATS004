@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 MOUNT_UNIT="/etc/systemd/system/srv-appdata.mount"
@@ -57,3 +59,4 @@ fi
 
 echo "PASS: native .mount/.automount units configured and on-demand trigger confirmed"
 exit 0
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: builds a quota-ready ext4 filesystem at /quota2, mounts it,
 # creates carol, and this time also fully turns quotas ON and sets
 # carol's limits -- the GRADED task here is the *consequences* of a
@@ -27,3 +29,4 @@ sudo chown carol /quota2/carol
 sudo quotacheck -cugv /quota2
 sudo quotaon -v /quota2
 sudo setquota -u carol 20M 25M 0 0 /quota2
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 if [ ! -f /etc/lab034-raid ]; then
@@ -55,3 +57,4 @@ fi
 
 echo "PASS: RAID5 array recovered -- clean, 3 active devices, spare integrated, data intact"
 exit 0
+ASTRONA_STUDENT_SCRIPT

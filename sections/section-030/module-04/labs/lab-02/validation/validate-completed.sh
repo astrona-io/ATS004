@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 detail=$(sudo mdadm --detail /dev/md0 2>/dev/null)
@@ -32,3 +34,4 @@ fi
 
 echo "PASS: array grown to 4 disks, filesystem extended, data intact, monitoring configured"
 exit 0
+ASTRONA_STUDENT_SCRIPT

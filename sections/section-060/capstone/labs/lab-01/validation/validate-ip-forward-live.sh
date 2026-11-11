@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Checks that net.ipv4.ip_forward is live-enabled via /proc/sys.
 
 set -u
@@ -12,3 +14,4 @@ else
   echo "FAIL: net.ipv4.ip_forward is '$value', expected '1'"
   exit 1
 fi
+ASTRONA_STUDENT_SCRIPT

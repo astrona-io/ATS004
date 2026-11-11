@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 sudo mkdir -p /var/nfs/exports/project-alpha
@@ -18,3 +20,4 @@ sudo tee /etc/exports > /dev/null <<'EOF'
 EOF
 
 sudo systemctl restart nfs-kernel-server
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 if ! sudo mdadm --detail /dev/md0 >/dev/null 2>&1; then
@@ -53,3 +55,4 @@ fi
 
 echo "PASS: RAID 5 array created, formatted, mounted, and made persistent"
 exit 0
+ASTRONA_STUDENT_SCRIPT

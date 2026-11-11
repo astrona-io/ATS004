@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Confirms a ~2G file-type swap area is active.
 
 set -u
@@ -22,3 +24,4 @@ fi
 
 echo "PASS: swapfile $name is active with size ~2G"
 exit 0
+ASTRONA_STUDENT_SCRIPT

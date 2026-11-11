@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 if ! grep -q '^42:/srv/xfs/webdata$' /etc/projects 2>/dev/null; then
@@ -41,3 +43,4 @@ fi
 
 echo "PASS: alice's user quota (40M/50M) and the webdata project quota (100M) are both active"
 exit 0
+ASTRONA_STUDENT_SCRIPT

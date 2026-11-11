@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 if ! grep -q "/var/nfs/public" /etc/exports; then
@@ -26,3 +28,4 @@ fi
 
 echo "PASS: NFS read-only share configured, exported, and mounted successfully"
 exit 0
+ASTRONA_STUDENT_SCRIPT

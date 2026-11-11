@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: a healthy RAID 1 array /dev/md0 on disks a and b (ext4, mounted
 # at /mnt/raid, with one file), and disk c holding the leftover label of a
 # retired one-disk array. The graded task is stop / reassemble / wipe.
@@ -29,3 +31,4 @@ sudo mkdir -p /mnt/raid
 sudo mount /dev/md0 /mnt/raid
 echo "mirrored cargo manifest" | sudo tee /mnt/raid/manifest.txt > /dev/null
 sync
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Checks io-report.txt's "direction" line correctly identifies the load as
 # write-bound (the bootstrap load is a dd write loop).
 
@@ -17,3 +19,4 @@ else
   echo "FAIL: io-report direction - expected 'write', got '$value'"
   exit 1
 fi
+ASTRONA_STUDENT_SCRIPT

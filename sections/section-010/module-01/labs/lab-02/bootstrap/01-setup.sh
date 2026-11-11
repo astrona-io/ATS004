@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: formats and mounts /mnt/locked-vault, then starts a
 # long-running process that holds the mount busy -- its working directory
 # AND an open file both live inside it, so umount refuses until the
@@ -61,3 +63,4 @@ EOF
 
 sudo systemctl daemon-reload
 sudo systemctl enable --now vault-keeper.service
+ASTRONA_STUDENT_SCRIPT

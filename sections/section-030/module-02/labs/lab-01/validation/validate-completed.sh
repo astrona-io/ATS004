@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 DISK1="/dev/disk/by-id/virtio-lab032-disk1"
@@ -27,3 +29,4 @@ fi
 
 echo "PASS: Online extent migration completed and Volume Group reduced successfully"
 exit 0
+ASTRONA_STUDENT_SCRIPT

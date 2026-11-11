@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "RAID Maintenance and Recovery" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 #
@@ -53,3 +55,4 @@ sudo mdadm --detail --scan | sudo tee /etc/mdadm/mdadm.conf >/dev/null
 echo "[playground] ready:"
 cat /etc/playground-raid
 echo "  /dev/md0 = RAID5 on member1..3, ext4 mounted at /mnt/raid"
+ASTRONA_STUDENT_SCRIPT

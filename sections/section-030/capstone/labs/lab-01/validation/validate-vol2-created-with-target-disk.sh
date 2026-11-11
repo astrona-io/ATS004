@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Confirms vol2 exists and the "lab030-b" disk is its PV. Resolved via
 # /dev/disk/by-id/virtio-<serial> instead of a raw /dev/vdX letter, since
 # astrona-cli doesn't guarantee extraDisks land on any particular letter.
@@ -26,3 +28,4 @@ fi
 
 echo "PASS: vol2 exists with $DISK as its physical volume"
 exit 0
+ASTRONA_STUDENT_SCRIPT

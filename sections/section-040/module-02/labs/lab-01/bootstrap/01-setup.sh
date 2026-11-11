@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 DISK=/dev/disk/by-id/virtio-lab042-swapdisk
@@ -21,3 +23,4 @@ sudo tee /etc/fstab > /dev/null <<'EOF'
 /dev/vda1 / ext4 defaults 0 1
 /swapfile none swap sw,pri=5 0 0
 EOF
+ASTRONA_STUDENT_SCRIPT

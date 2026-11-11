@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Checks that net.ipv4.ip_forward=1 was not written into any persistent
 # sysctl config file, confirming the change was live/temporary only.
 
@@ -23,3 +25,4 @@ else
   echo "FAIL: net.ipv4.ip_forward=1 found in a persistent sysctl config file (expected a live-only, temporary change)"
   exit 1
 fi
+ASTRONA_STUDENT_SCRIPT

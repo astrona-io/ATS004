@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "systemd Mount and Automount Units" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 set -euo pipefail
@@ -17,3 +19,4 @@ fi
 
 echo "[playground] ready. Spare ext4 filesystem (label DATA) on the spare disk (commonly /dev/vdb)."
 echo "[playground] /etc/fstab backed up to /etc/fstab.orig. UUID: sudo blkid /dev/vdb"
+ASTRONA_STUDENT_SCRIPT

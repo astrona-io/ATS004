@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 fail() { echo "FAIL: $*"; exit 1; }
@@ -34,3 +36,4 @@ keep=/var/lib/acme/acme.conf.keep
 
 echo "PASS: files are in their FHS places, the hard link shares an inode, and both symbolic links resolve"
 exit 0
+ASTRONA_STUDENT_SCRIPT

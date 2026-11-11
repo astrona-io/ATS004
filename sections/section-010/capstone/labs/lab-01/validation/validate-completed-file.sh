@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Confirms /mnt/backup-black/completed exists as an empty regular file.
 
 set -u
@@ -23,3 +25,4 @@ fi
 
 echo "PASS: $f exists and is an empty regular file"
 exit 0
+ASTRONA_STUDENT_SCRIPT

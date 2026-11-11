@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 fail() { echo "FAIL: $*"; exit 1; }
@@ -40,3 +42,4 @@ grep -q "Monthly reports" /mnt/reports/reports-marker.txt 2>/dev/null || fail "r
 
 echo "PASS: lv_reports is in /etc/fstab and was grown with its filesystem to about 800M, data intact"
 exit 0
+ASTRONA_STUDENT_SCRIPT

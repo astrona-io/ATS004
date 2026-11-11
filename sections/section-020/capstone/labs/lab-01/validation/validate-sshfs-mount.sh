@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Checks that /app-srv1/data-export is mounted via SSHFS, read-write,
 # with allow_other set.
 
@@ -23,3 +25,4 @@ fi
 
 echo "PASS: /app-srv1/data-export mounted fuse.sshfs, rw, allow_other ($line)"
 exit 0
+ASTRONA_STUDENT_SCRIPT

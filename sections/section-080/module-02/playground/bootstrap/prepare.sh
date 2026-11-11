@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "User and Group Disk Quotas" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Creates an ext4 filesystem mounted at /quota WITH the quota mount options
@@ -37,3 +39,4 @@ sudo chgrp team /quota/team && sudo chmod 2775 /quota/team
 
 echo "[playground] ready. /quota is ext4, mounted with usrquota,grpquota (see /etc/fstab)."
 echo "[playground] Users alice, bob; group team. Quotas are NOT on yet — run quotacheck / quotaon."
+ASTRONA_STUDENT_SCRIPT

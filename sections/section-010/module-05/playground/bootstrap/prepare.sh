@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "/etc/fstab in Depth" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Puts a labelled ext4 filesystem on each spare disk so there is something
@@ -25,3 +27,4 @@ done
 
 echo "[playground] ready. Two spare ext4 filesystems (labels DATA1, DATA2) on the spare disks."
 echo "[playground] /etc/fstab backed up to /etc/fstab.orig. Get UUIDs with: sudo blkid"
+ASTRONA_STUDENT_SCRIPT
