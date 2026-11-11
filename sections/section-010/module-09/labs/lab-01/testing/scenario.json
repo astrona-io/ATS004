@@ -1,0 +1,34 @@
+{
+  "initial_failures": {
+    "default/verify-xfs-mount-and-check": "expected 'xfs'"
+  },
+  "solution": [
+    {
+      "script": "testing/solution.sh",
+      "vm": "default"
+    }
+  ],
+  "negative": [
+    {
+      "name": "regression",
+      "apply": [
+        {
+          "script": "testing/negative.sh",
+          "vm": "default"
+        }
+      ],
+      "failures": {
+        "default/verify-xfs-mount-and-check": "missing or empty"
+      },
+      "restore": [
+        {
+          "script": "testing/restore.sh",
+          "vm": "default"
+        }
+      ]
+    }
+  ],
+  "reboot": [
+    "default"
+  ]
+}

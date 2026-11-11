@@ -1,0 +1,6 @@
+
+# Local lifecycle reports
+test-results/
+__pycache__/
+dist/
+release-evidence/

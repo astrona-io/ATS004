@@ -1,0 +1,78 @@
+name: publish-course
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New immutable course version, such as v1.0.0'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: publish-course
+  cancel-in-progress: false
+jobs:
+  reviewed-revision:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: version
+        env:
+          REQUESTED_VERSION: ${{ inputs.version || github.ref_name }}
+        run: |
+          [[ "$REQUESTED_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+          echo "version=$REQUESTED_VERSION" >> "$GITHUB_OUTPUT"
+  validate:
+    needs: reviewed-revision
+    uses: ./.github/workflows/labs.yml
+  publish:
+    needs: [reviewed-revision, validate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: '*-results'
+          path: release-evidence
+      - name: Install verified tools and package the tested revision
+        env:
+          COURSE_VERSION: ${{ needs.reviewed-revision.outputs.version }}
+        run: |
+          python3 -m pip install -r scripts/ci/requirements.txt
+          bash scripts/ci/install-cli.sh
+          python3 scripts/ci/package.py --reports release-evidence --version "$COURSE_VERSION"
+      - name: Publish the course as an OCI artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REGISTRY_USER: ${{ github.actor }}
+          REPOSITORY: ${{ github.repository }}
+          COURSE_VERSION: ${{ needs.reviewed-revision.outputs.version }}
+        run: |
+          printf '%s' "$GH_TOKEN" | oras login ghcr.io -u "$REGISTRY_USER" --password-stdin
+          target="ghcr.io/${REPOSITORY,,}/course:${COURSE_VERSION}"
+          if oras resolve "$target" > /tmp/course-digest 2> /tmp/course-resolve-error; then
+            echo "Refusing to overwrite existing course version $target" >&2
+            exit 1
+          fi
+          if ! grep -Eq 'not found|MANIFEST_UNKNOWN|404' /tmp/course-resolve-error; then
+            cat /tmp/course-resolve-error >&2
+            exit 1
+          fi
+          cd dist
+          oras push "$target" \
+            --artifact-type application/vnd.astrona.course.v1 \
+            --annotation "org.opencontainers.image.source=https://github.com/$REPOSITORY" \
+            --annotation "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --annotation "org.opencontainers.image.version=$COURSE_VERSION" \
+            course.tar.gz:application/gzip course.json:application/json SHA256SUMS:text/plain
+          oras resolve "$target" >> "$GITHUB_STEP_SUMMARY"

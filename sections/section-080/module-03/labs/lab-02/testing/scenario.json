@@ -1,0 +1,31 @@
+{
+  "initial_failures": {
+    "default/verify-copied-and-group-quotas": "bob|carol|quota|limits"
+  },
+  "solution": [
+    {
+      "script": "testing/solution.sh",
+      "vm": "default"
+    }
+  ],
+  "negative": [
+    {
+      "name": "regression",
+      "apply": [
+        {
+          "script": "testing/negative.sh",
+          "vm": "default"
+        }
+      ],
+      "failures": {
+        "default/verify-copied-and-group-quotas": "engineers|80"
+      },
+      "restore": [
+        {
+          "script": "testing/restore.sh",
+          "vm": "default"
+        }
+      ]
+    }
+  ]
+}

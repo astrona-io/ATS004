@@ -1,0 +1,34 @@
+{
+  "initial_failures": {
+    "default/verify-lv-fstab-and-grow": "fstab|UUID"
+  },
+  "solution": [
+    {
+      "script": "testing/solution.sh",
+      "vm": "default"
+    }
+  ],
+  "negative": [
+    {
+      "name": "regression",
+      "apply": [
+        {
+          "script": "testing/negative.sh",
+          "vm": "default"
+        }
+      ],
+      "failures": {
+        "default/verify-lv-fstab-and-grow": "not mounted"
+      },
+      "restore": [
+        {
+          "script": "testing/restore.sh",
+          "vm": "default"
+        }
+      ]
+    }
+  ],
+  "reboot": [
+    "default"
+  ]
+}

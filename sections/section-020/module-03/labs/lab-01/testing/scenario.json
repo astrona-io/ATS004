@@ -1,0 +1,34 @@
+{
+  "initial_failures": {
+    "client/verify-iscsi-persistent-mount": "no open iSCSI session"
+  },
+  "solution": [
+    {
+      "script": "testing/solution.sh",
+      "vm": "client"
+    }
+  ],
+  "negative": [
+    {
+      "name": "regression",
+      "apply": [
+        {
+          "script": "testing/negative.sh",
+          "vm": "client"
+        }
+      ],
+      "failures": {
+        "client/verify-iscsi-persistent-mount": "not mounted"
+      },
+      "restore": [
+        {
+          "script": "testing/restore.sh",
+          "vm": "client"
+        }
+      ]
+    }
+  ],
+  "reboot": [
+    "client"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "initial_failures": {
+    "terminal/verify-sshfs-mount": "not mounted",
+    "app-srv1/verify-nfs-mount": "not mounted"
+  },
+  "solution": [
+    {
+      "vm": "terminal",
+      "script": "testing/solution-0.sh"
+    },
+    {
+      "vm": "app-srv1",
+      "script": "testing/solution-1.sh"
+    }
+  ],
+  "negative": [
+    {
+      "name": "regression",
+      "apply": [
+        {
+          "vm": "app-srv1",
+          "script": "testing/negative-0.sh"
+        }
+      ],
+      "failures": {
+        "app-srv1/verify-nfs-mount": "not mounted"
+      },
+      "restore": [
+        {
+          "vm": "app-srv1",
+          "script": "testing/restore-0.sh"
+        }
+      ]
+    }
+  ],
+  "reboot": []
+}

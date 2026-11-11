@@ -1,0 +1,11 @@
+{
+  "initial_failures": {
+    "default/verify-mixed-pv-removal": "still marked|size|grown|small|expected"
+  },
+  "solution": [
+    {
+      "script": "testing/solution.sh",
+      "vm": "default"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "initial_failures": {
+    "default/verify-sysctl": "expected '1'"
+  },
+  "solution": [
+    {
+      "script": "testing/solution.sh",
+      "vm": "default"
+    }
+  ],
+  "negative": [
+    {
+      "name": "regression",
+      "apply": [
+        {
+          "script": "testing/negative.sh",
+          "vm": "default"
+        }
+      ],
+      "failures": {
+        "default/verify-sysctl": "expected '1'"
+      },
+      "restore": [
+        {
+          "script": "testing/restore.sh",
+          "vm": "default"
+        }
+      ]
+    }
+  ],
+  "reboot": [
+    "default"
+  ]
+}
