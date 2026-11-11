@@ -9,6 +9,13 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Copying the limits and setting the group limits and timer are the graded tasks.
 set -eu
 
+# Ubuntu packages the legacy quota format in the extra kernel modules.
+if ! sudo modprobe quota_v2; then
+  sudo apt-get update -qq
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "linux-modules-extra-$(uname -r)"
+  sudo modprobe quota_v2
+fi
+
 if ! command -v quotacheck >/dev/null; then
   sudo apt-get update -y
   sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota

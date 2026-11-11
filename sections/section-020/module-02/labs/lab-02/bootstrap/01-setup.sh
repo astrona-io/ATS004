@@ -9,7 +9,7 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 missing=()
-for package in nfs-common nfs-kernel-server; do
+for package in sshfs nfs-common nfs-kernel-server; do
   dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q 'install ok installed' || missing+=("$package")
 done
 if [ "${#missing[@]}" -gt 0 ]; then

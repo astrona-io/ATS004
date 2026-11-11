@@ -1,6 +1,10 @@
+import json
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
 import subprocess
 import unittest
-from lifecycle import checked_grade, GradeError, InfrastructureError
+from lifecycle import Lifecycle, checked_grade, GradeError, InfrastructureError
 
 
 class GradeContract(unittest.TestCase):
@@ -29,6 +33,51 @@ class GradeContract(unittest.TestCase):
     def test_solution_must_pass(self):
         with self.assertRaises(GradeError):
             checked_grade(self.result(1, 'FAIL: mount absent'))
+
+
+class VMHandles(unittest.TestCase):
+    def load(self, vm_names, records):
+        runner = Lifecycle.__new__(Lifecycle)
+        runner.config = {'runtime': {'qemu': vm_names}}
+        runner.name = 'astro-course-lab'
+        runner.handles = {}
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            for name, fields in records.items():
+                target = home / '.astrona/qemu' / name / 'handle.json'
+                target.parent.mkdir(parents=True)
+                target.write_text(json.dumps(fields))
+            with patch('lifecycle.Path.home', return_value=home):
+                runner.load_handles()
+        return runner.handles
+
+    def record(self, name, **changes):
+        return dict(clusterName=name, labName='astro-course-lab',
+                    sshHost='127.0.0.1', **changes)
+
+    def test_single_named_vm_uses_suffix(self):
+        name = 'astro-course-lab-host'
+        handles = self.load([{'name': 'host'}], {name: self.record(name)})
+        self.assertEqual(set(handles), {'host'})
+
+    def test_unnamed_vm_uses_lab_name(self):
+        name = 'astro-course-lab'
+        handles = self.load([{}], {name: self.record(name)})
+        self.assertEqual(set(handles), {'default'})
+
+    def test_other_labs_handle_is_rejected(self):
+        name = 'astro-course-lab-host'
+        record = self.record(name)
+        record['labName'] = 'another-lab'
+        with self.assertRaises(InfrastructureError):
+            self.load([{'name': 'host'}], {name: record})
+
+    def test_nonlocal_ssh_endpoint_is_rejected(self):
+        name = 'astro-course-lab-host'
+        record = self.record(name)
+        record['sshHost'] = 'example.com'
+        with self.assertRaises(InfrastructureError):
+            self.load([{'name': 'host'}], {name: record})
 
 
 if __name__ == '__main__':

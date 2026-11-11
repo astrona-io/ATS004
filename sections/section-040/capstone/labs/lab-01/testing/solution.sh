@@ -8,7 +8,8 @@ sudo tee /tmp/swap-fstab >/dev/null <<'REFERENCE_FILE'
 REFERENCE_FILE
 cat /tmp/swap-fstab | sudo tee -a /etc/fstab
 sudo swapon -p 5 /swapfile
-sudo mkswap /dev/disk/by-id/virtio-lab040-swap
-uuid=$(sudo blkid -s UUID -o value /dev/disk/by-id/virtio-lab040-swap)
+part="$(readlink -f /dev/disk/by-id/virtio-lab040-swap)1"
+sudo mkswap "$part"
+uuid=$(sudo blkid -s UUID -o value "$part")
 printf 'UUID=%s none swap sw,pri=10 0 0\n' "$uuid" | sudo tee -a /etc/fstab
 sudo swapon -a

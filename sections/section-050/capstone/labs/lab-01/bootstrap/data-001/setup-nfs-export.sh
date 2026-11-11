@@ -27,4 +27,8 @@ fi
 
 sudo systemctl enable --now nfs-kernel-server
 sudo exportfs -ra
+if sudo systemctl is-active --quiet firewalld; then
+  sudo firewall-cmd --permanent --add-service=nfs
+  sudo firewall-cmd --add-service=nfs
+fi
 ASTRONA_STUDENT_SCRIPT

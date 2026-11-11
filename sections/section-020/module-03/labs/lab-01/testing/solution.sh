@@ -4,7 +4,7 @@ sudo iscsiadm -m discovery -t sendtargets -p 10.10.60.10
 sudo iscsiadm -m node -T iqn.2026-01.io.astrona:storage.cargo -p 10.10.60.10 --login
 sudo udevadm settle
 for i in $(seq 1 30); do
- disk=$(find /dev/disk/by-path -name '*iscsi-iqn.2026-01.io.astrona:storage.cargo-lun-0' | head -1)
+ disk=$(find /dev/disk/by-path -name '*iscsi-iqn.2026-01.io.astrona:storage.cargo-lun-1' | head -1)
  test -n "$disk" && break
  sleep 1
 done

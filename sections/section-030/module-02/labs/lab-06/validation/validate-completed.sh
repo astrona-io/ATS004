@@ -28,9 +28,8 @@ case "$source_field" in
 esac
 [ "$(echo "$fstab_line" | awk '{print $3}')" = "ext4" ] || fail "fstab type for /mnt/reports is not ext4"
 
-# --- Prove the line works: drop the mount, let mount -a bring it back ---
-sudo umount /mnt/reports 2>/dev/null
-sudo mount -a >/dev/null 2>&1
+# Check the learner's live mount without repairing it.
+mountpoint -q /mnt/reports || fail "/mnt/reports is not mounted"
 fstype=$(findmnt -no FSTYPE /mnt/reports 2>/dev/null)
 [ "$fstype" = "ext4" ] || fail "after 'mount -a', /mnt/reports is not mounted as ext4 (found '$fstype')"
 

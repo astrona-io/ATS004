@@ -5,12 +5,12 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 sudo -n bash <<'GRADER_ROOT'
 set -u
 
-if ! grep -q "^\s*/mnt/net\s\+/etc/auto.net" /etc/auto.master; then
+if ! grep -Eq "^[[:space:]]*/mnt/net[[:space:]]+/etc/auto[.]net" /etc/auto.master; then
   echo "FAIL: Indirect map '/mnt/net /etc/auto.net' not found in /etc/auto.master"
   exit 1
 fi
 
-if ! grep -E "^\s*/mnt/net\s\+/etc/auto.net" /etc/auto.master | grep -q "timeout=120"; then
+if ! grep -E "^[[:space:]]*/mnt/net[[:space:]]+/etc/auto[.]net" /etc/auto.master | grep -q "timeout=120"; then
   echo "FAIL: Timeout for /mnt/net is not set to 120"
   exit 1
 fi

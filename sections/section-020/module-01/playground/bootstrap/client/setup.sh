@@ -7,6 +7,9 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # chapter's checkpoints have you do. All mounts in this module are non-root.
 set -eu
 
+sudo apt-get update
+sudo apt-get install -y sshfs
+
 export DEBIAN_FRONTEND=noninteractive
 
 # FUSE opt-in so a non-root `sshfs -o allow_other` mount is permitted.

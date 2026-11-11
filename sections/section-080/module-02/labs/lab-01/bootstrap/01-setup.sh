@@ -6,6 +6,13 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # or quotaon -- turning quotas on and setting limits is the graded task.
 set -eu
 
+# Load the kernel format used by external quota files.
+if ! sudo modprobe quota_v2; then
+  sudo apt-get update -qq
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "linux-modules-extra-$(uname -r)"
+  sudo modprobe quota_v2
+fi
+
 if ! command -v quotacheck >/dev/null; then
   sudo apt-get update -y
   sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota

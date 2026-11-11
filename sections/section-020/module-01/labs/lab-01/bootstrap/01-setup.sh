@@ -3,6 +3,9 @@
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
+sudo apt-get update
+sudo apt-get install -y sshfs
+
 sudo sed -i 's/#user_allow_other/user_allow_other/' /etc/fuse.conf
 
 if ! id "sshuser" >/dev/null 2>&1; then
@@ -11,6 +14,8 @@ if ! id "sshuser" >/dev/null 2>&1; then
 fi
 
 sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+echo "PasswordAuthentication yes" | sudo tee /etc/ssh/sshd_config.d/00-lab-password.conf >/dev/null
+sudo sshd -t
 sudo systemctl restart ssh
 
 sudo mkdir -p /opt/remote-data

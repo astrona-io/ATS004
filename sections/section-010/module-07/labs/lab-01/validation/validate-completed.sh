@@ -49,8 +49,8 @@ if [ "$FILE_UID" != "$STUDENT_UID" ]; then
   exit 1
 fi
 
-if ! sudo -u ubuntu test -w /mnt/usbdata/proof.txt; then
-  echo "FAIL: ubuntu cannot write to /mnt/usbdata/proof.txt"
+if ! sudo -u student test -w /mnt/usbdata/proof.txt; then
+  echo "FAIL: student cannot write to /mnt/usbdata/proof.txt"
   exit 1
 fi
 

@@ -18,7 +18,7 @@
         }
       ],
       "failures": {
-        "default/verify-nfs": "not.*mount|nothing is mounted|not active"
+        "default/verify-nfs": "Expected nfs or nfs4 mount.*found ''"
       },
       "restore": [
         {
