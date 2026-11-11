@@ -12,6 +12,15 @@ if ! sudo iscsiadm -m session 2>/dev/null | grep -q "$TARGET"; then
   exit 1
 fi
 
+# A nofail network mount can still be queued after SSH is available.
+# Wait only for an existing job; never start or repair the mount here.
+for attempt in $(seq 1 30); do
+  if ! systemctl list-jobs --no-legend --no-pager | awk '$2 == "mnt-cargo.mount" {found=1} END {exit !found}'; then
+    break
+  fi
+  sleep 2
+done
+
 source_device=$(findmnt -no SOURCE "$MOUNT_POINT" 2>/dev/null)
 if [ -z "$source_device" ]; then
   echo "FAIL: nothing is mounted at $MOUNT_POINT"

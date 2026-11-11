@@ -6,7 +6,7 @@ The exam checks what survives a restart. A network disk is harder than a local o
 
 At launch, systemd docks the holds in `/etc/fstab` in order. A local hold is ready at once. A hold on another ship needs the communications array first, and the array is not up yet when the first docking orders run.
 
-The mount option `_netdev` tells systemd: "this device needs the network". systemd then waits for the network, and it does not stop the whole launch if the hold is slow. Without it, a boot can hang on a mount that cannot work yet.
+The mount option `_netdev` tells systemd: "this device needs the network". systemd then orders the mount after the network is online. Use `nofail` separately when boot should continue if the disk is unavailable. Without it, a boot can hang on a mount that cannot work yet.
 
 ## The fstab line
 
@@ -51,13 +51,13 @@ If it shows `manual`, change it:
 sudo iscsiadm -m node -T iqn.2026-01.io.astrona:storage.cargo -p 10.10.60.10 --op update -n node.startup -v automatic
 ```
 
-At launch the `iscsid` service reads the records marked `automatic` and logs in. Check that the service itself is running:
+At boot, `open-iscsi.service` logs in to the records marked `automatic`, using the `iscsid` daemon. Check both services:
 
 ```sh
-systemctl is-active iscsid
+systemctl is-active iscsid open-iscsi
 ```
 
-It should print `active`. The two settings work as a pair: `automatic` logs in, `_netdev` makes the mount wait for it.
+Both should report `active`. A `nofail` mount can finish after SSH becomes available; inspect `systemctl list-jobs` and `systemctl status mnt-cargo.mount` before diagnosing a missing mount. The two settings work as a pair: `automatic` logs in, `_netdev` makes the mount wait for it.
 
 ## Common pitfalls
 

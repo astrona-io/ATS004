@@ -3,7 +3,7 @@
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Lab bootstrap for the "client" VM: the iSCSI initiator tools only.
 # Nothing is discovered, logged in, formatted or mounted. Packages are
-# installed with apt at start-up. Not run or tested by the course authors.
+# installed with apt at start-up.
 set -eu
 
 export DEBIAN_FRONTEND=noninteractive
