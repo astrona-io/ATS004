@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 import subprocess
 import unittest
-from lifecycle import Lifecycle, checked_grade, GradeError, InfrastructureError
+from lifecycle import Lifecycle, checked_grade, GradeError, InfrastructureError, CommandTimeout
 
 
 class GradeContract(unittest.TestCase):
@@ -78,6 +78,32 @@ class VMHandles(unittest.TestCase):
         record['sshHost'] = 'example.com'
         with self.assertRaises(InfrastructureError):
             self.load([{'name': 'host'}], {name: record})
+
+
+class RebootRetry(unittest.TestCase):
+    def runner(self):
+        runner = Lifecycle.__new__(Lifecycle)
+        runner.spec = {'reboot_timeout': 60}
+        return runner
+
+    def test_ssh_timeout_during_reboot_is_retried(self):
+        runner = self.runner()
+        ok = lambda value: subprocess.CompletedProcess([], 0, value)
+        responses = [ok('old-id'), ok('scheduled'), CommandTimeout('SSH unavailable'),
+                     ok('new-id'), ok('ready')]
+        with patch.object(runner, 'ssh', side_effect=responses) as ssh, \
+             patch('lifecycle.time.sleep'):
+            runner.reboot('default')
+        self.assertEqual(ssh.call_count, 5)
+
+    def test_retry_stops_at_reboot_deadline(self):
+        runner = self.runner()
+        ok = subprocess.CompletedProcess([], 0, 'old-id')
+        with patch.object(runner, 'ssh', side_effect=[ok, ok, CommandTimeout('offline')]), \
+             patch('lifecycle.time.sleep'), \
+             patch('lifecycle.time.monotonic', side_effect=[0, 0, 61]):
+            with self.assertRaisesRegex(InfrastructureError, 'did not complete a reboot'):
+                runner.reboot('default')
 
 
 if __name__ == '__main__':

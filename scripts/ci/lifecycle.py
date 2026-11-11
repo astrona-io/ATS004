@@ -18,6 +18,10 @@ class InfrastructureError(RuntimeError):
     pass
 
 
+class CommandTimeout(InfrastructureError):
+    pass
+
+
 class GradeError(RuntimeError):
     pass
 
@@ -68,7 +72,7 @@ class Lifecycle:
             if isinstance(text, bytes):
                 text = text.decode(errors='replace')
             (self.output / f'{len(self.results):03}-{label}.log').write_text(text)
-            raise InfrastructureError(f'{label} timed out after {timeout}s') from exc
+            raise CommandTimeout(f'{label} timed out after {timeout}s') from exc
         (self.output / f'{len(self.results):03}-{label}.log').write_text(result.stdout)
         self.results.append({'phase': self.phase, 'step': label, 'exit': result.returncode,
                              'seconds': round(time.monotonic() - started, 2)})
@@ -171,7 +175,10 @@ class Lifecycle:
         deadline = time.monotonic() + self.spec.get('reboot_timeout', 180)
         while time.monotonic() < deadline:
             time.sleep(5)
-            after = self.ssh(vm, 'cat /proc/sys/kernel/random/boot_id', 'wait-for-reboot', 20)
+            try:
+                after = self.ssh(vm, 'cat /proc/sys/kernel/random/boot_id', 'wait-for-reboot', 20)
+            except CommandTimeout:
+                continue
             if after.returncode == 0 and after.stdout.strip() != before.stdout.strip():
                 ready = self.ssh(vm, 'set -eu; timeout 90 cloud-init status --wait; test -d /run/systemd/system', 'boot-ready', 100)
                 checked_grade(ready)
