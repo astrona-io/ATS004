@@ -18,7 +18,7 @@ DEV=/dev/disk/by-id/virtio-s70m02-perf
 for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done
 sudo udevadm settle --timeout=30 || true
 if [ -e "$DEV" ]; then
-  blkid "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L PERF "$DEV"
+  sudo blkid -p -s TYPE -o value "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L PERF "$DEV"
   sudo mkdir -p /mnt/perf
   grep -q ' /mnt/perf ' /proc/mounts || sudo mount "$DEV" /mnt/perf
   sudo chmod 777 /mnt/perf

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 set -u
 
 DISK="/dev/disk/by-id/virtio-lab017-media"
@@ -29,7 +31,7 @@ if [ "$mount_source" != "$REAL_DEV" ]; then
   exit 1
 fi
 
-STUDENT_UID=$(id -u ubuntu)
+STUDENT_UID=$(id -u student)
 mount_options=$(findmnt -no OPTIONS /mnt/usbdata 2>/dev/null)
 if ! echo "$mount_options" | grep -q "uid=$STUDENT_UID"; then
   echo "FAIL: /mnt/usbdata is not mounted with uid=$STUDENT_UID (options: '$mount_options')"
@@ -54,4 +56,5 @@ fi
 
 echo "PASS: disk formatted FAT32, labeled USBDATA, mounted with correct uid, and writable without sudo"
 exit 0
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

@@ -21,7 +21,7 @@ done
 
 sudo udevadm settle --timeout=30 || true
 
-yes | sudo mdadm --create /dev/md0 --level=5 --raid-devices=3 "$A" "$B" "$C"
+sudo mdadm --create --run /dev/md0 --level=5 --raid-devices=3 "$A" "$B" "$C"
 sudo mdadm --wait /dev/md0 || true
 
 sudo mkfs.ext4 -q /dev/md0

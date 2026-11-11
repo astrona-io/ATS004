@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 set -u
 
 if ! sudo lvs vg_data/lv_storage >/dev/null 2>&1; then
@@ -17,4 +19,5 @@ fi
 
 echo "PASS: Logical Volume lv_storage exists at roughly 500M"
 exit 0
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

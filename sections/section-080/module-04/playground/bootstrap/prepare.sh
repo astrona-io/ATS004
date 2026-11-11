@@ -8,6 +8,11 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # with a reset helper, so the trailing-slash rm behaviour can be tried safely.
 set -euo pipefail
 
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
+
 # A realistic "current release" symlink to resolve and inspect (read-only use).
 sudo mkdir -p /srv/releases/v1 /srv/releases/v2 /srv/www
 echo "v1 index" | sudo tee /srv/releases/v1/index.html >/dev/null

@@ -5,6 +5,11 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Moving them to their FHS places and linking them are the graded tasks.
 set -eu
 
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
+
 sudo mkdir -p /srv/staging
 sudo tee /srv/staging/acme.conf > /dev/null <<'CONF'
 # acme settings

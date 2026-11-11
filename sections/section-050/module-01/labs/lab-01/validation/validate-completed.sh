@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 set -u
 
 if ! grep -q "^\s*/-\s\+/etc/auto.direct" /etc/auto.master; then
@@ -8,7 +10,7 @@ if ! grep -q "^\s*/-\s\+/etc/auto.direct" /etc/auto.master; then
   exit 1
 fi
 
-if ! grep -E "^\s*/-\s\+/etc/auto.direct" /etc/auto.master | grep -q "timeout=60"; then
+if ! grep -E "^[[:space:]]*/-[[:space:]]+/etc/auto.direct" /etc/auto.master | grep -q "timeout=60"; then
   echo "FAIL: Direct map timeout is not configured to 60 seconds"
   exit 1
 fi
@@ -23,7 +25,7 @@ if [ ! -f "/mnt/secure_archive/archive.txt" ]; then
   exit 1
 fi
 
-mount_type=$(findmnt -no FSTYPE /mnt/secure_archive 2>/dev/null)
+mount_type=$(findmnt -nr -T /mnt/secure_archive -o FSTYPE | tail -n1 2>/dev/null)
 if [[ "$mount_type" != "autofs" ]] && [[ "$mount_type" != "ext4" ]] && [[ "$mount_type" != "bind" ]]; then
   echo "FAIL: Expected bind mount type at /mnt/secure_archive, found '$mount_type'"
   exit 1
@@ -31,4 +33,5 @@ fi
 
 echo "PASS: autofs direct map and timeout configured and verified successfully"
 exit 0
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

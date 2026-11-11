@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Confirms an ext4 filesystem is mounted at /mnt/backup-black. Deliberately
 # does NOT assume a raw /dev/vdX device letter -- astrona-cli's extraDisks
 # aren't guaranteed to land on any particular letter, so this checks the
@@ -22,4 +24,5 @@ fi
 
 echo "PASS: $source is ext4 and mounted at /mnt/backup-black"
 exit 0
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Confirms the busy process was actually found and stopped (not just the
 # mount forced away), the disk cleanly unmounted, and no unrelated
 # critical process was killed collaterally.
@@ -24,4 +26,5 @@ fi
 
 echo "PASS: vault-keeper stopped, /mnt/locked-vault cleanly unmounted, no collateral damage"
 exit 0
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

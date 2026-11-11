@@ -8,6 +8,11 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # or quotaon — turning quotas on is the chapter's job.
 set -euo pipefail
 
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
+
 export DEBIAN_FRONTEND=noninteractive
 
 DEV=/dev/disk/by-id/virtio-s100m01-q
@@ -15,7 +20,7 @@ for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done
 sudo udevadm settle --timeout=30 || true
 
 if [ -e "$DEV" ]; then
-  blkid "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L QUOTA "$DEV"
+  sudo blkid -p -s TYPE -o value "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L QUOTA "$DEV"
   sudo mkdir -p /quota
   UUID=$(sudo blkid -s UUID -o value "$DEV")
   [ -e /etc/fstab.orig ] || sudo cp /etc/fstab /etc/fstab.orig

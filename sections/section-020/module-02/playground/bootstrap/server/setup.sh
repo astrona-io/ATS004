@@ -7,6 +7,15 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # /etc/exports is what the chapter's checkpoints have you do.
 set -eu
 
+missing=()
+for package in nfs-common nfs-kernel-server; do
+  dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q 'install ok installed' || missing+=("$package")
+done
+if [ "${#missing[@]}" -gt 0 ]; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "${missing[@]}"
+fi
+
 export DEBIAN_FRONTEND=noninteractive
 
 LAB_CIDR="10.10.20.0/24"

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Confirms a ~2G file-type swap area is active.
 
 set -u
@@ -12,7 +14,7 @@ if [[ -z "$line" ]]; then
 fi
 
 name="$(awk '{print $1}' <<<"$line")"
-size_bytes="$(swapon --show=NAME,SIZE -b --noheadings 2>/dev/null | awk -v n="$name" '$1==n{print $2}')"
+size_bytes="$(swapon --show=NAME,SIZE --bytes --noheadings 2>/dev/null | awk -v n="$name" '$1==n{print $2}')"
 
 # Accept 2G +/- 5%
 min=$((2*1024*1024*1024*95/100))
@@ -24,4 +26,5 @@ fi
 
 echo "PASS: swapfile $name is active with size ~2G"
 exit 0
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

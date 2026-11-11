@@ -7,6 +7,11 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # set any limits or define the project -- that is the graded task.
 set -eu
 
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
+
 DEV=/dev/disk/by-id/virtio-lab084-xfsquota
 for i in $(seq 1 30); do
   [ -e "$DEV" ] && break

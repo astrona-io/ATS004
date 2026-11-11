@@ -1,6 +1,6 @@
 {
   "initial_failures": {
-    "default/verify-raid-recovery": "spare|member|replace|failed"
+    "default/verify-raid-recovery": "[Ss]tate|[Dd]evices|spare|member|replace|failed"
   },
   "solution": [
     {

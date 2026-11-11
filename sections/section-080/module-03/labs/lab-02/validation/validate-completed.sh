@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 set -u
 
 fail() { echo "FAIL: $*"; exit 1; }
@@ -29,4 +31,5 @@ echo "$state" | grep -Eq 'Blocks grace time: *\[(3 days|72:00:00)' || \
 
 echo "PASS: alice's limits were copied to bob and carol, and engineers has 50M/80M with a 3-day block timer on XFS"
 exit 0
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

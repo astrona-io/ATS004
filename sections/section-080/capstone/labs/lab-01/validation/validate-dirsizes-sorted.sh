@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Checks that /opt/course/audit/dirsizes.txt is sorted largest-first.
 # Tolerant of du-h-style sizes (4.0K, 1.2G, 178M) or plain byte counts,
 # in either "SIZE\tPATH" or "SIZE PATH" order.
@@ -47,4 +49,5 @@ else
   echo "FAIL: dirsizes sorted - ${result#FAIL: }"
   exit 1
 fi
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

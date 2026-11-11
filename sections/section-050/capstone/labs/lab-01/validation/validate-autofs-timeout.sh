@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Confirms the idle-unmount timeout is 300s, either on the master map's
 # /mnt/auto line or globally in /etc/autofs.conf.
 set -u
@@ -20,4 +22,5 @@ fi
 
 echo "FAIL: autofs timeout - no 300s timeout found on the /mnt/auto master map line or in /etc/autofs.conf's TIMEOUT"
 exit 1
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

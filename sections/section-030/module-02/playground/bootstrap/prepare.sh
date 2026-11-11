@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+sudo install -m 755 "$0" /usr/local/bin/playground-prepare
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Advanced LVM Operations" playground.
@@ -146,8 +147,7 @@ sudo chmod +x /usr/local/bin/catchup
 # Keep a copy of this whole script on the VM under a stable name so
 # 'catchup reset' can re-run it later without needing the original
 # bootstrap source around.
-sudo cp "$0" /usr/local/bin/playground-prepare
-sudo chmod +x /usr/local/bin/playground-prepare
+
 
 echo "[playground] already know Part 2 or Part 2+3 and want to skip ahead? Run: catchup part3   or   catchup part4"
 echo "[playground] broke something and want to start over without destroying the VM? Run: catchup reset"

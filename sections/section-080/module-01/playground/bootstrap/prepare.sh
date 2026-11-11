@@ -8,12 +8,17 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # a large sparse file, and some data under /opt.
 set -euo pipefail
 
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
+
 DEV=/dev/disk/by-id/virtio-s80m01-data
 for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done
 sudo udevadm settle --timeout=30 || true
 
 if [ -e "$DEV" ]; then
-  blkid "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L DATA "$DEV"
+  sudo blkid -p -s TYPE -o value "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L DATA "$DEV"
   sudo mkdir -p /data
   grep -q ' /data ' /proc/mounts || sudo mount "$DEV" /data
   sudo chmod 777 /data

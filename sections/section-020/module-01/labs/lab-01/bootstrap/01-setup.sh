@@ -11,7 +11,7 @@ if ! id "sshuser" >/dev/null 2>&1; then
 fi
 
 sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-sudo systemctl restart sshd
+sudo systemctl restart ssh
 
 sudo mkdir -p /opt/remote-data
 sudo tee /opt/remote-data/welcome.txt > /dev/null <<'EOF'

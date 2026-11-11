@@ -1,6 +1,6 @@
 {
   "initial_failures": {
-    "default/verify-raid-reassemble-and-zero": "superblock|stale|signature"
+    "default/verify-raid-reassemble-and-zero": "still carries a RAID label"
   },
   "solution": [
     {

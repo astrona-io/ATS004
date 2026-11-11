@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Confirms the active swap file is persisted in /etc/fstab with type swap.
 
 set -u
@@ -18,4 +20,5 @@ fi
 
 echo "PASS: $name is persisted in /etc/fstab as swap"
 exit 0
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

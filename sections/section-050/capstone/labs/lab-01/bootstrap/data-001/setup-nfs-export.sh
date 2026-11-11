@@ -5,6 +5,15 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # part of the graded task -- the graded task is app-srv1's autofs config.
 set -eu
 
+missing=()
+for package in nfs-common nfs-kernel-server; do
+  dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q 'install ok installed' || missing+=("$package")
+done
+if [ "${#missing[@]}" -gt 0 ]; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "${missing[@]}"
+fi
+
 sudo mkdir -p /exports/shared
 sudo chmod 0755 /exports/shared
 echo "hello from data-001" | sudo tee /exports/shared/welcome.txt > /dev/null

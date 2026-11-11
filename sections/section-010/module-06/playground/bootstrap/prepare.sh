@@ -10,7 +10,7 @@ for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done
 sudo udevadm settle --timeout=30 || true
 
 if [ -e "$DEV" ]; then
-  blkid "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L DATA "$DEV"
+  sudo blkid -p -s TYPE -o value "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L DATA "$DEV"
 else
   echo "[playground] WARNING: $DEV did not appear."
 fi

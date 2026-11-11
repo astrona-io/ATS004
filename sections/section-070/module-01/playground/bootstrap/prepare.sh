@@ -14,7 +14,7 @@ for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done
 sudo udevadm settle --timeout=30 || true
 
 if [ -e "$DEV" ]; then
-  if ! blkid "$DEV" >/dev/null 2>&1; then
+  if ! sudo blkid -p -s TYPE -o value "$DEV" >/dev/null 2>&1; then
     sudo mkfs.ext4 -q -L PERF "$DEV"
   fi
   sudo mkdir -p /mnt/perf

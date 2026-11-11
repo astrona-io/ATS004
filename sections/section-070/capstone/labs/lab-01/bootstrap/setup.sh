@@ -30,7 +30,7 @@ done
 # the system". Settle udev and retry mkfs a few times to absorb that race.
 sudo udevadm settle --timeout=30 || true
 
-if ! blkid "$DISK" >/dev/null 2>&1; then
+if ! sudo blkid -p -s TYPE -o value "$DISK" >/dev/null 2>&1; then
   mkfs_ok=0
   for i in $(seq 1 10); do
     if sudo mkfs.ext4 -F "$DISK"; then

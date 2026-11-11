@@ -3,6 +3,11 @@
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
+
 sudo mkdir -p /usr/share/lab-links
 sudo mkdir -p /opt/course/audit
 sudo chmod -R 777 /opt/course/audit

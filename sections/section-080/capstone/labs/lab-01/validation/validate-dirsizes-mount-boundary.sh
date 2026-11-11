@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Checks that the /mnt entry in dirsizes.txt (if present) is small — proving
 # du -x kept the scan from crossing into the ~1G bigshare mount underneath
 # it. If /mnt doesn't appear as its own top-level line, skip gracefully.
@@ -45,4 +47,5 @@ fi
 
 echo "PASS: /mnt entry ($size_tok) is small, mount boundary respected"
 exit 0
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

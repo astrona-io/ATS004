@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 set -u
 
 mount_source=$(findmnt -no SOURCE /mnt/lvm-wide 2>/dev/null)
@@ -22,4 +24,5 @@ fi
 
 echo "PASS: lv_wide is formatted ext4 and mounted at /mnt/lvm-wide"
 exit 0
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

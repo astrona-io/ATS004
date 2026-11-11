@@ -9,6 +9,11 @@ sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Copying the limits and setting the group limits and timer are the graded tasks.
 set -eu
 
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
+
 EXT=/dev/disk/by-id/virtio-lab080302-ext
 XFS=/dev/disk/by-id/virtio-lab080302-xfs
 for dev in "$EXT" "$XFS"; do

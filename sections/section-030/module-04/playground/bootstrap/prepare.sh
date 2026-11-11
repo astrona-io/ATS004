@@ -31,7 +31,7 @@ for d in "$A" "$B" "$C" "$D"; do
   sudo wipefs -a "$d" || true
 done
 
-yes | sudo mdadm --create /dev/md0 --level=5 --raid-devices=3 "$A" "$B" "$C"
+sudo mdadm --create --run /dev/md0 --level=5 --raid-devices=3 "$A" "$B" "$C"
 # Wait for the initial resync so the array starts clean.
 sudo mdadm --wait /dev/md0 || true
 sudo mkfs.ext4 -q /dev/md0

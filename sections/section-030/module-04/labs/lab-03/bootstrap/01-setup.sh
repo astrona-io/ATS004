@@ -20,11 +20,11 @@ sudo udevadm settle --timeout=30 || true
 
 # Leftover label on disk C: build a throw-away array on it, then stop it.
 # Stopping an array does not erase the label on its members.
-yes | sudo mdadm --create /dev/md9 --run --level=1 --raid-devices=2 --metadata=1.2 "$C" missing
+sudo mdadm --create --run /dev/md9 --run --level=1 --raid-devices=2 --metadata=1.2 "$C" missing
 sudo mdadm --stop /dev/md9
 
 # The healthy array on A and B.
-yes | sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 --metadata=1.2 "$A" "$B"
+sudo mdadm --create --run /dev/md0 --level=1 --raid-devices=2 --metadata=1.2 "$A" "$B"
 sudo mdadm --wait /dev/md0 || true
 sudo mkfs.ext4 -q /dev/md0
 sudo mkdir -p /mnt/raid

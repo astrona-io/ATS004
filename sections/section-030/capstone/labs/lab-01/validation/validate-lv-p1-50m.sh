@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Match the account used by astrona ssh, including its home and permissions.
 sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Confirms vol2/p1 exists, is ~50M (rounded to extent size), and is ext4.
 
 set -u
@@ -28,4 +30,5 @@ fi
 
 echo "PASS: vol2/p1 is a ${size_mib}m ext4 logical volume"
 exit 0
+GRADER_ROOT
 ASTRONA_STUDENT_SCRIPT

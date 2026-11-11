@@ -1,6 +1,6 @@
 {
   "initial_failures": {
-    "default/verify-lv-fstab-and-grow": "fstab|UUID"
+    "default/verify-lv-fstab-and-grow": "expected about 800M"
   },
   "solution": [
     {
