@@ -100,7 +100,7 @@ Look for these results:
 
 - The fstab line starts with `UUID=` and that UUID is the same as the one `blkid` prints.
 - Its options include `nofail`, the fifth field is `0`, and the sixth field is `2`.
-- Something is mounted at `/mnt/appdata`, its type is `ext4`, and its live options include `nofail`.
+- Something is mounted at `/mnt/appdata`, its type is `ext4`, and its live options include `noatime`. The `nofail` option is checked in `/etc/fstab`, where it controls boot behavior.
 - `findmnt --verify` shows no `[E]` line for `/mnt/appdata`.
 
 Then send it for grading:
@@ -108,3 +108,7 @@ Then send it for grading:
 ```sh
 astrona submit -c sections/section-010/module-05/labs/lab-01
 ```
+
+## Prove the mount survives a reboot
+
+Check `sudo findmnt --verify` before rebooting. Run `sudo reboot`, reconnect after startup, and inspect `findmnt -no SOURCE,FSTYPE,OPTIONS /mnt/appdata`. The assigned disk must mount automatically with `noatime`. CI repeats the grader after a real reboot; a line in `/etc/fstab` alone does not prove that the mount works.

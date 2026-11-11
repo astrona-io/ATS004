@@ -1,0 +1,47 @@
+{
+  "initial_failures": {
+    "default/verify-fstab-entry": "FAIL: disk label must be APPDATA"
+  },
+  "solution": [
+    {
+      "script": "testing/solution.sh"
+    }
+  ],
+  "negative": [
+    {
+      "name": "wrong-live-options",
+      "apply": [
+        {
+          "script": "testing/wrong-live-options.sh"
+        }
+      ],
+      "failures": {
+        "default/verify-fstab-entry": "FAIL: live mount options"
+      },
+      "restore": [
+        {
+          "script": "testing/restore-options.sh"
+        }
+      ]
+    },
+    {
+      "name": "wrong-mounted-device",
+      "apply": [
+        {
+          "script": "testing/wrong-source.sh"
+        }
+      ],
+      "failures": {
+        "default/verify-fstab-entry": "FAIL: mounted source is not the assigned disk"
+      },
+      "restore": [
+        {
+          "script": "testing/restore-source.sh"
+        }
+      ]
+    }
+  ],
+  "reboot": [
+    "default"
+  ]
+}
