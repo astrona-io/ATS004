@@ -8,3 +8,14 @@ The XFS filesystem `/srv/xfs` is already mounted with `uquota,pquota` — quota 
 2. Define a project named `webdata` with ID `42` for the directory `/srv/xfs/webdata` (register it in `/etc/projects` and `/etc/projid`, then initialise it).
 3. Give the `webdata` project a block quota of `100m` hard.
 4. Confirm both limits are active by reporting on user and project quotas.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-03](../../course.md).
+
+The grader checks:
+
+- Confirms alice's user quota and the webdata project quota.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

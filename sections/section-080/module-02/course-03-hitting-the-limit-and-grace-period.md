@@ -15,6 +15,7 @@ Write past alice's 50M hard limit. This needs quotas on and alice's limit set wi
 ```sh
 sudo -u alice dd if=/dev/zero of=/quota/alice/big bs=1M count=60
 sudo -u alice ls -lh /quota/alice/big
+sync
 sudo repquota -s /quota
 ```
 
@@ -57,17 +58,19 @@ Set a one-hour grace period, give bob a 10M soft and 50M hard limit, and write 2
 
 ```sh
 sudo setquota -t 3600 3600 /quota
+sync
 sudo repquota -s /quota
 sudo setquota -u bob 10M 50M 0 0 /quota
 sudo -u bob dd if=/dev/zero of=/quota/bob/f bs=1M count=20
+sync
 sudo repquota -s /quota
 ```
 
 Expect something like this:
 
 ```text
-User      used   soft   hard  grace
-bob       20M*   10M    50M   59min
+User           used   soft   hard  grace
+bob       +-    20M    10M    50M   59min
 ```
 
 Bob is over his soft limit and under his hard limit, so writes succeed and a countdown of about an hour has started. If bob is still over 10 MiB when it reaches zero, his soft limit starts to behave like a hard limit until he deletes enough files.
@@ -78,7 +81,7 @@ Bob is over his soft limit and under his hard limit, so writes succeed and a cou
 > - **Confusing soft and hard.** Soft can be passed until the grace period runs out. Hard cannot be passed at all. Set hard as the true ceiling and soft a little below as the warning line.
 > - **Testing as `root`.** Root skips the quota check, so a `dd` as root never fails. Use `sudo -u <user>`.
 > - **Expecting the grace clock to restart.** The timer runs from the first crossing. Going back under soft clears it.
-> - **Reading the `*` as an error.** It only marks "over the soft limit". Writes still work until grace ends or the hard limit is reached.
+> - **Reading the `+` status as an error.** It only marks "over the soft limit". Writes still work until grace ends or the hard limit is reached.
 
 ## Your mission: ext4 Quota Hard Limit & Grace Period Lab
 
@@ -109,3 +112,5 @@ When the mission is done, remove it and start a fresh playground:
 astrona destroy ats-004-lab-085
 astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-080/module-02/playground
 ```
+
+Run `sync` before capturing quota usage after a write: ext4 can delay allocating blocks. `repquota` marks an exceeded block soft limit with `+` in its first status column. `quota` uses a different display.

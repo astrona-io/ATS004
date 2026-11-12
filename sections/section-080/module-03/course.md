@@ -34,3 +34,10 @@ After this module you can:
 You should know what a soft limit, a hard limit and a grace period are, and the difference between blocks and inodes.
 
 Your playground is one training spaceship: an Ubuntu 24.04 virtual machine with passwordless `sudo`. It has a 2 GB XFS filesystem mounted at `/srv/xfs` (its `/etc/fstab` line carries `uquota,pquota`, so quotas are already active), a directory `/srv/xfs/webdata`, and users **alice** and **bob**. Start the playground and connect to it with `astrona ssh section-080-module-03-playground`. Run every command in the parts in that shell.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [XFS Project Quota Lab](labs/lab-01/question.md): Set a 40m soft and 50m hard block quota for alice on the XFS filesystem /srv/xfs; Register project webdata with ID 42 for /srv/xfs/webdata in /etc/projects and /etc/projid and initialise it; Give the webdata project a 100m hard block limit and confirm it with xfs_quota reports.
+- [Copy User Quotas and Set XFS Group Limits Lab](labs/lab-02/question.md): Copy one user's quota to other users with edquota -p; Set block limits on a group of an XFS filesystem; Set the group grace time with xfs_quota.
+- [Filesystem Hierarchy and Directory Sizing Capstone Lab](../capstone/labs/lab-01/question.md): Write a size report of every top-level directory under / sorted largest first, excluding pseudo-filesystems; Keep du on one filesystem so the large mount under /mnt is not counted; List each top-level directory that is a symlink, with its target, in symlinks.txt.

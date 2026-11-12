@@ -51,3 +51,9 @@ Start the playground and connect to it with `astrona ssh section-060-module-01-p
 2. [Per-Process Directories & Open File Descriptors](./course-02-per-process-and-file-descriptors.md): `/proc/<PID>/` as a live view of one process, and counting `fd/` entries to catch a leak.
 3. [Limits, Status and Storage Counters](./course-03-limits-status-and-storage-counters.md): the open-file limits, the process status screen, and the disk counters and mount list that storage tools read.
 4. [Wrap-Up: Mission Debrief](./course-04-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [proc System Limits & File Descriptors Auditing Lab](labs/lab-01/question.md): Find the PID of systemd-journald and count its open file descriptors under /proc; Read the system-wide open file limit from the kernel and record it in an audit file.
+- [Virtual Filesystems /proc and /sys Capstone Lab](../capstone/labs/lab-01/question.md): Enable IPv4 forwarding for the current boot only, without writing it to any sysctl file; Read memory totals, a process's open file descriptors and the root mount options straight from /proc.

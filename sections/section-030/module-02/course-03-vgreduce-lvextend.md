@@ -220,7 +220,9 @@ Down from the `553M` you saw at the end of the growing walkthrough, matching the
 > - **`pvremove` before `vgreduce`.** A PV still referenced by any LV's extent list will not `pvremove` cleanly. Detach it with `vgreduce` first, and only after `pvmove` has emptied it.
 > - **Assuming XFS can shrink.** Neither `resize2fs` nor `xfs_growfs` shrinks XFS — it is not implemented in the on-disk format, not just missing from the tool. There is no supported XFS shrink path; plan capacity accordingly, or migrate data to a smaller LV.
 
-## Your mission: Advanced LVM: Live Extent Migration & VG Reduction Lab
+## Optional guided practice: Live extent migration
+
+Use this shorter exercise if you want guided practice first. The main migration exercise is [lab 038](./labs/lab-03/question.md), which also adds destination capacity. You can skip lab 032 after completing 038.
 
 You can now move extents off a live disk with `pvmove`, pull the empty disk out with `vgreduce`, and wipe its label with `pvremove`. The mission asks you to migrate the volume group `vg_migration` off one disk, reduce it, and remove the disk's PV label.
 

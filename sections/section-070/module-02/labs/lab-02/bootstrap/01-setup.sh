@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: an ext4 spool disk mounted at /mnt/spool. One background process
 # writes a 300M file there, deletes it, and keeps it open -- the space stays
 # used but no name shows it. The PID is saved in /var/lib/lab070202-holder.pid
@@ -32,3 +34,4 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 sync
+ASTRONA_STUDENT_SCRIPT

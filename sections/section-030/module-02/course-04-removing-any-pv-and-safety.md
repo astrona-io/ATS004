@@ -137,7 +137,9 @@ None of this is optional because LVM asked nicely — it's a different layer's j
 > - **Starting `pvmove` without checking free space on the *other* PVs first.** It fails safely rather than corrupting anything, but checking with `pvs -o pv_name,pv_used,pv_free` up front saves a wasted run on a large migration.
 > - **Assuming the PV you're removing holds a clean, single range.** As step 6 above shows, one PV can appear more than once in `lvs -o +devices` if it has absorbed extents at different times. Read the whole `Devices` cell, not just the first entry.
 
-## Your mission: LVM: Removing One PV Out of Three, Mixed Extents Lab
+## Optional advanced practice: Evacuate a middle PV
+
+This is an optional variation after [lab 038](./labs/lab-03/question.md). Attempt it when you want practice choosing existing destination capacity across a three-disk layout.
 
 You can now remove any one disk from a pool, even when its extents are mixed with the extents of other volumes. The mission asks you to remove `disk2` from the pool `vg_split`, which has three disks and mixed extents, without losing data.
 

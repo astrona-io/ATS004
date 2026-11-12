@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Partitioning Raw Storage" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Guarantees the scratch disk starts with no partition table so the fdisk /
@@ -28,3 +30,4 @@ else
 fi
 
 echo "[playground] ready. The scratch disk is commonly /dev/vdb — confirm with 'lsblk'."
+ASTRONA_STUDENT_SCRIPT

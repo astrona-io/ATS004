@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Removable Media and FAT32" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 set -euo pipefail
@@ -12,3 +14,4 @@ if [ ! -e "$DEV" ]; then
 fi
 
 echo "[playground] ready. Blank spare disk (commonly /dev/vdb). Confirm with: lsblk"
+ASTRONA_STUDENT_SCRIPT

@@ -35,3 +35,10 @@ After this module you can:
 You should know basic navigation (`ls`, `cd`).
 
 Your playground is one training spaceship: an Ubuntu 24.04 virtual machine with passwordless `sudo`. It has the distro's usrmerge symlinks in place (`/bin`, `/sbin`, `/lib` → `/usr/...`), a sample `/srv/www/active → /srv/releases/v2` to inspect, and a **disposable** `/tmp/rmdemo` (a real directory `real/` plus `link → real`) with a `reset-symlink-demo` command to rebuild it. Start the playground and connect to it with `astrona ssh section-080-module-04-playground`. Run every command in the parts in that shell.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Navigating Shortcuts: Symbolic Links Lab](labs/lab-01/question.md): Find every symbolic link under /usr/share/lab-links and read its target with readlink; Record the links that point into /etc/alternative or /opt/target, sorted, in symlink_report.txt.
+- [Place Files by FHS and Link Them Lab](labs/lab-02/question.md): Move files to the directories the Filesystem Hierarchy Standard names for them; Make a hard link and prove it shares the inode; Make symbolic links that point to the right targets.
+- [Filesystem Hierarchy and Directory Sizing Capstone Lab](../capstone/labs/lab-01/question.md): Write a size report of every top-level directory under / sorted largest first, excluding pseudo-filesystems; Keep du on one filesystem so the large mount under /mnt is not counted; List each top-level directory that is a symlink, with its target, in symlinks.txt.

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Device-Level Diagnostics" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Installs sysstat + fio, mounts an ext4 filesystem on the spare disk at
@@ -12,7 +14,7 @@ for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done
 sudo udevadm settle --timeout=30 || true
 
 if [ -e "$DEV" ]; then
-  if ! blkid "$DEV" >/dev/null 2>&1; then
+  if ! sudo blkid -p -s TYPE -o value "$DEV" >/dev/null 2>&1; then
     sudo mkfs.ext4 -q -L PERF "$DEV"
   fi
   sudo mkdir -p /mnt/perf
@@ -50,3 +52,4 @@ sudo chmod +x /usr/local/bin/stop-io-load
 
 echo "[playground] ready. /mnt/perf is on the spare disk (commonly /dev/vdb)."
 echo "[playground] run 'start-io-load seq' or 'start-io-load rand'; 'stop-io-load' to end."
+ASTRONA_STUDENT_SCRIPT

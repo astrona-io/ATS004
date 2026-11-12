@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Confirms an autofs master map references /mnt/auto and an indirect map
 # file whose entry points at data-001:/exports/shared.
 set -u
@@ -36,3 +40,5 @@ fi
 
 echo "PASS: master map -> $map_file -> shared key -> data-001:/exports/shared"
 exit 0
+GRADER_ROOT
+ASTRONA_STUDENT_SCRIPT

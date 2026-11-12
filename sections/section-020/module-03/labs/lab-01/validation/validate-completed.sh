@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Runs on "client". Checks the live machine.
 set -u
 
@@ -9,6 +11,15 @@ if ! sudo iscsiadm -m session 2>/dev/null | grep -q "$TARGET"; then
   echo "FAIL: no open iSCSI session to $TARGET"
   exit 1
 fi
+
+# A nofail network mount can still be queued after SSH is available.
+# Wait only for an existing job; never start or repair the mount here.
+for attempt in $(seq 1 30); do
+  if ! systemctl list-jobs --no-legend --no-pager | awk '$2 == "mnt-cargo.mount" {found=1} END {exit !found}'; then
+    break
+  fi
+  sleep 2
+done
 
 source_device=$(findmnt -no SOURCE "$MOUNT_POINT" 2>/dev/null)
 if [ -z "$source_device" ]; then
@@ -61,3 +72,4 @@ fi
 
 echo "PASS: iSCSI disk mounted at $MOUNT_POINT as ext4, persistent in fstab with _netdev, automatic login set"
 exit 0
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 DISK1=/dev/disk/by-id/virtio-lab086-disk1
@@ -24,3 +26,4 @@ sudo mount /dev/vg_xfs/lv_xfs /mnt/lvm-xfs
 sudo tee /mnt/lvm-xfs/xfs-marker.txt > /dev/null <<'EOF'
 LVM XFS grow test. If you can read this, the growth preserved existing data.
 EOF
+ASTRONA_STUDENT_SCRIPT

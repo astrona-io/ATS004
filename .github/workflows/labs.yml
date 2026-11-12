@@ -1,0 +1,72 @@
+name: labs
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '29 4 * * 1'
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: labs-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+env:
+  ASTRONA_NO_UPDATE_CHECK: '1'
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.matrix.outputs.environments }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 -m pip install -r scripts/ci/requirements.txt
+      - run: python3 -m unittest discover -s scripts/ci -p 'test_*.py'
+      - id: matrix
+        run: echo "environments=$(python3 scripts/ci/environments.py)" >> "$GITHUB_OUTPUT"
+  environment:
+    needs: discover
+    name: ${{ matrix.env.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        env: ${{ fromJSON(needs.discover.outputs.environments) }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install QEMU and course dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 qemu-utils genisoimage acl
+          test -c /dev/kvm
+          # Keep access across device events while multiple QEMU guests start.
+          echo 'KERNEL=="kvm", MODE="0666"' | sudo tee /etc/udev/rules.d/99-lfcs-kvm.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo udevadm settle
+          sudo chmod 0666 /dev/kvm
+          python3 -m pip install -r scripts/ci/requirements.txt
+          bash scripts/ci/install-cli.sh
+      - name: Run fresh environment lifecycle
+        env:
+          ENVIRONMENT: ${{ matrix.env.path }}
+        run: python3 scripts/ci/lifecycle.py "$ENVIRONMENT"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ${{ matrix.env.name }}-results
+          path: test-results/
+          retention-days: 14
+  all-environments-pass:
+    if: always()
+    needs: [discover, environment]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require discovery and every environment
+        env:
+          DISCOVERY: ${{ needs.discover.result }}
+          ENVIRONMENTS: ${{ needs.environment.result }}
+        run: test "$DISCOVERY" = success && test "$ENVIRONMENTS" = success

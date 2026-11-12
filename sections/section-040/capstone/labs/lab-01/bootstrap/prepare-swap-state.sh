@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: ensures the VM starts with genuinely zero swap active (matching
 # the scenario's "no swap configured at all"), and partitions the extra disk
 # into one unformatted partition for the task to turn into swap itself.
@@ -32,3 +34,4 @@ if [ ! -e "$PART" ]; then
   sudo parted -s "$DISK" mklabel gpt mkpart primary linux-swap 0% 100%
   sudo partprobe "$DISK"
 fi
+ASTRONA_STUDENT_SCRIPT

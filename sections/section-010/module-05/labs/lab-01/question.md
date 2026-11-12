@@ -9,3 +9,18 @@ Astronaut, a new cargo hold has been fitted to your ship for application data. A
 3. Add a persistent entry to `/etc/fstab` for this filesystem, keyed by its **`UUID=`** (not a `/dev/` path), with mount options `defaults,nofail,noatime`, `dump` set to `0`, and `pass` set to `2`.
 4. Apply the new entry with `mount -a` and confirm it is mounted.
 5. Verify the entry is safe with `findmnt --verify` before you would trust it at boot.
+
+## Prove the mount survives a reboot
+
+Check `sudo findmnt --verify` before rebooting. Run `sudo reboot`, reconnect after startup, and inspect `findmnt -no SOURCE,FSTYPE,OPTIONS /mnt/appdata`. The assigned disk must mount automatically with `noatime`. CI repeats the grader after a real reboot; a line in `/etc/fstab` alone does not prove that the mount works.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-05](../../course.md).
+
+The grader checks:
+
+- Confirms UUID-keyed, correctly-optioned, persistent fstab entry.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

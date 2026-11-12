@@ -8,3 +8,14 @@ Automate mounting of a local directory on-demand.
 2. Configure a direct map so that accessing `/mnt/secure_archive` automatically mounts the local folder `/var/data/archive` using a bind mount.
 3. Set the direct map timeout to exactly **60** seconds so that inactivity leads to automatic unmounting.
 4. Do not list `/mnt/secure_archive` in `/etc/fstab`.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-01](../../course.md).
+
+The grader checks:
+
+- Confirms autofs direct map mounting and timeout values.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

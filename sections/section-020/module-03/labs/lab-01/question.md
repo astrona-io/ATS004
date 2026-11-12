@@ -12,3 +12,14 @@ Astronaut, the storage ship `server` (10.10.60.10) offers one empty disk over iS
 6. Make the login automatic: set `node.startup` of this target to `automatic`.
 
 The grader checks the live `client` machine: it looks for an open iSCSI session to the target, checks that `/mnt/cargo` is mounted from that iSCSI disk as ext4, reads the `/etc/fstab` line, and reads the `node.startup` value.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-01](../../../module-01/course.md), [module-02](../../../module-02/course.md), [module-03](../../course.md).
+
+The grader checks:
+
+- Confirms an iSCSI session, an ext4 filesystem on the iSCSI disk mounted at /mnt/cargo, and a UUID= fstab line with _netdev.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

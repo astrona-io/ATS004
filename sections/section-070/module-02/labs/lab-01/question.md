@@ -9,3 +9,14 @@ A rogue process is hammering the local hard drive with aggressive write operatio
 3. Write your findings to `/opt/course/audit/culprit.txt` with:
    - The process PID on the **first** line.
    - The absolute file path of the active log file on the **second** line.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-02](../../course.md).
+
+The grader checks:
+
+- Confirms proper profiling of the rogue writing process and target file.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

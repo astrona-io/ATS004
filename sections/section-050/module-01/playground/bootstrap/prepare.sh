@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "On-Demand Mounting Fundamentals" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Installs autofs, seeds a local directory the chapter bind-mounts through
@@ -21,3 +23,4 @@ sudo rmdir /mnt/auto 2>/dev/null || true
 
 echo "[playground] /srv/localdata seeded. /etc/auto.master backed up to /etc/auto.master.orig."
 systemctl is-active autofs || echo "(autofs not started yet — the chapter enables it)"
+ASTRONA_STUDENT_SCRIPT

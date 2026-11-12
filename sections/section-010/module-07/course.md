@@ -47,3 +47,9 @@ Start the playground and connect to it with `astrona ssh section-010-module-07-p
 1. **[What FAT32 Is & Creating One](./course-01-what-fat32-is-and-creating-one.md)**: why a format from the MS-DOS days is still the default for removable media, what it lacks compared to ext4, and how to create one with `mkfs.vfat`.
 2. **[Mounting FAT32 & Its Unix-less Quirks](./course-02-mounting-fat32-quirks.md)**: giving the files an owner at mount time with `uid=`, `gid=` and `umask=`, and the 4 GiB file size limit. Ends with your mission.
 3. **[Wrap-Up: Mission Debrief](./course-03-wrap-up.md)**: what you learned, your mission, and a short self-check.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [FAT32 Removable Media Lab](labs/lab-01/question.md): Format the disk as FAT32 with the volume label USBDATA; Mount it at /mnt/usbdata with a uid option so files belong to the ubuntu user; Create /mnt/usbdata/proof.txt as ubuntu without sudo and show that ubuntu can write to it.
+- [Local Storage Integration Capstone Lab](../capstone/labs/lab-01/question.md): Find the unused disk, format it with ext4, mount it at /mnt/backup-black and add an empty completed file; Compare usage of the two mounted disks with df and empty the hidden .trash folder on the fuller one; Find the process using more memory and unmount the disk that holds its executable.

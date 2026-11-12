@@ -1,0 +1,31 @@
+{
+  "initial_failures": {
+    "default/verify-nfs": "not found in /etc/exports"
+  },
+  "solution": [
+    {
+      "script": "testing/solution.sh",
+      "vm": "default"
+    }
+  ],
+  "negative": [
+    {
+      "name": "regression",
+      "apply": [
+        {
+          "script": "testing/negative.sh",
+          "vm": "default"
+        }
+      ],
+      "failures": {
+        "default/verify-nfs": "Expected nfs or nfs4 mount.*found ''"
+      },
+      "restore": [
+        {
+          "script": "testing/restore.sh",
+          "vm": "default"
+        }
+      ]
+    }
+  ]
+}

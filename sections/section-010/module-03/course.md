@@ -42,3 +42,9 @@ Start the playground and connect to it with `astrona ssh section-010-module-03-p
 2. [Creating a Container and Its Keyslots](./course-02-creating-a-container-and-keyslots.md): lock a disk with `luksFormat`, and give it a second passphrase.
 3. [Opening, Using and Closing the Vault](./course-03-opening-using-closing.md): open the disk, put a filesystem on it, close it again, and look at the raw bytes.
 4. [Wrap-Up: Mission Debrief](./course-04-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [LUKS Block-level Encryption Lab](labs/lab-01/question.md): Create a LUKS container on the raw 2 GB disk with the given passphrase; Open the container as /dev/mapper/secure_volume and format the mapping with ext4; Mount the unlocked volume at /mnt/secure-data and prove it is writable with a marker file.
+- [Local Storage Integration Capstone Lab](../capstone/labs/lab-01/question.md): Find the unused disk, format it with ext4, mount it at /mnt/backup-black and add an empty completed file; Compare usage of the two mounted disks with df and empty the hidden .trash folder on the fuller one; Find the process using more memory and unmount the disk that holds its executable.

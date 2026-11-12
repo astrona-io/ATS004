@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 set -u
 
-if ! grep -q "^\s*/mnt/net\s\+/etc/auto.net" /etc/auto.master; then
+if ! grep -Eq "^[[:space:]]*/mnt/net[[:space:]]+/etc/auto[.]net" /etc/auto.master; then
   echo "FAIL: Indirect map '/mnt/net /etc/auto.net' not found in /etc/auto.master"
   exit 1
 fi
 
-if ! grep -E "^\s*/mnt/net\s\+/etc/auto.net" /etc/auto.master | grep -q "timeout=120"; then
+if ! grep -E "^[[:space:]]*/mnt/net[[:space:]]+/etc/auto[.]net" /etc/auto.master | grep -q "timeout=120"; then
   echo "FAIL: Timeout for /mnt/net is not set to 120"
   exit 1
 fi
@@ -29,3 +33,5 @@ fi
 
 echo "PASS: autofs wildcard indirect map configured and verified successfully"
 exit 0
+GRADER_ROOT
+ASTRONA_STUDENT_SCRIPT

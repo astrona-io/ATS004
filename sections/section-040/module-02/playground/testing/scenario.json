@@ -1,0 +1,8 @@
+{
+  "smoke": [
+    {
+      "vm": "default",
+      "script": "testing/smoke-0.sh"
+    }
+  ]
+}

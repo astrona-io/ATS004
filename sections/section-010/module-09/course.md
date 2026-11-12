@@ -42,3 +42,9 @@ Start the playground and connect to it with `astrona ssh section-010-module-09-p
 1. [Creating and Inspecting XFS](./course-01-creating-and-inspecting-xfs.md): build an XFS filesystem, read its layout, mount it with options, and make the mount persistent.
 2. [Growing and Repairing XFS](./course-02-growing-and-repairing-xfs.md): grow a docked filesystem, run a safe repair check, and know when the repair crew is allowed to work.
 3. [Wrap-Up: Mission Debrief](./course-03-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [XFS Create, Mount and Check Lab](labs/lab-01/question.md): Format a blank disk as XFS with the label NEWCARGO; Mount it at /srv/newcargo by UUID through /etc/fstab with the options defaults,noatime; Dry-run xfs_repair -n on an unmounted XFS disk and save the output without changing the disk.
+- [Local Storage Integration Capstone Lab](../capstone/labs/lab-01/question.md): Find the unused disk, format it with ext4, mount it at /mnt/backup-black and add an empty completed file; Compare usage of the two mounted disks with df and empty the hidden .trash folder on the fuller one; Find the process using more memory and unmount the disk that holds its executable.

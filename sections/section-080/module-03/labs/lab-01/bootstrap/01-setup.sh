@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: mounts an XFS filesystem at /srv/xfs with uquota,pquota already
 # active (XFS enables quotas purely by mount option -- no quotacheck, unlike
 # ext4), seeds /srv/xfs/webdata, and creates test users alice/bob. Does NOT
 # set any limits or define the project -- that is the graded task.
 set -eu
+
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
 
 DEV=/dev/disk/by-id/virtio-lab084-xfsquota
 for i in $(seq 1 30); do
@@ -25,3 +32,4 @@ sudo chmod 1777 /srv/xfs/webdata
 
 id alice >/dev/null 2>&1 || sudo useradd -m alice
 id bob   >/dev/null 2>&1 || sudo useradd -m bob
+ASTRONA_STUDENT_SCRIPT

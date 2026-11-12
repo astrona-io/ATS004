@@ -1,8 +1,22 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: builds a quota-ready ext4 filesystem at /quota (usrquota,grpquota
 # in fstab) plus test users/group, but deliberately does NOT run quotacheck
 # or quotaon -- turning quotas on and setting limits is the graded task.
 set -eu
+
+# Load the kernel format used by external quota files.
+if ! sudo modprobe quota_v2; then
+  sudo apt-get update -qq
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "linux-modules-extra-$(uname -r)"
+  sudo modprobe quota_v2
+fi
+
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
 
 DEV=/dev/disk/by-id/virtio-lab083-quota
 for i in $(seq 1 30); do
@@ -29,3 +43,4 @@ sudo mkdir -p /quota/alice /quota/bob /quota/team
 sudo chown alice /quota/alice
 sudo chown bob /quota/bob
 sudo chgrp team /quota/team && sudo chmod 2775 /quota/team
+ASTRONA_STUDENT_SCRIPT

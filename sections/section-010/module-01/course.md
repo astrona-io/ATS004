@@ -44,3 +44,10 @@ Start the playground and connect to it with `astrona ssh section-010-module-01-p
 2. [Diagnosing a Stuck Disk](./course-02-diagnosing-a-stuck-disk.md): find the process that keeps a mount busy, stop it safely, and unmount.
 3. [Finding Hidden Space](./course-03-finding-hidden-space.md): find disk space used by hidden dot-directories.
 4. [Wrap-Up: Mission Debrief](./course-04-wrap-up.md): what you learned, your missions, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Filesystem Creation & Mounting Sandbox Lab](labs/lab-01/question.md): Find the raw disk among the attached block devices without guessing its device name; Format the disk with ext4 and mount it on the new directory /mnt/backup-black; Create a marker file on the mounted filesystem to prove it is writable.
+- [Diagnosing & Evicting a Busy Mount Lab](labs/lab-02/question.md): Identify the process that keeps a mount busy with lsof or fuser; Stop only that process, trying a graceful signal before a forced one; Unmount /mnt/locked-vault cleanly without stopping unrelated services.
+- [Local Storage Integration Capstone Lab](../capstone/labs/lab-01/question.md): Find the unused disk, format it with ext4, mount it at /mnt/backup-black and add an empty completed file; Compare usage of the two mounted disks with df and empty the hidden .trash folder on the fuller one; Find the process using more memory and unmount the disk that holds its executable.

@@ -37,3 +37,10 @@ After this module you can:
 You should know how to mount and unmount a local filesystem and be comfortable with `sudo` and basic SSH.
 
 The linked playground gives you two VMs on a private network: `client` (where you run every command below, reached with `astrona ssh astro-section-020-module-01-playground` — choose `client` when prompted) and `srv` (a plain SSH host exposing `/srv/logs`). On `client`, `sshfs` and FUSE are installed, `/etc/fuse.conf` already has the `user_allow_other` opt-in, there is a spare local user `bob`, and your **login user on `client` has passwordless SSH to `srv`** (the playground wires this up), so `sshfs srv:...` works with no password and no `sudo`. `~` is your login user's home — for example `/home/ubuntu` — and the bootstrap already created `~/remote` there for you to use as the mount point. `/srv/logs` on `srv` holds `app.log` and `access.log` (world-readable) plus `secret.txt` (mode 600, readable on `srv` only by your login user). Run the command blocks in that VM.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [SSHFS User-space Mounting Lab](labs/lab-01/question.md): Mount a remote directory over SSH with sshfs at /mnt/sshfs-share without using /etc/fstab; Enable allow_other so other users on the system can read the FUSE mount; Confirm the remote welcome.txt file is reachable through the mount.
+- [iSCSI Disk on a Remote Server Lab](../module-03/labs/lab-01/question.md): Discover and log in to an iSCSI target and find the new disk by its by-path name; Create an ext4 filesystem on the iSCSI disk and mount it at /mnt/cargo; Add a UUID= fstab line with _netdev and set node.startup to automatic.
+- [Remote Filesystems: SSHFS and NFS Capstone Lab](../capstone/labs/lab-01/question.md): Mount app-srv1:/data-export on terminal with sshfs, read-write and with allow_other; Export /nfs/share from terminal read-only to the 10.10.40.0/24 network; Mount terminal:/nfs/share read-only at /nfs/terminal/share on app-srv1.

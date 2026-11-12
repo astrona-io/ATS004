@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "RAID Maintenance and Recovery" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 #
@@ -29,7 +31,7 @@ for d in "$A" "$B" "$C" "$D"; do
   sudo wipefs -a "$d" || true
 done
 
-yes | sudo mdadm --create /dev/md0 --level=5 --raid-devices=3 "$A" "$B" "$C"
+sudo mdadm --create --run /dev/md0 --level=5 --raid-devices=3 "$A" "$B" "$C"
 # Wait for the initial resync so the array starts clean.
 sudo mdadm --wait /dev/md0 || true
 sudo mkfs.ext4 -q /dev/md0
@@ -53,3 +55,4 @@ sudo mdadm --detail --scan | sudo tee /etc/mdadm/mdadm.conf >/dev/null
 echo "[playground] ready:"
 cat /etc/playground-raid
 echo "  /dev/md0 = RAID5 on member1..3, ext4 mounted at /mnt/raid"
+ASTRONA_STUDENT_SCRIPT

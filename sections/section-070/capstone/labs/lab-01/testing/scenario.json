@@ -1,0 +1,32 @@
+{
+  "initial_failures": {
+    "default/verify-io-report-exists": "missing or empty"
+  },
+  "solution": [
+    {
+      "vm": "default",
+      "script": "testing/solution-0.sh"
+    }
+  ],
+  "negative": [
+    {
+      "name": "regression",
+      "apply": [
+        {
+          "vm": "default",
+          "script": "testing/negative-0.sh"
+        }
+      ],
+      "failures": {
+        "default/verify-io-report-process": "PID"
+      },
+      "restore": [
+        {
+          "vm": "default",
+          "script": "testing/restore-0.sh"
+        }
+      ]
+    }
+  ],
+  "reboot": []
+}

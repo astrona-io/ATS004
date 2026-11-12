@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 set -u
 
 if [ ! -f /etc/lab034-raid ]; then
@@ -15,7 +19,7 @@ if [ -z "$detail" ]; then
 fi
 
 state=$(echo "$detail" | awk -F: '/^ *State/{gsub(/^ +| +$/,"",$2); print $2; exit}')
-if [ "$state" != "clean" ]; then
+if [[ "$state" != "clean" && "$state" != "active" ]]; then
   echo "FAIL: array State is '$state', expected 'clean' (not degraded/resyncing/recovering)"
   exit 1
 fi
@@ -55,3 +59,5 @@ fi
 
 echo "PASS: RAID5 array recovered -- clean, 3 active devices, spare integrated, data intact"
 exit 0
+GRADER_ROOT
+ASTRONA_STUDENT_SCRIPT

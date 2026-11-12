@@ -9,3 +9,14 @@ Astronaut, a volume group named `vg_data` lives on the disk `/dev/disk/by-id/vir
 3. Check the file before any restart with `sudo findmnt --verify`, and confirm the new size with `df -h /mnt/reports`.
 
 The grader reads `/etc/fstab`, unmounts `/mnt/reports`, runs `mount -a`, and checks that the volume is about 800M, that the filesystem reports the bigger size, and that `reports-marker.txt` is still there.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-02](../../course.md).
+
+The grader checks:
+
+- Confirms the fstab line, the grown volume and filesystem, and that mount -a brings the volume back.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

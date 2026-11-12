@@ -1,0 +1,34 @@
+{
+  "initial_failures": {
+    "app-srv1/verify-autofs-master-config": "not found|no master map"
+  },
+  "solution": [
+    {
+      "vm": "app-srv1",
+      "script": "testing/solution-0.sh"
+    }
+  ],
+  "negative": [
+    {
+      "name": "regression",
+      "apply": [
+        {
+          "vm": "app-srv1",
+          "script": "testing/negative-0.sh"
+        }
+      ],
+      "failures": {
+        "app-srv1/verify-autofs-master-config": "mapped|mapping|does not exist"
+      },
+      "restore": [
+        {
+          "vm": "app-srv1",
+          "script": "testing/restore-0.sh"
+        }
+      ]
+    }
+  ],
+  "reboot": [
+    "app-srv1"
+  ]
+}

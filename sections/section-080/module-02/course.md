@@ -33,3 +33,10 @@ After this module you can:
 You need to know the fields of an `/etc/fstab` line and to be comfortable with users, groups and `sudo`.
 
 Your playground is one training spaceship: an Ubuntu 24.04 virtual machine with passwordless `sudo`. It has a 2 GB ext4 filesystem mounted at `/quota` (its `/etc/fstab` line already carries `usrquota,grpquota`, but quotas are **not on yet**), test users **alice** and **bob**, group **team**, and the `quota` toolset installed. Start the playground and connect to it with `astrona ssh section-080-module-02-playground`. Run every command in the parts in that shell.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [ext4 User & Group Quotas Lab](labs/lab-01/question.md): Build the quota files and turn on user and group quota enforcement for /quota; Set block limits for alice, bob and the group team; Confirm the limits with repquota.
+- [ext4 Quota Hard Limit & Grace Period Lab](labs/lab-02/question.md): Show that a write by carol is cut off at her 25M hard limit; Set a two minute block grace period and push carol over her soft limit but under her hard limit; Capture repquota output that shows carol over her soft limit in /root/grace-evidence.txt.
+- [Filesystem Hierarchy and Directory Sizing Capstone Lab](../capstone/labs/lab-01/question.md): Write a size report of every top-level directory under / sorted largest first, excluding pseudo-filesystems; Keep du on one filesystem so the large mount under /mnt is not counted; List each top-level directory that is a symlink, with its target, in symlinks.txt.

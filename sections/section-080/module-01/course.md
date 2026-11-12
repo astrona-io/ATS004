@@ -34,3 +34,9 @@ After this module you can:
 You should be comfortable with pipes and reading sizes like `256M` / `1.4G`.
 
 Your playground is one training spaceship: an Ubuntu 24.04 virtual machine with passwordless `sudo`. It has a second filesystem mounted at `/data` (so `du -x` has a boundary to hit). It also has seeded files on the root filesystem: `/opt/reports/big-real.bin` (256 MiB of real blocks), `/opt/archive/sparse.img` (512 MiB apparent, near-zero on disk), and `/opt/logs/` (200 tiny files). Start the playground and connect to it with `astrona ssh section-080-module-01-playground`. Run every command in the parts in that shell.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [Directory Capacity Profiling (du -xh) Lab](labs/lab-01/question.md): Measure the immediate subdirectories of /var/log with du at a depth of one; Stay on the root filesystem with du -x so a separately mounted disk is not counted; Record the largest local subdirectory in /opt/course/audit/heavy_dirs.txt.
+- [Filesystem Hierarchy and Directory Sizing Capstone Lab](../capstone/labs/lab-01/question.md): Write a size report of every top-level directory under / sorted largest first, excluding pseudo-filesystems; Keep du on one filesystem so the large mount under /mnt is not counted; List each top-level directory that is a symlink, with its target, in symlinks.txt.

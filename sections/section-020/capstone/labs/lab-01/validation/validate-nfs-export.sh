@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Checks that /nfs/share is exported read-only to 10.10.40.0/24.
 
 set -u
@@ -22,3 +24,4 @@ fi
 
 echo "PASS: /nfs/share exported ro to 10.10.40.0/24 ($out)"
 exit 0
+ASTRONA_STUDENT_SCRIPT

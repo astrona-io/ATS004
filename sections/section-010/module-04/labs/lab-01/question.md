@@ -9,3 +9,14 @@ Astronaut, a cargo hold came back from a rough flight damaged. The extra 2 GB di
 3. Find the UUID of this filesystem.
 4. Add a line to `/etc/fstab` that mounts this filesystem at `/mnt/recovered` by its **UUID**. The line must start with `UUID=` followed directly by the UUID, with no quotes.
 5. Create the directory `/mnt/recovered` and mount the filesystem there using the `/etc/fstab` line.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-04](../../course.md).
+
+The grader checks:
+
+- Confirms filesystem repair, label, and persistent UUID mount.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

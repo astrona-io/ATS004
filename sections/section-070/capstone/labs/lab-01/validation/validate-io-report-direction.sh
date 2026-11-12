@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Checks io-report.txt's "direction" line correctly identifies the load as
 # write-bound (the bootstrap load is a dd write loop).
 
@@ -17,3 +21,5 @@ else
   echo "FAIL: io-report direction - expected 'write', got '$value'"
   exit 1
 fi
+GRADER_ROOT
+ASTRONA_STUDENT_SCRIPT

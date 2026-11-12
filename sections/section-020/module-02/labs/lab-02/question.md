@@ -13,3 +13,14 @@ Astronaut, this ship plays both sides of two remote holds, and mission control w
 4. Check the file with `sudo findmnt --verify`, then bring both mounts up with `sudo mount -a`.
 
 The grader reads `/etc/fstab`, unmounts both shares, runs `mount -a` and checks that both come back: the NFS mount must be read-only and show `q4-report.txt`, and the SSHFS mount must show `welcome.txt`.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-02](../../course.md).
+
+The grader checks:
+
+- Unmounts both shares, runs mount -a, and confirms both come back from /etc/fstab.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

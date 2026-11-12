@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap for the "client" VM: SSHFS client.
 # Environment prep only — no task, no grading. Installs the tools and pre-creates
 # the mount point, but does NOT create the sshfs mount: that is what the
 # chapter's checkpoints have you do. All mounts in this module are non-root.
 set -eu
+
+sudo apt-get update
+sudo apt-get install -y sshfs
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -39,3 +44,4 @@ done
 sort -u "$HOME/.ssh/known_hosts" -o "$HOME/.ssh/known_hosts" 2>/dev/null || true
 
 echo "[playground] client ready: user 'bob' added, ~/remote created."
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 set -u
 
 fail() { echo "FAIL: $*"; exit 1; }
@@ -24,9 +28,8 @@ case "$source_field" in
 esac
 [ "$(echo "$fstab_line" | awk '{print $3}')" = "ext4" ] || fail "fstab type for /mnt/reports is not ext4"
 
-# --- Prove the line works: drop the mount, let mount -a bring it back ---
-sudo umount /mnt/reports 2>/dev/null
-sudo mount -a >/dev/null 2>&1
+# Check the learner's live mount without repairing it.
+mountpoint -q /mnt/reports || fail "/mnt/reports is not mounted"
 fstype=$(findmnt -no FSTYPE /mnt/reports 2>/dev/null)
 [ "$fstype" = "ext4" ] || fail "after 'mount -a', /mnt/reports is not mounted as ext4 (found '$fstype')"
 
@@ -40,3 +43,5 @@ grep -q "Monthly reports" /mnt/reports/reports-marker.txt 2>/dev/null || fail "r
 
 echo "PASS: lv_reports is in /etc/fstab and was grown with its filesystem to about 800M, data intact"
 exit 0
+GRADER_ROOT
+ASTRONA_STUDENT_SCRIPT

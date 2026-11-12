@@ -37,14 +37,14 @@ You proved the skills in graded missions, right after the part that taught them:
 
 | Mission | After the part | What you proved |
 | --- | --- | --- |
-| [Advanced LVM: Live Extent Migration & VG Reduction Lab](./labs/lab-01/README.md) | vgreduce, and Growing/Shrinking a Volume | move extents with `pvmove`, then run `vgreduce` and `pvremove` |
+| [Optional guided migration (032)](./labs/lab-01/README.md) | vgreduce, and Growing/Shrinking a Volume | move extents with `pvmove`, then run `vgreduce` and `pvremove` |
 | [LVM Live Grow & Safe Shrink Lab](./labs/lab-02/README.md) | vgreduce, and Growing/Shrinking a Volume | grow a volume to 500M and shrink it to 350M with the data intact |
 | [LVM: vgextend a Live Pool, Then Evacuate a Disk Lab](./labs/lab-03/README.md) | vgreduce, and Growing/Shrinking a Volume | extend a live pool and evacuate a disk |
 | [LVM: Growing an XFS Volume Lab](./labs/lab-05/README.md) | vgreduce, and Growing/Shrinking a Volume | grow an XFS volume with `lvextend` and `xfs_growfs` |
-| [LVM: Removing One PV Out of Three, Mixed Extents Lab](./labs/lab-04/README.md) | Removing Any PV, and Physical Disk Safety | remove one disk out of three with mixed extents |
+| [Optional advanced migration (039)](./labs/lab-04/README.md) | Removing Any PV, and Physical Disk Safety | remove one disk out of three with mixed extents |
 | [Persistent LVM Mount and One-Command Grow Lab](./labs/lab-06/README.md) | Growing in One Command | write an `/etc/fstab` line for a volume and grow it with `lvextend -r` |
 
-If you skipped one, go back to it now. They are short, and the exam asks for exactly these skills.
+Lab 038 is the main migration exercise. Lab 032 is optional guided practice with spare capacity already available; lab 039 is an optional advanced variation with extents distributed across three disks.
 
 ## Check yourself
 

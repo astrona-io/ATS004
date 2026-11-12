@@ -10,3 +10,14 @@ Astronaut, a cargo hold on your training ship will not undock. A disk is already
 4. Unmount `/mnt/locked-vault` successfully once the process is gone. Leave it unmounted.
 
 The grader checks the live machine: the holding process is no longer running, nothing is mounted at `/mnt/locked-vault`, and the rest of the system (such as `sshd`) is still running.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-01](../../course.md).
+
+The grader checks:
+
+- Confirms the busy process was found and stopped, and the disk cleanly unmounted.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

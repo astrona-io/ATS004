@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap for the "srv" VM: a plain SSH host that exposes /srv/logs.
 # Environment prep only — no task, no grading. Does NOT create any mount.
 set -eu
@@ -25,3 +27,4 @@ if ! grep -q '[[:space:]]client$' /etc/hosts; then
 fi
 
 echo "[playground] srv ready: /srv/logs seeded (secret.txt mode 600, owned by $LOGIN_USER)."
+ASTRONA_STUDENT_SCRIPT

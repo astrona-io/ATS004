@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: makes sure net.ipv4.ip_forward starts disabled and unpersisted
 # (so the lab's "temporarily enable it" task has a clean starting point and
 # a meaningful "not persisted" check), and deploys a small long-running
@@ -55,3 +57,4 @@ EOF
 
 sudo systemctl daemon-reload
 sudo systemctl enable --now lab-target-process
+ASTRONA_STUDENT_SCRIPT

@@ -1,0 +1,31 @@
+{
+  "initial_failures": {
+    "default/verify-raid-recovery": "[Ss]tate|[Dd]evices|spare|member|replace|failed"
+  },
+  "solution": [
+    {
+      "script": "testing/solution.sh",
+      "vm": "default"
+    }
+  ],
+  "negative": [
+    {
+      "name": "regression",
+      "apply": [
+        {
+          "script": "testing/negative.sh",
+          "vm": "default"
+        }
+      ],
+      "failures": {
+        "default/verify-raid-recovery": "data.txt|content"
+      },
+      "restore": [
+        {
+          "script": "testing/restore.sh",
+          "vm": "default"
+        }
+      ]
+    }
+  ]
+}

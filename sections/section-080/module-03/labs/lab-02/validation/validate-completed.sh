@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 set -u
 
 fail() { echo "FAIL: $*"; exit 1; }
 
 # --- ext4: bob and carol have alice's limits (40M soft, 50M hard) ---
-user_report=$(sudo repquota -s /quota-ext 2>/dev/null)
+user_report=$(sudo repquota -v /quota-ext 2>/dev/null)
 [ -n "$user_report" ] || fail "repquota could not report on /quota-ext (are user quotas on?)"
 
 for user in alice bob carol; do
   line=$(echo "$user_report" | grep -E "^$user\b")
   [ -n "$line" ] || fail "no quota entry for $user on /quota-ext"
-  # Match soft immediately followed by hard, not a fixed column.
-  echo "$line" | grep -Pq '\b40M\s+50M\b' || fail "$user's block limits are not 40M soft / 50M hard: $line"
+  # Numeric reports include the status flags before usage and limits.
+  echo "$line" | awk '$4 == 40960 && $5 == 51200 {ok=1} END {exit !ok}' || fail "$user's block limits are not 40M soft / 50M hard: $line"
 done
 
 # --- XFS: group engineers has 50M soft / 80M hard ---
@@ -27,3 +31,5 @@ echo "$state" | grep -Eq 'Blocks grace time: *\[(3 days|72:00:00)' || \
 
 echo "PASS: alice's limits were copied to bob and carol, and engineers has 50M/80M with a 3-day block timer on XFS"
 exit 0
+GRADER_ROOT
+ASTRONA_STUDENT_SCRIPT

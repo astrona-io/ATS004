@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Inside /proc" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Seeds two files for a demo process to hold open, plus a helper that starts
@@ -20,3 +22,4 @@ EOF
 sudo chmod +x /usr/local/bin/start-demo-proc
 
 echo "[playground] ready. Run 'start-demo-proc' to launch a process to inspect under /proc/<PID>/."
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap for the "app-srv1" VM: SSHFS/NFS-export source + NFS client role.
 # Fully pre-configures SSH access (this side is not graded) and creates the
 # export source directory, but does NOT mount the NFS share -- that's the
@@ -18,3 +20,4 @@ sudo mkdir -p /nfs/terminal/share
 if ! grep -q '[[:space:]]terminal$' /etc/hosts; then
   echo "10.10.40.5 terminal" | sudo tee -a /etc/hosts >/dev/null
 fi
+ASTRONA_STUDENT_SCRIPT

@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "XFS Quotas and Project Quotas" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # XFS quotas are enabled purely by mount option, so the filesystem comes up
 # quota-ready. The chapter defines the project and the limits.
 set -euo pipefail
+
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -12,7 +19,7 @@ for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done
 sudo udevadm settle --timeout=30 || true
 
 if [ -e "$DEV" ]; then
-  blkid "$DEV" >/dev/null 2>&1 || sudo mkfs.xfs -q -L XFSQUOTA "$DEV"
+  sudo blkid -p -s TYPE -o value "$DEV" >/dev/null 2>&1 || sudo mkfs.xfs -q -L XFSQUOTA "$DEV"
   sudo mkdir -p /srv/xfs
   UUID=$(sudo blkid -s UUID -o value "$DEV")
   [ -e /etc/fstab.orig ] || sudo cp /etc/fstab /etc/fstab.orig
@@ -32,3 +39,4 @@ sudo chmod 1777 /srv/xfs/webdata
 echo "[playground] ready. /srv/xfs is XFS, mounted with uquota,pquota (see /etc/fstab)."
 echo "[playground] Directory tree /srv/xfs/webdata; users alice, bob."
 echo "[playground] No /etc/projects, /etc/projid, or limits yet — the chapter adds them."
+ASTRONA_STUDENT_SCRIPT

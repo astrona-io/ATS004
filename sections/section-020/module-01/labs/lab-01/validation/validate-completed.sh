@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -u
 
 mount_type=$(findmnt -no FSTYPE /mnt/sshfs-share 2>/dev/null)
@@ -20,3 +22,4 @@ fi
 
 echo "PASS: SSHFS mounted securely with user-space options"
 exit 0
+ASTRONA_STUDENT_SCRIPT

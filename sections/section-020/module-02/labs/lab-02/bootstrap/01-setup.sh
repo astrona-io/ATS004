@@ -1,10 +1,21 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: one machine plays both ships. It prepares
 #  - an SSH login (sshuser) that root can reach with a key, for the SSHFS mount
 #  - an NFS export that is deliberately offered to the WRONG network, so the
 #    first mount attempt is refused (the broken part the learner must fix)
 # It does NOT write any /etc/fstab line and does NOT mount anything.
 set -eu
+
+missing=()
+for package in sshfs nfs-common nfs-kernel-server; do
+  dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q 'install ok installed' || missing+=("$package")
+done
+if [ "${#missing[@]}" -gt 0 ]; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "${missing[@]}"
+fi
 
 # --- SSHFS side ---
 if ! id sshuser >/dev/null 2>&1; then
@@ -38,3 +49,4 @@ sudo exportfs -ra
 
 # --- Empty hatches ---
 sudo mkdir -p /mnt/nfs-reports /mnt/sshfs-logs
+ASTRONA_STUDENT_SCRIPT

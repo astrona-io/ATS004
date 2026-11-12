@@ -39,3 +39,11 @@ After this module you can:
 You should know how to mount and unmount a filesystem and read command output.
 
 The linked playground gives you two VMs on a private `10.10.20.0/24` network: `server` (10.10.20.10), where `nfs-kernel-server` is already running and `/nfs/share` holds `report.txt` and `notes.txt`, and `client` (10.10.20.5), where `nfs-common` and `showmount` are installed and `/mnt/nfs` exists. `/etc/exports` on `server` starts **empty** — you write the export line yourself in the first hands-on step. Each VM resolves the other's name from `/etc/hosts`. Reach the environment with `astrona ssh astro-section-020-module-02-playground` and choose `server` or `client` when prompted; run each command block on the VM named in its heading.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [NFS Enterprise Network Sharing Lab](labs/lab-01/question.md): Export /var/nfs/public to all clients in /etc/exports and reload the export table; Mount the export from 127.0.0.1 at /mnt/nfs-share over NFS; Prove the mount is read-only by showing that writing to it fails.
+- [Persistent Remote Mounts and NFS Repair Lab](labs/lab-02/question.md): Add persistent NFS and SSHFS lines to /etc/fstab with _netdev and nofail; Repair the export so the NFS mount is accepted and mounts read-only; Prove both mounts come back with mount -a.
+- [iSCSI Disk on a Remote Server Lab](../module-03/labs/lab-01/question.md): Discover and log in to an iSCSI target and find the new disk by its by-path name; Create an ext4 filesystem on the iSCSI disk and mount it at /mnt/cargo; Add a UUID= fstab line with _netdev and set node.startup to automatic.
+- [Remote Filesystems: SSHFS and NFS Capstone Lab](../capstone/labs/lab-01/question.md): Mount app-srv1:/data-export on terminal with sshfs, read-write and with allow_other; Export /nfs/share from terminal read-only to the 10.10.40.0/24 network; Mount terminal:/nfs/share read-only at /nfs/terminal/share on app-srv1.

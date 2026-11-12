@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Confirms the "lab030-b" disk (the one bootstrap forced vol1/data1's
 # extents onto) is no longer a member of vol1 (vgreduce succeeded).
 # Resolved via /dev/disk/by-id/virtio-<serial> instead of a raw /dev/vdX
@@ -23,3 +27,5 @@ fi
 
 echo "PASS: $DISK is no longer a member of vol1 (current VG: '${vg:-none}')"
 exit 0
+GRADER_ROOT
+ASTRONA_STUDENT_SCRIPT

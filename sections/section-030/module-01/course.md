@@ -55,3 +55,10 @@ The linked playground gives you an Ubuntu server VM with passwordless `sudo`, th
 A quick note on the disk names before you touch anything: `/dev/vda` is the system disk with the OS on it, and `/dev/vdb` is a tiny (~366 KiB) read-only disk the platform uses for boot configuration — leave both alone. Only `vdc`, `vdd`, and `vde` are yours to experiment with. Always run `lsblk` first and match on the serial column, not on the letter.
 
 Already comfortable with the PV and VG steps and want to start at logical volumes? Run `catchup part3` once you're in the playground. It does the PV and VG exercise for you, so you land at the start of the logical volume steps. Run `catchup` with no arguments to see what it does before using it.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [LVM Fundamentals: PV, VG, and LV Allocation Lab](labs/lab-01/question.md): Initialise the raw disk as a physical volume and pool it into the volume group vg_data; Create the 500M logical volume lv_storage in vg_data; Format lv_storage with ext4 and mount it at /mnt/lvm-storage.
+- [LVM Fundamentals: Pooling PVs Across Disks Lab](labs/lab-02/question.md): Pool two 1 GB physical volumes into the single volume group vg_pool; Create the 1500M logical volume lv_wide, format it with ext4 and mount it at /mnt/lvm-wide; Show with lvs -o +devices that the extents of lv_wide span both disks.
+- [LVM Volume Groups and Logical Volumes Capstone Lab](../capstone/labs/lab-01/question.md): Find the physical volume that holds vol1/data1 and remove it from vol1; Create the volume group vol2 on the freed disk with a 50M logical volume named p1; Format vol2/p1 with ext4.

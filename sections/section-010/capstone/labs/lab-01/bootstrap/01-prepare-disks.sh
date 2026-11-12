@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: formats and fills the "backup-blue"/"backup-red" extraDisks so
 # the "which disk has higher usage" step of the task has a real, verifiable
 # answer. The "scratch" extraDisk is deliberately left raw/unformatted --
@@ -61,3 +63,4 @@ sudo mount "$RED" /mnt/backup-red
 sudo dd if=/dev/urandom of=/mnt/backup-red/filler bs=1M count=900 status=none
 sudo mkdir -p /mnt/backup-red/.trash
 sudo dd if=/dev/urandom of=/mnt/backup-red/.trash/old-log-1 bs=1M count=3 status=none
+ASTRONA_STUDENT_SCRIPT

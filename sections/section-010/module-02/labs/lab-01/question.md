@@ -8,3 +8,14 @@ Astronaut, mission control has fitted your ship with a new 2 GB cargo hold: a ra
 2. Write a GUID Partition Table (GPT) label on this disk.
 3. Create one partition, partition 1, that starts at sector 2048 (1 MiB, for correct alignment) and ends at 1 GiB (1024 MiB).
 4. Leave the partition unformatted and unmounted.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-02](../../course.md).
+
+The grader checks:
+
+- Confirms GPT partition table and aligned partition on the raw disk.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

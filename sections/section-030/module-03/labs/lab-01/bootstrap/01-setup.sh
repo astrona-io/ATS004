@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 DISKS=(
@@ -19,3 +21,4 @@ for d in "${DISKS[@]}"; do
     sudo wipefs -a "$d" || true
   fi
 done
+ASTRONA_STUDENT_SCRIPT

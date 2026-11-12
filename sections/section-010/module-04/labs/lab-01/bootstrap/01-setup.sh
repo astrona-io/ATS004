@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 DEV=/dev/disk/by-id/virtio-lab013-corrupt
@@ -19,3 +21,4 @@ sudo touch /tmp/corrupt-mount/recovered-file-2
 sudo umount /tmp/corrupt-mount
 
 sudo dd if=/dev/zero of="$DEV" bs=1k count=10 seek=1024 conv=notrunc
+ASTRONA_STUDENT_SCRIPT

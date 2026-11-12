@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 set -u
 
 MOUNT_UNIT="/etc/systemd/system/srv-appdata.mount"
@@ -49,7 +53,7 @@ if [ "$active" != "active" ]; then
   exit 1
 fi
 
-fstype=$(findmnt -no FSTYPE /srv/appdata 2>/dev/null)
+fstype=$(findmnt -nr -t ext4 -o FSTYPE /srv/appdata 2>/dev/null)
 if [ "$fstype" != "ext4" ]; then
   echo "FAIL: /srv/appdata is mounted with fstype '$fstype', expected ext4"
   exit 1
@@ -57,3 +61,5 @@ fi
 
 echo "PASS: native .mount/.automount units configured and on-demand trigger confirmed"
 exit 0
+GRADER_ROOT
+ASTRONA_STUDENT_SCRIPT

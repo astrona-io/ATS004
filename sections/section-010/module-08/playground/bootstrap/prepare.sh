@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Backing Up and Cloning Storage Devices" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 set -euo pipefail
@@ -24,3 +26,4 @@ fi
 
 echo "[playground] ready. Source disk (ext4, label SOURCEVOL) is commonly /dev/vdb; blank clone disk is commonly /dev/vdc."
 echo "[playground] Confirm with: lsblk"
+ASTRONA_STUDENT_SCRIPT

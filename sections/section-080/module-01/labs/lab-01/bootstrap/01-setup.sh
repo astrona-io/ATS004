@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
+
+# Load the kernel format used by external quota files.
+if ! sudo modprobe quota_v2; then
+  sudo apt-get update -qq
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "linux-modules-extra-$(uname -r)"
+  sudo modprobe quota_v2
+fi
+
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
 
 DISK=/dev/disk/by-id/virtio-lab081-disk
 
@@ -21,3 +35,4 @@ sudo dd if=/dev/zero of=/var/log/heavy_local_log/local-file bs=1M count=200 stat
 
 sudo mkdir -p /opt/course/audit
 sudo chmod -R 777 /opt/course/audit
+ASTRONA_STUDENT_SCRIPT

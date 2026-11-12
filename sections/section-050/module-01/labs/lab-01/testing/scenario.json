@@ -1,0 +1,34 @@
+{
+  "initial_failures": {
+    "default/verify-autofs-direct": "not found|no master map"
+  },
+  "solution": [
+    {
+      "vm": "default",
+      "script": "testing/solution-0.sh"
+    }
+  ],
+  "negative": [
+    {
+      "name": "regression",
+      "apply": [
+        {
+          "vm": "default",
+          "script": "testing/negative-0.sh"
+        }
+      ],
+      "failures": {
+        "default/verify-autofs-direct": "mapped|mapping|does not exist"
+      },
+      "restore": [
+        {
+          "vm": "default",
+          "script": "testing/restore-0.sh"
+        }
+      ]
+    }
+  ],
+  "reboot": [
+    "default"
+  ]
+}

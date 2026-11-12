@@ -10,3 +10,14 @@ A Volume Group named `vg_live` already exists on a single 2GB disk, `/dev/disk/b
 4. Once `/dev/disk/by-id/virtio-lab038-disk1` is completely free, remove it from `vg_live` with `vgreduce`.
 5. Erase its LVM signature with `pvremove`, returning it to a raw state.
 6. Ensure `lv_active` at `/mnt/lvm-live` remains fully readable and writable throughout, and that its data survives the whole process.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-02](../../course.md).
+
+The grader checks:
+
+- Confirms disk2 was added to the VG with vgextend, disk1 was fully evacuated and removed, and data survived.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

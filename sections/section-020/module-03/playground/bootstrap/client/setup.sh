@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap for the "client" VM: NBD client and iSCSI initiator tools.
 # Environment prep only - no task, no grading. Nothing is connected or mounted.
 # Packages are installed with apt at start-up. Not run or tested by the authors.
@@ -42,3 +44,4 @@ if ! grep -q '[[:space:]]server$' /etc/hosts; then
 fi
 
 echo "[playground] client ready: nbd-client and open-iscsi installed, /mnt/cargo created."
+ASTRONA_STUDENT_SCRIPT

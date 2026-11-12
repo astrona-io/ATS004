@@ -41,7 +41,6 @@ modules:
       - type: reading
         title: "Section Overview"
         path: sections/section-010/README.md
-
       - type: reading
         title: "The Lifecycle of Local Storage"
         path: sections/section-010/module-01/course.md
@@ -103,7 +102,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-010/module-01/course-04-wrap-up.md
-
       - type: reading
         title: "Splitting the Hold: Partitioning Raw Storage"
         path: sections/section-010/module-02/course.md
@@ -141,7 +139,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-010/module-02/course-04-wrap-up.md
-
       - type: reading
         title: "Under Lock and Key: Securing Data-at-Rest with LUKS"
         path: sections/section-010/module-03/course.md
@@ -181,7 +178,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-010/module-03/course-04-wrap-up.md
-
       - type: reading
         title: "The Digital Auditor: Filesystem Maintenance, Labeling, and Tuning"
         path: sections/section-010/module-04/course.md
@@ -218,7 +214,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-010/module-04/course-03-wrap-up.md
-
       - type: reading
         title: "/etc/fstab in Depth"
         path: sections/section-010/module-05/course.md
@@ -255,7 +250,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-010/module-05/course-03-wrap-up.md
-
       - type: reading
         title: "systemd Mount and Automount Units"
         path: sections/section-010/module-06/course.md
@@ -293,7 +287,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-010/module-06/course-04-wrap-up.md
-
       - type: reading
         title: "Removable Media & the FAT32 Filesystem"
         path: sections/section-010/module-07/course.md
@@ -328,7 +321,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-010/module-07/course-03-wrap-up.md
-
       - type: reading
         title: "Backing Up & Cloning Storage Devices"
         path: sections/section-010/module-08/course.md
@@ -365,7 +357,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-010/module-08/course-03-wrap-up.md
-
       - type: reading
         title: "XFS: Creating, Growing and Repairing"
         path: sections/section-010/module-09/course.md
@@ -400,7 +391,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-010/module-09/course-03-wrap-up.md
-
       - type: reading
         title: "Btrfs Basics"
         path: sections/section-010/module-10/course.md
@@ -435,7 +425,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-010/module-10/course-03-wrap-up.md
-
       - type: quiz
         title: "Section 010 Knowledge Check: Local Storage & Forensics"
         path: sections/section-010/quiz.yaml
@@ -476,7 +465,6 @@ modules:
       - type: reading
         title: "Section Overview"
         path: sections/section-020/README.md
-
       - type: reading
         title: "Ad-Hoc Mounting with SSHFS"
         path: sections/section-020/module-01/course.md
@@ -514,7 +502,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-020/module-01/course-04-wrap-up.md
-
       - type: reading
         title: "Enterprise Sharing with NFS"
         path: sections/section-020/module-02/course.md
@@ -581,7 +568,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-020/module-02/course-05-wrap-up.md
-
       - type: reading
         title: "Network Block Devices: NBD and iSCSI"
         path: sections/section-020/module-03/course.md
@@ -619,7 +605,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-020/module-03/course-04-wrap-up.md
-
       - type: quiz
         title: "Section 020 Knowledge Check: Remote Filesystems"
         path: sections/section-020/quiz.yaml
@@ -662,7 +647,6 @@ modules:
       - type: reading
         title: "Section Overview"
         path: sections/section-030/README.md
-
       - type: reading
         title: "LVM Fundamentals"
         path: sections/section-030/module-01/course.md
@@ -729,7 +713,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-030/module-01/course-05-wrap-up.md
-
       - type: reading
         title: "Advanced LVM Operations"
         path: sections/section-030/module-02/course.md
@@ -742,28 +725,6 @@ modules:
       - type: reading
         title: "vgreduce, and Growing/Shrinking a Volume"
         path: sections/section-030/module-02/course-03-vgreduce-lvextend.md
-      - type: reading
-        title: Question
-        path: sections/section-030/module-02/labs/lab-01/question.md
-      - type: lab
-        title: "Advanced LVM: Live Extent Migration & VG Reduction Lab"
-        path: sections/section-030/module-02/labs/lab-01
-        difficulty: intermediate
-        estimated_duration: 20m
-        topic: lvm
-        task_kind: migration
-        tags: [pvmove, vgreduce, by-id-paths, findmnt]
-        learning_goals:
-          - Move every allocated extent off the old disk with pvmove while the volume stays mounted
-          - Remove the emptied disk from vg_migration with vgreduce and wipe its label with pvremove
-          - Confirm the logical volume is still mounted at /mnt/lvm-migration with its data intact
-        resources:
-          - name: "pvmove(8) manual page"
-            url: https://man7.org/linux/man-pages/man8/pvmove.8.html
-          - name: "vgreduce(8) manual page"
-            url: https://man7.org/linux/man-pages/man8/vgreduce.8.html
-          - name: "pvremove(8) manual page"
-            url: https://man7.org/linux/man-pages/man8/pvremove.8.html
       - type: reading
         title: Question
         path: sections/section-030/module-02/labs/lab-02/question.md
@@ -838,30 +799,6 @@ modules:
         title: "Removing Any PV, and Physical Disk Safety"
         path: sections/section-030/module-02/course-04-removing-any-pv-and-safety.md
       - type: reading
-        title: Question
-        path: sections/section-030/module-02/labs/lab-04/question.md
-      - type: lab
-        title: "LVM: Removing One PV Out of Three, Mixed Extents Lab"
-        path: sections/section-030/module-02/labs/lab-04
-        difficulty: intermediate
-        estimated_duration: 20m
-        topic: lvm
-        task_kind: migration
-        tags: [pvmove, vgreduce, by-id-paths, findmnt]
-        learning_goals:
-          - Show with lvs -o +devices that lv_data spreads across three disks
-          - Evacuate the middle disk with pvmove onto the free space of the other two, then remove it with vgreduce and pvremove
-          - Confirm vg_split keeps two physical volumes and lv_data stays mounted at its original size with data intact
-        resources:
-          - name: "pvmove(8) manual page"
-            url: https://man7.org/linux/man-pages/man8/pvmove.8.html
-          - name: "vgreduce(8) manual page"
-            url: https://man7.org/linux/man-pages/man8/vgreduce.8.html
-          - name: "pvremove(8) manual page"
-            url: https://man7.org/linux/man-pages/man8/pvremove.8.html
-          - name: "lvs(8) manual page"
-            url: https://man7.org/linux/man-pages/man8/lvs.8.html
-      - type: reading
         title: "Growing in One Command"
         path: sections/section-030/module-02/course-05-growing-in-one-command.md
       - type: reading
@@ -889,7 +826,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-030/module-02/course-06-wrap-up.md
-
       - type: reading
         title: "Software RAID Fundamentals"
         path: sections/section-030/module-03/course.md
@@ -929,7 +865,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-030/module-03/course-04-wrap-up.md
-
       - type: reading
         title: "RAID Maintenance and Recovery"
         path: sections/section-030/module-04/course.md
@@ -1007,7 +942,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-030/module-04/course-04-wrap-up.md
-
       - type: quiz
         title: "Section 030 Knowledge Check: Dynamic & Redundant Volumes"
         path: sections/section-030/quiz.yaml
@@ -1048,7 +982,6 @@ modules:
       - type: reading
         title: "Section Overview"
         path: sections/section-040/README.md
-
       - type: reading
         title: "Temporary Safety Valves: Swap Files"
         path: sections/section-040/module-01/course.md
@@ -1091,7 +1024,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-040/module-01/course-05-wrap-up.md
-
       - type: reading
         title: "Permanent Swap Partitions & Priority Scheduling"
         path: sections/section-040/module-02/course.md
@@ -1132,7 +1064,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-040/module-02/course-05-wrap-up.md
-
       - type: quiz
         title: "Section 040 Knowledge Check: Swap Space Management"
         path: sections/section-040/quiz.yaml
@@ -1173,7 +1104,6 @@ modules:
       - type: reading
         title: "Section Overview"
         path: sections/section-050/README.md
-
       - type: reading
         title: "On-Demand Mounting Fundamentals"
         path: sections/section-050/module-01/course.md
@@ -1214,7 +1144,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-050/module-01/course-05-wrap-up.md
-
       - type: reading
         title: "Network Automount Maps & Tuning"
         path: sections/section-050/module-02/course.md
@@ -1255,7 +1184,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-050/module-02/course-05-wrap-up.md
-
       - type: quiz
         title: "Section 050 Knowledge Check: On-Demand Mounting (autofs)"
         path: sections/section-050/quiz.yaml
@@ -1296,7 +1224,6 @@ modules:
       - type: reading
         title: "Section Overview"
         path: sections/section-060/README.md
-
       - type: reading
         title: "The Process Blueprint: Inside /proc"
         path: sections/section-060/module-01/course.md
@@ -1333,7 +1260,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-060/module-01/course-04-wrap-up.md
-
       - type: reading
         title: "The Hardware Tree & Runtime Tuning: /sys & sysctl"
         path: sections/section-060/module-02/course.md
@@ -1373,7 +1299,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-060/module-02/course-05-wrap-up.md
-
       - type: quiz
         title: "Section 060 Knowledge Check: Virtual Filesystems"
         path: sections/section-060/quiz.yaml
@@ -1413,7 +1338,6 @@ modules:
       - type: reading
         title: "Section Overview"
         path: sections/section-070/README.md
-
       - type: reading
         title: "Device-Level Diagnostics: Queues & Latency"
         path: sections/section-070/module-01/course.md
@@ -1451,7 +1375,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-070/module-01/course-05-wrap-up.md
-
       - type: reading
         title: "Process-Level Auditing: Identifying the Culprit"
         path: sections/section-070/module-02/course.md
@@ -1513,7 +1436,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-070/module-02/course-05-wrap-up.md
-
       - type: quiz
         title: "Section 070 Knowledge Check: Storage Performance"
         path: sections/section-070/quiz.yaml
@@ -1555,7 +1477,6 @@ modules:
       - type: reading
         title: "Section Overview"
         path: sections/section-080/README.md
-
       - type: reading
         title: "Directory Capacity Auditing"
         path: sections/section-080/module-01/course.md
@@ -1593,7 +1514,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-080/module-01/course-04-wrap-up.md
-
       - type: reading
         title: "User and Group Disk Quotas"
         path: sections/section-080/module-02/course.md
@@ -1655,7 +1575,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-080/module-02/course-04-wrap-up.md
-
       - type: reading
         title: "XFS Quotas and Project Quotas"
         path: sections/section-080/module-03/course.md
@@ -1713,7 +1632,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-080/module-03/course-04-wrap-up.md
-
       - type: reading
         title: "Navigating Shortcuts: Symbolic Links & FHS"
         path: sections/section-080/module-04/course.md
@@ -1775,7 +1693,6 @@ modules:
       - type: reading
         title: "Wrap-Up: Mission Debrief"
         path: sections/section-080/module-04/course-05-wrap-up.md
-
       - type: quiz
         title: "Section 080 Knowledge Check: Capacity, Quotas & Symlinks"
         path: sections/section-080/quiz.yaml

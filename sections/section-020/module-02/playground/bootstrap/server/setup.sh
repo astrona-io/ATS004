@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap for the "server" VM: the NFS server.
 # Environment prep only — no task, no grading. Installs and starts the NFS
 # server and seeds the share directory, but writes NO export line: filling in
 # /etc/exports is what the chapter's checkpoints have you do.
 set -eu
+
+missing=()
+for package in nfs-common nfs-kernel-server; do
+  dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q 'install ok installed' || missing+=("$package")
+done
+if [ "${#missing[@]}" -gt 0 ]; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "${missing[@]}"
+fi
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -68,3 +79,4 @@ if ! grep -q '[[:space:]]client$' /etc/hosts; then
 fi
 
 echo "[playground] server ready: mountd registered, lab subnet ${LAB_CIDR} trusted, /nfs/share seeded, /etc/exports empty."
+ASTRONA_STUDENT_SCRIPT

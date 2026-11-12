@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "/sys & sysctl" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Just reports the starting state the chapter refers to.
@@ -14,3 +16,4 @@ echo "[playground] spare block device for /sys reads:"
 lsblk -dn -o NAME,SIZE,SERIAL | grep -i s60m02 || true
 echo
 echo "[playground] ready. /proc, /sys, and sysctl are all available; a 1 GB spare disk is attached."
+ASTRONA_STUDENT_SCRIPT

@@ -1,0 +1,11 @@
+{
+  "initial_failures": {
+    "default/verify-pvmove": "still marked|size|grown|small|expected"
+  },
+  "solution": [
+    {
+      "script": "testing/solution.sh",
+      "vm": "default"
+    }
+  ]
+}

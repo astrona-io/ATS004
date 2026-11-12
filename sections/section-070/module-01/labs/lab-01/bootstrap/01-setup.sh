@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 DISK2=/dev/disk/by-id/virtio-lab071-disk2
@@ -27,3 +29,4 @@ EOF
 
 sudo chmod +x /opt/saturator.sh
 nohup /opt/saturator.sh >/dev/null 2>&1 &
+ASTRONA_STUDENT_SCRIPT

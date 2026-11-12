@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 set -u
 
 if ! sudo lvs vg_pool/lv_wide >/dev/null 2>&1; then
@@ -15,3 +19,5 @@ fi
 
 echo "PASS: lv_wide exists at roughly 1500M"
 exit 0
+GRADER_ROOT
+ASTRONA_STUDENT_SCRIPT

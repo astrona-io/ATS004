@@ -10,3 +10,14 @@ Astronaut, mission control gave you two cargo holds. The disk `/dev/disk/by-id/v
 4. Run a dry-run repair check on the old disk, without changing it and without mounting it. Save everything the tool prints to `/home/ubuntu/oldcargo-check.txt`.
 
 The grader checks the live machine: the type and label on both disks, the line in `/etc/fstab`, what is mounted at `/srv/newcargo` and with which options, that the old disk is still unmounted and its data is intact, and the saved check output.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-09](../../course.md).
+
+The grader checks:
+
+- Confirms the XFS label, the UUID-based fstab mount, and a saved dry-run repair of the untouched old disk.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

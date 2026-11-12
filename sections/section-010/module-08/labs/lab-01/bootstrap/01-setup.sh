@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 SOURCE=/dev/disk/by-id/virtio-lab018-source
@@ -21,3 +23,4 @@ sudo mkdir -p /mnt/lab018-source
 sudo mount "$SOURCE" /mnt/lab018-source
 echo "sample data for lab018 dd clone" | sudo tee /mnt/lab018-source/hello.txt > /dev/null
 sudo umount /mnt/lab018-source
+ASTRONA_STUDENT_SCRIPT

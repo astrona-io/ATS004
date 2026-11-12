@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: builds vg_resize/lv_data at 300M, ext4, mounted with a
 # sample file. The GRADED task is growing then correctly shrinking it,
 # not building it, so that part is done here.
@@ -22,3 +24,4 @@ sudo mount /dev/vg_resize/lv_data /mnt/resize-data
 sudo tee /mnt/resize-data/marker.txt > /dev/null <<'EOF'
 resize marker: this file must survive both the grow and the shrink.
 EOF
+ASTRONA_STUDENT_SCRIPT

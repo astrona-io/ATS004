@@ -12,7 +12,7 @@ You need to mount `/data-export` from `app-srv1` to `/app-srv1/data-export` on `
 
 Make sure you can connect to `app-srv1` via SSH:
 ```bash
-ssh root@app-srv1 'ls -ld /data-export'
+ssh app-srv1 'ls -ld /data-export'
 ```
 *Enter password `AstronaLab2024!` if prompted.*
 
@@ -56,7 +56,8 @@ By default, FUSE mounts do not allow other local users to access them. You must 
 2. Run the `sshfs` mount command. If you forget `sshfs` syntax, run `sshfs -h` or `sshfs --help`. Under the options section, it lists `-o opt,...`.
 3. Mount with the required options:
    ```bash
-   sudo sshfs -o allow_other,rw root@app-srv1:/data-export /app-srv1/data-export
+   sudo chown student:student /app-srv1/data-export
+   sshfs -o allow_other,rw app-srv1:/data-export /app-srv1/data-export
    ```
 4. Verify the mount is active and accessible:
    ```bash
@@ -127,7 +128,7 @@ sudo exportfs -v
    ```
 3. Mount the NFS export. If you do not remember the NFS mount type, check `man mount` and search `/nfs`:
    ```bash
-   sudo mount -t nfs terminal:/nfs/share /nfs/terminal/share
+   sudo mount -t nfs -o ro terminal:/nfs/share /nfs/terminal/share
    ```
 
 ---

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Securing Data-at-Rest with LUKS" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Makes sure the scratch disk is raw so `cryptsetup luksFormat` starts clean.
@@ -26,3 +28,4 @@ else
 fi
 
 echo "[playground] ready. The scratch disk is commonly /dev/vdb — confirm with 'lsblk'."
+ASTRONA_STUDENT_SCRIPT

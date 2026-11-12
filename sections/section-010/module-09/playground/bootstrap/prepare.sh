@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "XFS: Creating, Growing and Repairing" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 set -euo pipefail
@@ -13,3 +15,4 @@ sudo udevadm settle --timeout=30 || true
 
 echo "[playground] ready. Two blank spare disks (1 GB and 2 GB), commonly /dev/vdb and /dev/vdc."
 echo "[playground] /etc/fstab backed up to /etc/fstab.orig. Confirm the disk names with: lsblk"
+ASTRONA_STUDENT_SCRIPT

@@ -9,3 +9,14 @@ The administration wants to locate the largest local subdirectory under `/var/lo
 1. Profile immediate subdirectories at `/var/log` (depth of 1 only).
 2. Ensure you stay strictly on the local root filesystem device (`-x` or `--one-file-system`). Do not count space on separate, nested physical or virtual drives mounted under `/var/log`.
 3. Locate the largest subdirectory matching these parameters and write its absolute folder path to `/opt/course/audit/heavy_dirs.txt`.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-01](../../course.md).
+
+The grader checks:
+
+- Confirms proper directory capacity auditing restricted to local device boundaries.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

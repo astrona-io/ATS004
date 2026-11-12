@@ -52,3 +52,9 @@ Start the playground and connect to it with `astrona ssh section-060-module-02-p
 3. [sysctl: Viewing and Changing Parameters](./course-03-sysctl-viewing-and-changing.md): `sysctl` as a name map onto `/proc/sys/`, and why `sudo echo >` fails.
 4. [sysctl: Persisting and Precedence](./course-04-sysctl-persisting-and-precedence.md): drop-in files, `sysctl --system` and the ordering rule that decides which file wins.
 5. [Wrap-Up: Mission Debrief](./course-05-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [sysctl IPv4 Forwarding Tuning Lab](labs/lab-01/question.md): Turn on IPv4 forwarding in the running kernel without rebooting; Persist net.ipv4.ip_forward = 1 in a sysctl configuration file so it survives a reboot.
+- [Virtual Filesystems /proc and /sys Capstone Lab](../capstone/labs/lab-01/question.md): Enable IPv4 forwarding for the current boot only, without writing it to any sysctl file; Read memory totals, a process's open file descriptors and the root mount options straight from /proc.

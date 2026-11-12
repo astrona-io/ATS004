@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap: creates two long-running "processes" (dark-matter-v1 and
 # dark-matter-v2) with a deliberate, deterministic memory gap so the
 # RSS/VSZ comparison step has one clear winner, and with a real,
@@ -82,3 +84,4 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable --now dark-matter-v1.service
 sudo systemctl enable --now dark-matter-v2.service
+ASTRONA_STUDENT_SCRIPT

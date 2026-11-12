@@ -1,0 +1,11 @@
+{
+  "initial_failures": {
+    "default/verify-partitioning": "GPT|gpt|partition"
+  },
+  "solution": [
+    {
+      "script": "testing/solution.sh",
+      "vm": "default"
+    }
+  ]
+}

@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "User and Group Disk Quotas" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Creates an ext4 filesystem mounted at /quota WITH the quota mount options
 # and a persistent fstab entry, plus test users. It does NOT run quotacheck
 # or quotaon — turning quotas on is the chapter's job.
 set -euo pipefail
+
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -13,7 +20,7 @@ for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done
 sudo udevadm settle --timeout=30 || true
 
 if [ -e "$DEV" ]; then
-  blkid "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L QUOTA "$DEV"
+  sudo blkid -p -s TYPE -o value "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L QUOTA "$DEV"
   sudo mkdir -p /quota
   UUID=$(sudo blkid -s UUID -o value "$DEV")
   [ -e /etc/fstab.orig ] || sudo cp /etc/fstab /etc/fstab.orig
@@ -37,3 +44,4 @@ sudo chgrp team /quota/team && sudo chmod 2775 /quota/team
 
 echo "[playground] ready. /quota is ext4, mounted with usrquota,grpquota (see /etc/fstab)."
 echo "[playground] Users alice, bob; group team. Quotas are NOT on yet — run quotacheck / quotaon."
+ASTRONA_STUDENT_SCRIPT

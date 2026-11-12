@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 set -eu
 
 DISK1=/dev/disk/by-id/virtio-lab038-disk1
@@ -27,3 +29,4 @@ sudo mount /dev/vg_live/lv_active /mnt/lvm-live
 sudo tee /mnt/lvm-live/live-marker.txt > /dev/null <<'EOF'
 LVM live vgextend-and-migration test. If you can read this, your migration succeeded.
 EOF
+ASTRONA_STUDENT_SCRIPT

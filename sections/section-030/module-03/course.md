@@ -46,3 +46,9 @@ After this module you can:
 You should know how to create and mount a filesystem (`mkfs.ext4`, `mount`) and identify disks with `lsblk`.
 
 The linked playground gives you an Ubuntu server VM with `mdadm` installed and **four raw 1 GB spare disks** (commonly `/dev/vdb`–`/dev/vde`), wiped on every boot. Run the command blocks in each part below in that VM after `astrona ssh section-030-module-03-playground`.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [RAID 5 Array Creation & Persistence Lab](labs/lab-01/question.md): Create a healthy RAID 5 array /dev/md0 from three raw disks; Format the array with ext4 and mount it at /mnt/raid-data; Record the array in /etc/mdadm/mdadm.conf and add an /etc/fstab entry keyed by UUID.
+- [LVM Volume Groups and Logical Volumes Capstone Lab](../capstone/labs/lab-01/question.md): Find the physical volume that holds vol1/data1 and remove it from vol1; Create the volume group vol2 on the freed disk with a 50M logical volume named p1; Format vol2/p1 with ext4.

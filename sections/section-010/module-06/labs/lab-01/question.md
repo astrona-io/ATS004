@@ -11,3 +11,14 @@ Astronaut, a new 1 GB cargo hold has been fitted to your training ship. It is at
 5. Access `/srv/appdata` and confirm that `srv-appdata.mount` becomes active, with `/srv/appdata` mounted as ext4.
 
 The grader checks the live machine: it reads both unit files, checks that `srv-appdata.automount` is enabled, then accesses `/srv/appdata` itself and checks that `srv-appdata.mount` is active and the mounted filesystem is ext4.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-06](../../course.md).
+
+The grader checks:
+
+- Confirms native .mount/.automount units and on-demand trigger.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

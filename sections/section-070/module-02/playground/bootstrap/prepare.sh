@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Process-Level Auditing" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Installs iotop/sysstat/lsof/fio, mounts an ext4 fs at /mnt/perf, turns on
@@ -16,7 +18,7 @@ DEV=/dev/disk/by-id/virtio-s70m02-perf
 for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done
 sudo udevadm settle --timeout=30 || true
 if [ -e "$DEV" ]; then
-  blkid "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L PERF "$DEV"
+  sudo blkid -p -s TYPE -o value "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L PERF "$DEV"
   sudo mkdir -p /mnt/perf
   grep -q ' /mnt/perf ' /proc/mounts || sudo mount "$DEV" /mnt/perf
   sudo chmod 777 /mnt/perf
@@ -42,3 +44,4 @@ EOF
 sudo chmod +x /usr/local/bin/stop-io-load
 
 echo "[playground] ready. 'start-io-load' backgrounds a writer to /mnt/perf/leak.log; 'stop-io-load' ends it."
+ASTRONA_STUDENT_SCRIPT

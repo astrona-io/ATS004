@@ -13,3 +13,14 @@ Astronaut, two cargo holds on this ship have allowances to set up.
 4. Confirm everything with `repquota -s /quota-ext`, `xfs_quota -x -c 'report -g -h' /srv/xfs-teams` and `xfs_quota -x -c 'state -g' /srv/xfs-teams`.
 
 The grader reads the live quota tables on both filesystems.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-03](../../course.md).
+
+The grader checks:
+
+- Confirms the copied ext4 user limits, the XFS group block limits, and the group block grace timer.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

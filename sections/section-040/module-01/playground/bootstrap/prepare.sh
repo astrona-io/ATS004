@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Swap Files" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Just reports the starting memory/swap picture and clears any stale swapfile
@@ -19,3 +21,4 @@ echo
 echo "[playground] root filesystem free space:"
 df -h /
 echo "[playground] ready. Create /swapfile with fallocate; the root fs is ext4."
+ASTRONA_STUDENT_SCRIPT

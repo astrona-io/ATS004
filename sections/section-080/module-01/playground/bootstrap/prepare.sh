@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Directory Capacity Auditing" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # Mounts a second filesystem at /data (so `du -x` has a boundary to stop at)
@@ -6,12 +8,17 @@
 # a large sparse file, and some data under /opt.
 set -euo pipefail
 
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
+
 DEV=/dev/disk/by-id/virtio-s80m01-data
 for _ in $(seq 1 30); do [ -e "$DEV" ] && break; sleep 1; done
 sudo udevadm settle --timeout=30 || true
 
 if [ -e "$DEV" ]; then
-  blkid "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L DATA "$DEV"
+  sudo blkid -p -s TYPE -o value "$DEV" >/dev/null 2>&1 || sudo mkfs.ext4 -q -L DATA "$DEV"
   sudo mkdir -p /data
   grep -q ' /data ' /proc/mounts || sudo mount "$DEV" /data
   sudo chmod 777 /data
@@ -41,3 +48,4 @@ echo "  /data          -> second ext4 filesystem (du -x should stop here)"
 echo "  /opt/reports   -> big-real.bin, 256 MiB of real blocks"
 echo "  /opt/archive   -> sparse.img, 512 MiB apparent, ~0 on disk"
 echo "  /opt/logs      -> 200 tiny files"
+ASTRONA_STUDENT_SCRIPT

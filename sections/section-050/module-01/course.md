@@ -50,3 +50,9 @@ Start the playground and connect to it with `astrona ssh section-050-module-01-p
 3. [Direct Maps and a Fixed Mount Point](./course-03-direct-maps.md): the `/-` form for one fixed path, and your graded mission.
 4. [Drop-In Master Files and Debugging autofs](./course-04-drop-ins-and-debugging.md): `/etc/auto.master.d/`, `automount -m` and the foreground debug run.
 5. [Wrap-Up: Mission Debrief](./course-05-wrap-up.md): what you learned, your mission, questions to check yourself, and cleanup.
+
+<!-- curriculum-practice -->
+## Practice and assessment
+
+- [autofs Direct Maps & Timeouts Lab](labs/lab-01/question.md): Add a direct map to /etc/auto.master with a 60 second timeout; Map /mnt/secure_archive to a bind mount of /var/data/archive in the direct map file; Trigger the mount by reading the archive file through /mnt/secure_archive.
+- [Filesystem Automount with autofs Capstone Lab](../capstone/labs/lab-01/question.md): Configure an autofs indirect map so that /mnt/auto/shared mounts data-001:/exports/shared on demand; Set a 300 second idle timeout so the share is released after five minutes; Keep the share out of /etc/fstab and prove access triggers a live mount.

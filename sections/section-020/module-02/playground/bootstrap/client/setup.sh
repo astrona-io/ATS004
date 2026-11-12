@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap for the "client" VM: the NFS client.
 # Environment prep only — no task, no grading. Installs the client tools and
 # creates the mount point, but does NOT mount anything.
 set -eu
+if ! command -v mount.nfs >/dev/null; then
+  sudo apt-get update -qq
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y nfs-common
+fi
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -28,3 +34,4 @@ if ! grep -q '[[:space:]]server$' /etc/hosts; then
 fi
 
 echo "[playground] client ready: lab subnet ${LAB_CIDR} trusted, /mnt/nfs created."
+ASTRONA_STUDENT_SCRIPT

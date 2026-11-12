@@ -10,3 +10,14 @@ Build a redundant storage array from three raw disks using Linux software RAID.
 4. Mount the array at `/mnt/raid-data`.
 5. Make the array persistent: record it in `/etc/mdadm/mdadm.conf` and refresh the initramfs.
 6. Add a persistent `/etc/fstab` entry for `/mnt/raid-data`, keyed by the filesystem's `UUID=`, with the `nofail` option.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-03](../../course.md).
+
+The grader checks:
+
+- Confirms a persistent RAID 5 array, formatted, mounted, and fstab-entered.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

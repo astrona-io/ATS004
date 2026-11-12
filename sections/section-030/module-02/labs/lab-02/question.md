@@ -12,3 +12,14 @@ mounted at `/mnt/resize-data`) is already set up.
     first, then shrink the logical volume — never the other way round.
 3.  Remount `lv_data` at `/mnt/resize-data` and confirm `marker.txt` still
     has its original content.
+<!-- curriculum-links -->
+
+## Related lessons and assessment
+
+Read [module-02](../../course.md).
+
+The grader checks:
+
+- Confirms the volume was grown then correctly shrunk, filesystem healthy, data intact.
+
+Use the inspection commands in the solution to check your work. Submit when you have finished; submission ends this environment.

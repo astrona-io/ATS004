@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Bootstrap for the "client" VM: the autofs client.
 # Environment prep only — no task, no grading. Installs the tools and keeps a
 # pristine /etc/auto.master; writes NO map entries (that is the chapter's job).
@@ -15,3 +17,4 @@ fi
 [ -e /etc/auto.master.orig ] || sudo cp /etc/auto.master /etc/auto.master.orig
 
 echo "[playground] client ready: autofs running, 'nfs' in /etc/hosts."
+ASTRONA_STUDENT_SCRIPT

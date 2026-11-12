@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # OS prep for the "Symbolic Links & FHS" playground.
 # Runs once at startup. Environment preparation only — no task, no grading.
 # The system already has the usrmerge symlinks (/bin, /sbin, /lib -> usr/...).
 # This adds a sample release layout to inspect and a DISPOSABLE /tmp/rmdemo
 # with a reset helper, so the trailing-slash rm behaviour can be tried safely.
 set -euo pipefail
+
+if ! command -v quotacheck >/dev/null; then
+  sudo apt-get update -y
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y quota
+fi
 
 # A realistic "current release" symlink to resolve and inspect (read-only use).
 sudo mkdir -p /srv/releases/v1 /srv/releases/v2 /srv/www
@@ -30,3 +37,4 @@ reset-symlink-demo
 echo "[playground] ready:"
 echo "  /srv/www/active -> /srv/releases/v2   (sample release symlink)"
 echo "  /tmp/rmdemo/{real,link}               (disposable; rebuild with reset-symlink-demo)"
+ASTRONA_STUDENT_SCRIPT

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
 # Lab bootstrap for the "server" VM: an iSCSI target with one empty disk.
 # Prepares the starting state only, never the graded result. Packages are
 # installed with apt at start-up. Not run or tested by the course authors.
@@ -51,3 +53,4 @@ if ! grep -q '[[:space:]]client$' /etc/hosts; then
 fi
 
 echo "[lab] server ready: iSCSI target ${TARGET_NAME} on 10.10.60.10:3260."
+ASTRONA_STUDENT_SCRIPT

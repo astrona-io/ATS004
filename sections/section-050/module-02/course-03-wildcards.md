@@ -105,3 +105,5 @@ When the mission is done, remove it and start a fresh playground:
 astrona destroy ats-004-lab-052
 astrona run --git ssh://git@github.com/astrona-io/ATS004.git -c sections/section-050/module-02/playground
 ```
+
+For a localhost NFS export, add `nobind` to the map options to force an NFS mount. Without it, autofs may use a local bind mount. Check the resulting type with `findmnt`.

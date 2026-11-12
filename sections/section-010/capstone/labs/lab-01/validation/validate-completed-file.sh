@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Match the account used by astrona ssh, including its home and permissions.
+sudo -H -u student bash <<'ASTRONA_STUDENT_SCRIPT'
+# Inspect protected state; user access checks select their target account explicitly.
+sudo -n bash <<'GRADER_ROOT'
 # Confirms /mnt/backup-black/completed exists as an empty regular file.
 
 set -u
@@ -23,3 +27,5 @@ fi
 
 echo "PASS: $f exists and is an empty regular file"
 exit 0
+GRADER_ROOT
+ASTRONA_STUDENT_SCRIPT
