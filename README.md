@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://astrona.io/courses/linux-foundation-certified-sysadmin-lfcs">
+    <img src="https://astrona.io/courses/linux-foundation-certified-sysadmin-lfcs/domains/ATS004.svg" alt="ATS004: Storage, part of the Linux Foundation Certified System Administrator course on Astrona" width="100%">
+  </a>
+</p>
+
 # ATS004 - LFCS: Storage
 
 [![Liberapay](https://img.shields.io/badge/Liberapay-Support_Astrona.io-F6C915?logo=liberapay&logoColor=black&style=for-the-badge)](https://liberapay.com/Astrona.io)
